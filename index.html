@@ -2406,8 +2406,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '08/08/26 - 16:30'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Versión personalizada para Nathy: (1) tema por defecto ahora es CLARO (antes oscuro) — se puede cambiar igual con el botón de tema; (2) nuevo selector de "Color de acento" en Config → Apariencia, con un color picker libre (cualquier color, no una lista fija) que se aplica a botones, enlaces y resaltados de toda la app, con botón para restablecer al azul original; (3) firebaseConfig y DOC_REF apuntando al proyecto y documento propios de Nathy (finanzasnathy-ee3fb / users/nathy), totalmente separado del proyecto original.';
+const APP_VERSION_DATE = '08/08/26 - 16:37'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Corregido bug importante: seedDemo() se ejecutaba automáticamente en cada login cuando la cuenta estaba vacía, y sembraba datos de EJEMPLO reales de la cuenta de Miguel (saldos de BCP/BBVA, movimientos de mayo-junio, etc.) — por eso aparecían cuentas y montos que Nathy nunca ingresó, incluso después de borrar todo (porque al volver a entrar con la cuenta vacía, se volvía a sembrar solo). Función desactivada (seedDemo ahora no hace nada). Pendiente: el desplegable "Cuenta" de Nuevo Movimiento todavía lista BCP/BBVA/Efectivo/Ahorro Soles/Ahorro Dólares como opciones fijas (aunque ya con saldo S/0 en vez de los montos reales) — están hardcodeadas en varias partes del código como las "5 cuentas por defecto" de la app; falta renombrarlas a las cuentas reales de Nathy cuando las defina.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -12427,6 +12427,15 @@ function getUpcomingCalEventsThisMonth(){
 
 // ── SEED ─────────────────────────────────────────────
 function seedDemo(){
+  // DESACTIVADO en la copia de Nathy: esta función originalmente sembraba
+  // datos de EJEMPLO de la cuenta de Miguel (saldos y movimientos reales,
+  // no ficticios) en cualquier cuenta nueva que detectara vacía — así fue
+  // como aparecieron cuentas y montos que Nathy nunca ingresó. Se deja la
+  // función vacía (en vez de borrar la llamada en el flujo de login) para
+  // no tener que tocar esa parte del código.
+  return;
+}
+function seedDemo_DISABLED_ORIGINAL(){
   // Don't seed if user explicitly cleared all data
   if(localStorage.getItem('mf_cleared')==='1'){
     localStorage.removeItem('mf_cleared');
