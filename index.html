@@ -2403,8 +2403,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '08/08/26 - 17:13'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Arreglo estructural (no solo un parche): la app ya NO tiene ninguna "memoria" de BCP/BBVA/Efectivo/Ahorro Soles/Ahorro Dólares por defecto. Antes, aunque no las hubieras creado, varias funciones las asumían como cuentas válidas para sumar (Disponible, Ahorro) o para ofrecer en desplegables — eso permitía que residuos de pruebas viejas (cuentas borradas, movimientos huérfanos) siguieran sumando dinero fantasma sin que aparecieran en ninguna tabla visible (causa exacta del S/0.40 fantasma reportado). Ahora TODO (Disponible, Ahorro, tabla de Cuentas, desplegable "Cuenta" en Nuevo Movimiento, Transferir, TC Tracker, exportar Excel) se calcula ÚNICAMENTE a partir de las cuentas que existen en state.customCuentas — es decir, las que tú creaste a mano en Gestionar Cuentas. Si no has creado ninguna, los desplegables y mensajes lo dicen explícitamente ("Crea una cuenta primero") en vez de ofrecer bancos que no son tuyos. Verificado con un residuo fantasma simulado: ya no se cuenta. Se mantiene todo lo demás: validación anti-duplicados, seedDemo desactivado, tema claro + color de acento.';
+const APP_VERSION_DATE = '08/08/26 - 17:55'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Corregido: "Disponible Anterior" (y también Ahorro/gráficos) se veía vacío ("—") en cualquier mes SIN movimientos ni snapshot propio, aunque las cuentas ya tuvieran saldo real arrastrado de un mes anterior — ej. crear cuentas en diciembre, no tocar nada en enero, y ver febrero: "Disponible Anterior" (enero) salía en blanco en vez de mostrar el saldo real. Causa: varias funciones solo revisaban si había actividad en el mes EXACTO que se estaba mostrando, en vez de si había datos en o antes de ese mes (que es lo que reconstructSaldoAt ya sabe calcular perfectamente, arrastrando el saldo). Se creó tieneDatosHasta(y,m) y se aplicó en Disponible, tabla anual, y los 2 gráficos de 12 meses (Ahorro/Disponible y Patrimonio Neto). Se mantiene todo lo demás: sin memoria de bancos por defecto, deduplicación de saldos, seedDemo desactivado.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3489,10 +3489,25 @@ function sumaAhorroDe(saldos, moneda){
   });
   return tot;
 }
+// ¿Hay algún dato (movimiento o snapshot) EN o ANTES del mes (y,m)? — a
+// diferencia de solo mirar el mes exacto, esto reconoce que una cuenta creada
+// en un mes anterior sigue "teniendo saldo válido" en los meses siguientes
+// aunque no haya habido ningún movimiento nuevo ese mes específico. Sin este
+// chequeo, un mes sin actividad propia mostraba "—" en vez del saldo real
+// (que reconstructSaldoAt sí sabe calcular perfectamente, arrastrándolo del
+// mes anterior) — por eso "Disponible Anterior" se veía vacío en un mes
+// "tranquilo" aunque las cuentas llevaran saldo desde antes.
+function tieneDatosHasta(y,m){
+  const cutoff=new Date(y,m+1,0,23,59,59);
+  const hasMov=state.movimientos.some(mv=>new Date(mv.date+'T12:00:00')<=cutoff);
+  if(hasMov) return true;
+  return Object.keys(state.snapshots||{}).some(key=>{
+    const [yy,mm]=key.split('-').map(Number);
+    return yy<y || (yy===y && (mm-1)<=m);
+  });
+}
 function getDisponible(y,m){
-  const hasMov=state.movimientos.some(mv=>{const d=new Date(mv.date+'T12:00:00');return d.getFullYear()===y&&d.getMonth()===m;});
-  const hasSnap=!!(state.snapshots||{})[snapKey(y,m)];
-  if(!hasMov&&!hasSnap) return null;
+  if(!tieneDatosHasta(y,m)) return null;
   const s=reconstructSaldoAt(y,m);
   return sumaDisponibleDe(s);
 }
@@ -4617,10 +4632,8 @@ function renderAnualTable(){
   const rows=[];
   for(let i=0;i<12;i++){
     const disp=getDisponible(state.currentYear,i);
-    const hasMov=state.movimientos.some(mv=>{const d=new Date(mv.date+'T12:00:00');return d.getFullYear()===state.currentYear&&d.getMonth()===i;});
-    const hasSnap=!!(state.snapshots||{})[snapKey(state.currentYear,i)];
     let aS=null,aD=null;
-    if(hasMov||hasSnap){
+    if(tieneDatosHasta(state.currentYear,i)){
       const s=reconstructSaldoAt(state.currentYear,i);
       aS=sumaAhorroDe(s,'PEN');
       aD=sumaAhorroDe(s,'USD');
@@ -4794,10 +4807,7 @@ function renderChart(){
     // así el gráfico refleja el mismo total que la tarjeta de arriba.
     const data=[];
     for(let i=0;i<12;i++){
-      // Verificar si hay movimientos o snapshot en ese mes
-      const hasMov=state.movimientos.some(mv=>{const d=new Date(mv.date+'T12:00:00');return d.getFullYear()===state.currentYear&&d.getMonth()===i;});
-      const hasSnap=!!(state.snapshots||{})[snapKey(state.currentYear,i)];
-      if(hasMov||hasSnap){
+      if(tieneDatosHasta(state.currentYear,i)){
         const s=reconstructSaldoAt(state.currentYear,i);
         if(isS) data.push(+sumaAhorroDe(s,'PEN').toFixed(2));
         else if(isD) data.push(+sumaAhorroDe(s,'USD').toFixed(2));
@@ -4899,9 +4909,7 @@ function renderChart(){
       meses.push({y,m});
     }
     const data=meses.map(({y,m})=>{
-      const hasMov=state.movimientos.some(mv=>{const d=new Date(mv.date+'T12:00:00');return d.getFullYear()===y&&d.getMonth()===m;});
-      const hasSnap=!!(state.snapshots||{})[snapKey(y,m)];
-      if(!hasMov&&!hasSnap) return null;
+      if(!tieneDatosHasta(y,m)) return null;
       const s=reconstructSaldoAt(y,m);
       const disponible=sumaDisponibleDe(s);
       // Suma TODAS las cuentas de ahorro (default + personalizadas), sin
