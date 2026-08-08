@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shhhh🤫</title>
+<title>No hay nada que ver aquí</title>
 <!-- PWA: instalable en la pantalla de inicio. Ícono y nombre deliberadamente
      neutros/genéricos, igual que el título de la pestaña, para no delatar
      de qué app se trata a simple vista. -->
@@ -2406,8 +2406,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '08/08/26 - 13:52'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Corregido: en móvil, los desplegables de "Análisis", "Créditos", "Patrimonio" y "Otros" no se veían al tocarlos. Causa: .nav-center tiene overflow-x:auto para poder hacer scroll horizontal entre pestañas en pantallas chicas, y eso recortaba el menú (estaba con position:absolute dentro de ese mismo contenedor). Solución: el menú ahora usa position:fixed con la posición calculada por JS (debajo del botón tocado, ajustada si se saldría del borde derecho de la pantalla), así ya no lo afecta el overflow de ningún contenedor. También se cierra solo si haces scroll horizontal de las pestañas mientras está abierto. Se mantiene todo lo demás: último día del mes en Pagos Frecuentes, km actual manual en Mantenimiento, valorización por unidad/total en Inversiones.';
+const APP_VERSION_DATE = '08/08/26 - 16:30'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Versión personalizada para Nathy: (1) tema por defecto ahora es CLARO (antes oscuro) — se puede cambiar igual con el botón de tema; (2) nuevo selector de "Color de acento" en Config → Apariencia, con un color picker libre (cualquier color, no una lista fija) que se aplica a botones, enlaces y resaltados de toda la app, con botón para restablecer al azul original; (3) firebaseConfig y DOC_REF apuntando al proyecto y documento propios de Nathy (finanzasnathy-ee3fb / users/nathy), totalmente separado del proyecto original.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
