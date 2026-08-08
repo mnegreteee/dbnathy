@@ -2406,8 +2406,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '08/08/26 - 16:44'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Corregido: la tabla de Cuentas mostraba filas duplicadas cuando se creaba una cuenta personalizada con el mismo nombre que una de las 5 cuentas por defecto (ej. crear "Efectivo" duplicaba la fila "Efectivo"). Causa: saveNewCuenta() escribe tanto en state.customCuentas como en state.cuentas, así que renderAccountsTables() la contaba dos veces — una como "cuenta por defecto" y otra como "cuenta personalizada". Se agregó (1) deduplicación por nombre en la tabla (por si ya existían duplicados guardados de antes) y (2) validación al crear una cuenta nueva que bloquea nombres ya en uso, con mensaje claro. Se mantiene todo lo demás: seedDemo() desactivado, tema claro + color de acento personalizable.';
+const APP_VERSION_DATE = '08/08/26 - 17:01'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Corregido bug importante de doble conteo: cuando una cuenta personalizada usa el mismo nombre que una cuenta por defecto (ej. "Efectivo"), varias funciones sumaban su saldo DOS VECES — una vez como cuenta por defecto, otra como personalizada. Esto inflaba al doble "Disponible Actual/Anterior", "Ahorro Soles/Dólares", "Patrimonio Neto Total" y el gráfico de Año Completo. Se creó un par de funciones centralizadas (getCuentasOperativasUnicas/sumaDisponibleDe y sumaAhorroDe) que deduplican por nombre (la cuenta personalizada manda si hay choque), y se reemplazaron TODOS los lugares que sumaban a mano BCP+BBVA+Efectivo o Ahorro Soles/Dólares para usar estas funciones — incluyendo Dashboard, tarjetas resumen de Finanzas, tabla anual, gráfico de 12 meses, Comparativo, exportar a Excel, y el aviso de "saldo bajo". Verificado en simulación exacta del caso reportado: con Efectivo=S/0.10 duplicado, antes mostraba S/0.20, ahora muestra S/0.10 correctamente. Se mantiene todo lo demás: deduplicación visual en Gestionar Cuentas, validación anti-duplicados al crear cuentas, seedDemo desactivado, tema claro + color de acento personalizable.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3456,24 +3456,46 @@ function calcMonth(y,m){
   });
   return{ingresos:ing,gastos:gas,resultado:ing-gas};
 }
+// Devuelve la lista de cuentas OPERATIVAS (no ahorro, no "otras") sin
+// duplicados: si una cuenta personalizada usa el mismo nombre que una de
+// las 3 operativas por defecto (BCP/BBVA/Efectivo), la personalizada manda
+// y el default con ese nombre NO se cuenta aparte. Esto evita el bug real
+// que reportó Nathy: "Disponible" mostraba el doble del saldo real porque
+// se sumaba una vez como cuenta por defecto y otra vez como personalizada.
+function getCuentasOperativasUnicas(){
+  const defaultOp=['BCP','BBVA','Efectivo'];
+  const customKeys=Object.entries(state.customCuentas||{}).filter(([,v])=>v.type==='operativa').map(([k])=>k);
+  const customSet=new Set(customKeys);
+  return [...defaultOp.filter(k=>!customSet.has(k)), ...customKeys];
+}
+// Suma el saldo operativo total ("Disponible") a partir de un objeto de
+// saldos ya reconstruido (ver reconstructSaldoAt/state.cuentas). Usar SIEMPRE
+// esta función en vez de sumar BCP+BBVA+Efectivo a mano, para no repetir el
+// bug del doble conteo si en el futuro se agrega otra cuenta con nombre
+// repetido.
+function sumaDisponibleDe(saldos){
+  return getCuentasOperativasUnicas().reduce((sum,k)=>sum+((saldos||{})[k]||0),0);
+}
+// Mismo cuidado que arriba pero para cuentas de AHORRO: si una cuenta
+// personalizada usa el mismo nombre que "Ahorro Soles"/"Ahorro Dólares", no
+// se debe sumar dos veces. moneda: 'PEN' o 'USD'.
+function sumaAhorroDe(saldos, moneda){
+  const claveDefault = moneda==='USD' ? 'Ahorro Dólares' : 'Ahorro Soles';
+  const customAhorro = Object.entries(state.customCuentas||{}).filter(([,v])=>v.type==='ahorro');
+  const customSet = new Set(customAhorro.map(([k])=>k));
+  let tot = customSet.has(claveDefault) ? 0 : ((saldos||{})[claveDefault]||0);
+  customAhorro.forEach(([k,v])=>{
+    const esUSD = v.currency==='USD';
+    if((moneda==='USD')===esUSD) tot += ((saldos||{})[k]||0);
+  });
+  return tot;
+}
 function getDisponible(y,m){
   const hasMov=state.movimientos.some(mv=>{const d=new Date(mv.date+'T12:00:00');return d.getFullYear()===y&&d.getMonth()===m;});
   const hasSnap=!!(state.snapshots||{})[snapKey(y,m)];
   if(!hasMov&&!hasSnap) return null;
   const s=reconstructSaldoAt(y,m);
-  // Only sum OPERATIVA accounts (type=operativa or default op accounts)
-  // Explicitly exclude: ahorro, otras, Ahorro Soles, Ahorro Dólares
-  const defaultOp=['BCP','BBVA','Efectivo'];
-  const ahDefaults=['Ahorro Soles','Ahorro Dólares'];
-  let total=0;
-  // Default operativa accounts
-  defaultOp.forEach(k=>{ if(s[k]!==undefined) total+=s[k]; });
-  // Custom accounts: only operativa type
-  Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-    if(v.type==='operativa') total+=(s[k]||0);
-    // 'otras' and 'ahorro' are explicitly excluded
-  });
-  return total;
+  return sumaDisponibleDe(s);
 }
 
 // ── RENDER MAIN ───────────────────────────────────────
@@ -3632,7 +3654,7 @@ function checkBrowserNotifications(forzar){
 
   // 2. Saldo bajo en cuentas operativas (umbral fijo de S/50, igual que el bot por defecto)
   const threshold=50;
-  const cuentasOperativas=['BCP','BBVA','Efectivo',...Object.entries(state.customCuentas||{}).filter(([,v])=>v.type==='operativa').map(([k])=>k)];
+  const cuentasOperativas=getCuentasOperativasUnicas();
   cuentasOperativas.forEach(k=>{
     const saldo=(state.cuentas||{})[k];
     if(saldo!==undefined && saldo<threshold) mensajes.push(`⚠️ Saldo bajo en ${k}: S/ ${saldo.toFixed(2)}`);
@@ -3862,7 +3884,7 @@ function renderSummaryCards(){
 
   // Disponible actual = mes SELECCIONADO reconstruido desde movimientos
   const dcRaw=getDisponible(state.currentYear,state.currentMonth);
-  const dc = dcRaw !== null ? dcRaw : (state.cuentas.BCP||0)+(state.cuentas.BBVA||0)+(state.cuentas.Efectivo||0);
+  const dc = dcRaw !== null ? dcRaw : sumaDisponibleDe(state.cuentas);
   document.getElementById('sum-disp-cur').textContent=M(fmtS(dc));
   document.getElementById('sum-disp-cur').style.color=dc>=0?'var(--accent)':'var(--red)';
   if(dp!==null){
@@ -3872,15 +3894,11 @@ function renderSummaryCards(){
 
   // Reconstruir saldos del mes seleccionado para los cards
   const curSaldoCards=reconstructSaldoAt(state.currentYear,state.currentMonth);
-  // Sum ALL ahorro-type accounts for display
-  let aS=curSaldoCards['Ahorro Soles']||0;
-  let aD=curSaldoCards['Ahorro Dólares']||0;
-  Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-    if(v.type==='ahorro'){
-      if(v.currency==='USD') aD+=(curSaldoCards[k]||0);
-      else aS+=(curSaldoCards[k]||0);
-    }
-  });
+  // Sum ALL ahorro-type accounts for display — usa sumaAhorroDe() (ver arriba)
+  // para no contar dos veces si una cuenta personalizada repite el nombre
+  // "Ahorro Soles"/"Ahorro Dólares".
+  let aS=sumaAhorroDe(curSaldoCards,'PEN');
+  let aD=sumaAhorroDe(curSaldoCards,'USD');
   document.getElementById('sum-ahorro-soles').textContent=M(fmtS(aS));
   const intS=getMovs(state.currentYear,state.currentMonth).filter(m=>m.type==='ahorro'&&(
     m.account==='Ahorro Soles'||
@@ -3950,22 +3968,14 @@ function clearSaldoCache(){ _saldoCache = {}; }
 function getTotalAhorroSoles(){
   const now = new Date();
   const saldo = reconstructSaldoAt(now.getFullYear(), now.getMonth());
-  let aS = saldo['Ahorro Soles'] || 0;
-  Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-    if(v.type==='ahorro' && v.currency!=='USD') aS += (saldo[k]||0);
-  });
-  return aS;
+  return sumaAhorroDe(saldo,'PEN');
 }
 
 // Devuelve el saldo actual TOTAL de Ahorro en Dólares (cuenta default + custom tipo ahorro en USD)
 function getTotalAhorroDolares(){
   const now = new Date();
   const saldo = reconstructSaldoAt(now.getFullYear(), now.getMonth());
-  let aD = saldo['Ahorro Dólares'] || 0;
-  Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-    if(v.type==='ahorro' && v.currency==='USD') aD += (saldo[k]||0);
-  });
-  return aD;
+  return sumaAhorroDe(saldo,'USD');
 }
 
 function reconstructSaldoAt(y,m){
@@ -4626,13 +4636,8 @@ function renderAnualTable(){
     let aS=null,aD=null;
     if(hasMov||hasSnap){
       const s=reconstructSaldoAt(state.currentYear,i);
-      aS=s['Ahorro Soles']||0;
-      aD=s['Ahorro Dólares']||0;
-      // Suma también las cuentas de ahorro personalizadas de cada moneda
-      Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-        if(v.type!=='ahorro') return;
-        if(v.currency==='USD') aD+=(s[k]||0); else aS+=(s[k]||0);
-      });
+      aS=sumaAhorroDe(s,'PEN');
+      aD=sumaAhorroDe(s,'USD');
     }
     rows.push({disp,aS,aD});
   }
@@ -4801,15 +4806,6 @@ function renderChart(){
     // Suma TODAS las cuentas de ahorro de la moneda indicada (la cuenta por
     // defecto + las personalizadas tipo "ahorro"), no solo la cuenta fija —
     // así el gráfico refleja el mismo total que la tarjeta de arriba.
-    const sumAhorro=(s, moneda)=>{
-      let tot = s[moneda==='USD'?'Ahorro Dólares':'Ahorro Soles']||0;
-      Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-        if(v.type!=='ahorro') return;
-        const esUSD = v.currency==='USD';
-        if((moneda==='USD')===esUSD) tot += (s[k]||0);
-      });
-      return tot;
-    };
     const data=[];
     for(let i=0;i<12;i++){
       // Verificar si hay movimientos o snapshot en ese mes
@@ -4817,10 +4813,10 @@ function renderChart(){
       const hasSnap=!!(state.snapshots||{})[snapKey(state.currentYear,i)];
       if(hasMov||hasSnap){
         const s=reconstructSaldoAt(state.currentYear,i);
-        if(isS) data.push(+sumAhorro(s,'PEN').toFixed(2));
-        else if(isD) data.push(+sumAhorro(s,'USD').toFixed(2));
-        else if(isT) data.push(+((s.BCP||0)+(s.BBVA||0)+(s.Efectivo||0)+sumAhorro(s,'PEN')).toFixed(2));
-        else data.push(+((s.BCP||0)+(s.BBVA||0)+(s.Efectivo||0)).toFixed(2));
+        if(isS) data.push(+sumaAhorroDe(s,'PEN').toFixed(2));
+        else if(isD) data.push(+sumaAhorroDe(s,'USD').toFixed(2));
+        else if(isT) data.push(+(sumaDisponibleDe(s)+sumaAhorroDe(s,'PEN')).toFixed(2));
+        else data.push(+sumaDisponibleDe(s).toFixed(2));
       } else data.push(null);
     }
     const lbl=isS?'Ahorro S/':isD?'Ahorro $':isT?'Total Soles':'Saldo disp.';
@@ -4921,15 +4917,11 @@ function renderChart(){
       const hasSnap=!!(state.snapshots||{})[snapKey(y,m)];
       if(!hasMov&&!hasSnap) return null;
       const s=reconstructSaldoAt(y,m);
-      const disponible=(s.BCP||0)+(s.BBVA||0)+(s.Efectivo||0);
-      // Suma TODAS las cuentas de ahorro (default + personalizadas), no solo
-      // las dos por defecto — si no, el patrimonio ignoraría los ahorros que
-      // el usuario tenga repartidos en otros bancos.
-      let ahorroPEN=s['Ahorro Soles']||0, ahorroUSD=s['Ahorro Dólares']||0;
-      Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-        if(v.type!=='ahorro') return;
-        if(v.currency==='USD') ahorroUSD+=(s[k]||0); else ahorroPEN+=(s[k]||0);
-      });
+      const disponible=sumaDisponibleDe(s);
+      // Suma TODAS las cuentas de ahorro (default + personalizadas), sin
+      // contar dos veces si alguna personalizada repite el nombre de una
+      // cuenta de ahorro por defecto (mismo cuidado que sumaAhorroDe()).
+      const ahorroPEN=sumaAhorroDe(s,'PEN'), ahorroUSD=sumaAhorroDe(s,'USD');
       const ahorro=ahorroPEN+(ahorroUSD*rate);
       return +(disponible+ahorro+invValorAhora-deudaTCTotalAhora).toFixed(2);
     });
@@ -6474,7 +6466,7 @@ function renderComparativo(){
     {label:'Ingresos',a:cA.ingresos,b:cB.ingresos,fmt:fmtS,color:'var(--green)'},
     {label:'Gastos',a:cA.gastos,b:cB.gastos,fmt:fmtS,color:'var(--red)'},
     {label:'Resultado',a:cA.resultado,b:cB.resultado,fmt:fmtS,color:'var(--accent)'},
-    {label:'Ahorro Soles',a:(()=>{const s=(state.snapshots||{})[snapKey(yA,mA)];return s?s['Ahorro Soles']||0:0;})(),b:(()=>{const s=(state.snapshots||{})[snapKey(yB,mB)];return s?s['Ahorro Soles']||0:getTotalAhorroSoles();})(),fmt:fmtS,color:'var(--purple)'},
+    {label:'Ahorro Soles',a:sumaAhorroDe(reconstructSaldoAt(yA,mA),'PEN'),b:sumaAhorroDe(reconstructSaldoAt(yB,mB),'PEN'),fmt:fmtS,color:'var(--purple)'},
     {label:'Disponible',a:getDisponible(yA,mA)||0,b:getDisponible(yB,mB)||0,fmt:fmtS,color:'var(--teal)'},
   ];
   const maxVal=Math.max(...rows.map(r=>Math.max(r.a,r.b)))||1;
@@ -6518,6 +6510,7 @@ function exportXLSX(){
   const saldos=[['Cuenta','Tipo','Moneda','Saldo']];
   ['BCP','BBVA','Efectivo','Ahorro Soles','Ahorro Dólares'].forEach(k=>{
     if(state.cuentas[k]===undefined) return;
+    if((state.customCuentas||{})[k]) return; // evita fila duplicada si una cuenta personalizada repite este nombre
     const esAhorro=k.startsWith('Ahorro');
     saldos.push([k, esAhorro?'ahorro':'operativa', k==='Ahorro Dólares'?'USD':'PEN', state.cuentas[k]||0]);
   });
@@ -9395,16 +9388,10 @@ function renderDashboard(){
   const dispPrev = getDisponible(prev.year, prev.month) || 0;
 
   // ── Ahorros ───────────────────────────────────────
-  let aS = saldoCur['Ahorro Soles']  || 0;
-  let aD = saldoCur['Ahorro Dólares']|| 0;
-  let aSp= saldoPrev['Ahorro Soles'] || 0;
-  let aDp= saldoPrev['Ahorro Dólares']||0;
-  Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-    if(v.type==='ahorro'){
-      if(v.currency==='USD'){ aD+=(saldoCur[k]||0); aDp+=(saldoPrev[k]||0); }
-      else { aS+=(saldoCur[k]||0); aSp+=(saldoPrev[k]||0); }
-    }
-  });
+  const aS = sumaAhorroDe(saldoCur,'PEN');
+  const aD = sumaAhorroDe(saldoCur,'USD');
+  const aSp= sumaAhorroDe(saldoPrev,'PEN');
+  const aDp= sumaAhorroDe(saldoPrev,'USD');
   const ahorroTotalCur  = aS + (aD * (state.tc?.compra||3.45));
   const ahorroTotalPrev = aSp + (aDp* (state.tc?.compra||3.45));
 
