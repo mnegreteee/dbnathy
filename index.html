@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>No hay nada que ver aquí</title>
+<title>Shhhh🤫</title>
 <!-- PWA: instalable en la pantalla de inicio. Ícono y nombre deliberadamente
      neutros/genéricos, igual que el título de la pestaña, para no delatar
      de qué app se trata a simple vista. -->
@@ -864,6 +864,13 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
           <div class="config-row">
             <div class="config-row-label">Tema<small>Oscuro / Claro</small></div>
             <button class="config-action-btn neutral" onclick="toggleTheme()">🌙 / ☀️ Cambiar tema</button>
+          </div>
+          <div class="config-row">
+            <div class="config-row-label">Color de acento<small>Botones, enlaces y resaltados — elige el que quieras</small></div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="color" id="cfg-accent-picker" value="#5b8def" style="width:34px;height:30px;padding:2px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);cursor:pointer" onchange="setAccentColor(this.value)" title="Elegir color de acento">
+              <button class="config-action-btn neutral" onclick="resetAccentColor()">↺ Restablecer</button>
+            </div>
           </div>
           <div class="config-row">
             <div class="config-row-label">Ocultar cifras<small>Enmascara todos los montos</small></div>
@@ -3244,8 +3251,52 @@ function toggleTheme(){
   if(projChart)renderProyeccion();
 }
 function loadTheme(){
-  const t=localStorage.getItem('mf_theme')||'dark';
+  const t=localStorage.getItem('mf_theme')||'light';
   document.documentElement.setAttribute('data-theme',t);
+}
+
+// ── COLOR DE ACENTO PERSONALIZADO ──────────────────────
+// --accent/--accent2 son las únicas 2 variables de color que NO cambian
+// entre tema oscuro/claro (ver :root{...} arriba) — se usan en botones,
+// links y resaltados en TODA la app. Sobreescribirlas con style.setProperty
+// en <html> tiene más prioridad que la regla :root del CSS, así que basta
+// con esto para "pintar" la app del color que la persona elija, sin tocar
+// nada de la lógica de light/dark (que sigue controlando fondos y textos).
+function hexToRgb(hex){
+  const h=hex.replace('#','');
+  return {r:parseInt(h.substring(0,2),16), g:parseInt(h.substring(2,4),16), b:parseInt(h.substring(4,6),16)};
+}
+function shadeColor(hex, percent){ // percent negativo = oscurecer, positivo = aclarar
+  const {r,g,b}=hexToRgb(hex);
+  const adj=(c)=>Math.max(0,Math.min(255,Math.round(c+(percent<0?c:255-c)*percent/100)));
+  const toHex=(c)=>c.toString(16).padStart(2,'0');
+  return '#'+toHex(adj(r))+toHex(adj(g))+toHex(adj(b));
+}
+function setAccentColor(hex){
+  if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+  document.documentElement.style.setProperty('--accent', hex);
+  document.documentElement.style.setProperty('--accent2', shadeColor(hex,-18)); // versión más oscura, para hover/gradientes
+  localStorage.setItem('mf_accent', hex);
+  if(mainChart) renderChart();
+  if(projChart) renderProyeccion();
+}
+function resetAccentColor(){
+  document.documentElement.style.removeProperty('--accent');
+  document.documentElement.style.removeProperty('--accent2');
+  localStorage.removeItem('mf_accent');
+  const picker=document.getElementById('cfg-accent-picker');
+  if(picker) picker.value='#5b8def';
+  if(mainChart) renderChart();
+  if(projChart) renderProyeccion();
+}
+function loadAccentColor(){
+  const saved=localStorage.getItem('mf_accent');
+  const picker=document.getElementById('cfg-accent-picker');
+  if(saved){
+    document.documentElement.style.setProperty('--accent', saved);
+    document.documentElement.style.setProperty('--accent2', shadeColor(saved,-18));
+    if(picker) picker.value=saved;
+  }
 }
 
 // ── HIDE CIFRAS ───────────────────────────────────────
@@ -12445,7 +12496,7 @@ function seedDemo(){
 })();
 
 // ── INIT ─────────────────────────────────────────────
-loadTheme();loadCompact();
+loadTheme();loadCompact();loadAccentColor();
 (function(){
   const el = document.getElementById('app-version-label');
   if(el) el.textContent = 'Versión '+APP_VERSION_DATE;
