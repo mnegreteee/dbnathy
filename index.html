@@ -2403,8 +2403,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '08/08/26 - 17:55'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Corregido: "Disponible Anterior" (y también Ahorro/gráficos) se veía vacío ("—") en cualquier mes SIN movimientos ni snapshot propio, aunque las cuentas ya tuvieran saldo real arrastrado de un mes anterior — ej. crear cuentas en diciembre, no tocar nada en enero, y ver febrero: "Disponible Anterior" (enero) salía en blanco en vez de mostrar el saldo real. Causa: varias funciones solo revisaban si había actividad en el mes EXACTO que se estaba mostrando, en vez de si había datos en o antes de ese mes (que es lo que reconstructSaldoAt ya sabe calcular perfectamente, arrastrando el saldo). Se creó tieneDatosHasta(y,m) y se aplicó en Disponible, tabla anual, y los 2 gráficos de 12 meses (Ahorro/Disponible y Patrimonio Neto). Se mantiene todo lo demás: sin memoria de bancos por defecto, deduplicación de saldos, seedDemo desactivado.';
+const APP_VERSION_DATE = '08/08/26 - 18:03'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Corregido: "Disponible Actual" mostraba el saldo EN VIVO de hoy al navegar a un mes pasado sin datos (ej. un mes antes de haber creado tus cuentas) — mostraba S/2.00 en noviembre 2025 aunque la tabla de Cuentas, correctamente, mostrara S/0.00 para ese mismo mes. Causa: el atajo que usa el saldo en vivo cuando no hay datos históricos (pensado solo para alguien recién empezando, viendo el mes actual real) se aplicaba sin importar qué mes se estuviera navegando. Ahora ese atajo solo se usa si el mes que se ve es de verdad el mes actual real — cualquier mes pasado sin datos muestra S/0.00, consistente con sus propias cuentas. Se mantiene todo lo demás: tieneDatosHasta() para meses "tranquilos" con saldo arrastrado, sin memoria de bancos por defecto, deduplicación de saldos.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3896,9 +3896,18 @@ function renderSummaryCards(){
   else{pe.textContent='—';pe.style.color='var(--text3)';}
   document.getElementById('sub-disp-prev').textContent=MONTHS[prev.month]+' '+prev.year;
 
-  // Disponible actual = mes SELECCIONADO reconstruido desde movimientos
+  // Disponible actual = mes SELECCIONADO reconstruido desde movimientos.
+  // El atajo de usar el saldo EN VIVO (state.cuentas) solo tiene sentido si
+  // el mes que se está viendo es de verdad el mes actual real (útil para
+  // alguien recién empezando, sin snapshots históricos todavía) — si no,
+  // mostraba el saldo de HOY al navegar a un mes pasado sin datos (ej. antes
+  // de haber creado las cuentas), aunque la tabla de Cuentas sí mostrara S/0
+  // correctamente para ese mes. Ahora un mes pasado sin datos muestra S/0,
+  // igual que sus propias filas de cuentas.
   const dcRaw=getDisponible(state.currentYear,state.currentMonth);
-  const dc = dcRaw !== null ? dcRaw : sumaDisponibleDe(state.cuentas);
+  const hoyReal=new Date();
+  const esMesActualReal = state.currentYear===hoyReal.getFullYear() && state.currentMonth===hoyReal.getMonth();
+  const dc = dcRaw !== null ? dcRaw : (esMesActualReal ? sumaDisponibleDe(state.cuentas) : 0);
   document.getElementById('sum-disp-cur').textContent=M(fmtS(dc));
   document.getElementById('sum-disp-cur').style.color=dc>=0?'var(--accent)':'var(--red)';
   if(dp!==null){
