@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shhh🤫</title>
+<title>Top secret🤫</title>
 <!-- PWA: instalable en la pantalla de inicio. Ícono y nombre deliberadamente
      neutros/genéricos, igual que el título de la pestaña, para no delatar
      de qué app se trata a simple vista. -->
@@ -126,7 +126,7 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .mc-pos{color:var(--green);}.mc-neg{color:var(--red);}.mc-zero{color:var(--text3);}
 
 /* ── CARDS ── */
-.main-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+.main-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px;}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;box-shadow:var(--card-shadow);}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .card.c-green::before{background:var(--green);}
@@ -138,6 +138,13 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .card-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:6px;}
 .card-value{font-family:var(--mono);font-size:19px;font-weight:500;letter-spacing:-0.5px;margin-bottom:3px;}
 .card-sub{font-size:11px;color:var(--text3);}
+/* Tarjeta de "Proyección de cierre" en el dashboard — mismo estilo de
+   tarjeta, pero clickeable (lleva a la pestaña Proyección). */
+.card.c-proj{cursor:pointer;transition:transform .12s,border-color .12s;}
+.card.c-proj::before{background:linear-gradient(90deg,var(--accent),#2dd4bf)!important;}
+.card.c-proj:hover{transform:translateY(-2px);border-color:var(--accent);}
+.card.c-proj .card-value{color:var(--accent);}
+.card.c-proj .proj-chevron{position:absolute;top:16px;right:16px;color:var(--text3);font-size:16px;}
 .card-equiv{font-size:11px;color:var(--text3);margin-top:2px;}
 .badge{display:inline-flex;align-items:center;gap:3px;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:500;font-family:var(--mono);}
 .badge-green{background:var(--green-bg);color:var(--green);}
@@ -838,6 +845,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <div class="nav-dropdown-menu" id="navmenu-otros">
         <button class="nav-dropdown-item" id="nav-combustible" onclick="showPage('combustible')">⛽ Combustible</button>
         <button class="nav-dropdown-item" id="nav-calendario" onclick="showPage('calendario')">📅 Calendario</button>
+        <button class="nav-dropdown-item" id="nav-sueldos" onclick="showPage('sueldos')">💼 Análisis de Sueldos</button>
+        <button class="nav-dropdown-item" id="nav-minijuegos" onclick="showPage('minijuegos')">🎮 Minijuegos</button>
       </div>
     </div>
   </div>
@@ -889,6 +898,10 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
           <div class="config-row">
             <div class="config-row-label">Relojes Mundiales<small id="cfg-relojes-count">4 ciudades</small></div>
             <button class="config-action-btn neutral" onclick="closeConfig();abrirGestionRelojes()">🌍 Administrar</button>
+          </div>
+          <div class="config-row">
+            <div class="config-row-label">País en movimientos<small id="cfg-pais-status">Detectando ubicación en segundo plano para guardar el país de cada consumo</small></div>
+            <button class="config-action-btn neutral" id="cfg-pais-btn" onclick="togglePaisDeteccion()">🟢 Activado</button>
           </div>
         </div>
 
@@ -1054,7 +1067,10 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 <div class="container">
 
   <div class="dash-hero">
-    <div class="dash-greeting" id="dash-greeting">Bienvenido 👋</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="dash-greeting" id="dash-greeting">Bienvenido 👋</div>
+      <span id="dash-racha-badge" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap"></span>
+    </div>
     <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px">
       <div>
         <div class="dash-patrimonio-label">Patrimonio Neto Total</div>
@@ -1207,6 +1223,12 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <div class="card-value money" id="sum-disp-cur">S/ 0.00</div>
       <div class="card-sub" id="sub-disp-cur">—</div>
     </div>
+    <div class="card c-proj" onclick="showPage('proyeccion')">
+      <div class="card-label">📅 Proyección de cierre</div>
+      <div class="card-value money" id="sum-proyeccion-cierre">S/ 0.00</div>
+      <div class="card-sub">Ver detalle →</div>
+      <div class="proj-chevron">›</div>
+    </div>
     <div class="card c-purple">
       <div class="card-label">Ahorro Soles</div>
       <div class="card-value money" id="sum-ahorro-soles">S/ 0.00</div>
@@ -1238,7 +1260,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
   <div class="mid-grid-3col">
     <div class="card" style="padding:18px">
       <div class="section-header"><div class="section-title">Cuentas</div><button id="btn-transferir" class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="openTransferModal()">🔄 Transferir</button></div>
-      <div id="cuentas-subtitle" style="font-size:10px;color:var(--text3);margin-top:-8px;margin-bottom:8px"></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:-8px;margin-bottom:8px">BCP · BBVA · Efectivo</div>
       <table class="account-table"><thead><tr><th>Cuenta</th><th>Previo</th><th style="text-align:right">Actual</th></tr></thead><tbody id="accounts-tbody"></tbody></table>
       <div id="account-filter-badge" style="display:none;margin-top:8px"><div class="filter-badge"><span id="filter-badge-text"></span><span style="cursor:pointer" onclick="clearAccountFilter()"> ✕</span></div></div>
     </div>
@@ -1364,7 +1386,44 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 <!-- ══ PAGE: PROYECCIÓN ══ -->
 <div class="page" id="page-proyeccion">
 <div class="container">
-  <div class="month-nav"><h1>📈 Proyección de Ahorro</h1></div>
+  <div class="month-nav"><h1>📈 Proyección</h1></div>
+
+  <!-- ══ BLOQUE 1: CIERRE DE ESTE MES (corto plazo) ══ -->
+  <div style="font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--text3);margin-bottom:10px">🗓️ CIERRE DE ESTE MES</div>
+  <div class="card" style="padding:20px;margin-bottom:14px">
+    <div class="section-header"><div class="section-title" id="cierre-titulo">📅 Proyección de cierre de mes</div></div>
+    <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--accent)" id="cierre-hero-pen">S/ 0.00</div>
+    <div style="font-size:13px;color:var(--text3);margin-top:2px" id="cierre-hero-usd" style="display:none"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:8px" id="cierre-vs-anterior"></div>
+  </div>
+
+  <div class="card" style="padding:18px;margin-bottom:14px">
+    <div class="section-header"><div class="section-title">Desglose</div></div>
+    <div class="chart-wrap" style="height:180px"><canvas id="cierre-waterfall"></canvas></div>
+    <div id="cierre-desglose-lista" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card" style="padding:18px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;cursor:pointer" onclick="toggleCierreDetalle()">
+      <div class="section-title" style="margin:0">📋 Detalle de lo pendiente</div>
+      <span id="cierre-detalle-arrow" style="color:var(--text3);font-size:12px">▼</span>
+    </div>
+    <div id="cierre-detalle-lista"></div>
+  </div>
+
+  <div class="card" style="padding:18px;margin-bottom:14px">
+    <div class="section-header"><div class="section-title">Tendencia — últimos 6 meses vs. proyección</div></div>
+    <div class="chart-wrap" style="height:200px"><canvas id="cierre-tendencia"></canvas></div>
+  </div>
+
+  <!-- ══ Separador claro entre los 2 temas — para que no parezcan la misma sección ══ -->
+  <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px">
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--text3);white-space:nowrap">🎯 AHORRO A LARGO PLAZO</div>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+
+  <!-- ══ BLOQUE 2: PROYECCIÓN DE AHORRO (largo plazo, metas) ══ -->
   <div class="projection-card">
     <div class="section-header"><div class="section-title">Meta de ahorro</div></div>
     <div class="proj-goal-row">
@@ -1697,6 +1756,218 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 </div>
 </div>
 
+<!-- ══ PAGE: ANÁLISIS DE SUELDOS ══ -->
+<div class="page" id="page-sueldos">
+<div class="container">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">💼 Análisis de Sueldos</div>
+    <div style="display:flex;gap:8px">
+      <button class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="abrirSimuladorNeto()">🧮 Simular sueldo neto</button>
+      <button class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="abrirConfigSueldo()">⚙ Configurar</button>
+    </div>
+  </div>
+
+  <div id="sueldo-sin-config" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Antes de calcular tus descuentos, necesito unos datos tuyos (sistema de pensión, tipo de sueldo, fecha de inicio en tu trabajo actual).</div>
+    <button class="btn btn-primary" onclick="abrirConfigSueldo()">⚙ Configurar ahora</button>
+  </div>
+
+  <div id="sueldo-contenido" style="display:none">
+    <div class="card" style="padding:16px 20px;margin-bottom:16px">
+      <div class="section-header" style="margin-bottom:10px">
+        <div class="section-title" style="font-size:13px">Parámetros vigentes <span id="sueldo-anio-parametros"></span> <small style="font-weight:400;color:var(--text3)">— revisar cada enero</small></div>
+        <button class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="abrirParametrosSueldo()">✏ Editar</button>
+      </div>
+      <div id="sueldo-parametros-resumen" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;font-size:12px"></div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;margin-bottom:16px">
+      <div class="section-title" style="font-size:13px;margin-bottom:10px">Registrar boleta del mes</div>
+      <div class="field-row">
+        <div class="field"><label>Mes</label>
+          <select id="sb-mes">
+            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+            <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+            <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+        </div>
+        <div class="field"><label>Año</label><input id="sb-anio" type="number" style="width:100%"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Remuneración básica</label><input id="sb-basica" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label>Bono / variable (monto exacto)</label><input id="sb-bono" type="number" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Otros ingresos gravados <small>(horas extra, etc. — opcional. NO pongas aquí tu gratificación, ya se calcula sola)</small></label><input id="sb-otros" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label>Utilidades recibidas este mes <small>(de un periodo anterior — opcional, monto único, no se proyecta a futuro)</small></label><input id="sb-utilidades" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label>Renta 5ta según tu boleta real <small>(opcional, para comparar — incluye retención por utilidades si tu boleta la junta)</small></label><input id="sb-renta-real" type="number" step="0.01" placeholder="0.00"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="guardarBoletaSueldo()">💾 Calcular y guardar</button>
+    </div>
+
+    <div id="sueldo-resultado-mes" style="display:none;margin-bottom:16px"></div>
+
+    <div class="card" style="padding:16px 20px;margin-bottom:16px">
+      <div class="section-title" style="font-size:13px;margin-bottom:10px">Proyección del año</div>
+      <div id="sueldo-proyeccion-anual" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px"></div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;margin-bottom:16px">
+      <div class="section-title" style="font-size:13px;margin-bottom:10px">Evolución del año</div>
+      <div class="chart-tabs" style="margin-bottom:10px">
+        <div class="chart-tab active" id="sct0" onclick="setSueldoChartTab(0)">Ingreso vs Retención</div>
+        <div class="chart-tab" id="sct1" onclick="setSueldoChartTab(1)">Neto mensual</div>
+        <div class="chart-tab" id="sct2" onclick="setSueldoChartTab(2)">Tasa efectiva</div>
+      </div>
+      <div style="position:relative;height:220px">
+        <canvas id="sueldo-chart"></canvas>
+      </div>
+      <div id="sueldo-chart-legend" style="display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:11px;color:var(--text3)"></div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;margin-bottom:16px">
+      <div class="section-title" style="font-size:13px;margin-bottom:2px">Gratificación y CTS</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Calculadas con tu básica + el promedio de tu bono variable de cada semestre (D.S. 005-2002-TR).</div>
+      <div id="sueldo-grat-cts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div class="section-title" style="font-size:13px;margin-bottom:10px">Boletas registradas</div>
+      <table class="account-table" style="width:100%">
+        <thead><tr><th>Mes</th><th style="text-align:right">Ingreso</th><th style="text-align:right">5ta estimada</th><th style="text-align:right">5ta real</th><th style="text-align:right">Dif.</th><th></th></tr></thead>
+        <tbody id="sueldo-boletas-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="modal-overlay" id="sueldo-config-overlay" onclick="if(event.target===this)cerrarConfigSueldo()">
+  <div class="modal" style="width:400px;max-height:85vh;overflow-y:auto">
+    <div class="modal-title"><span>⚙ Configurar sueldo</span><button class="modal-close" onclick="cerrarConfigSueldo()">✕</button></div>
+    <div class="field">
+      <label>Sistema de pensión</label>
+      <select id="sc-sistema" onchange="onSistemaPensionChange()">
+        <option value="afp">AFP</option>
+        <option value="onp">ONP</option>
+      </select>
+    </div>
+    <div id="sc-afp-wrap">
+      <div class="field">
+        <label>¿Cuál AFP?</label>
+        <select id="sc-afp-nombre">
+          <option value="Integra">Integra</option>
+          <option value="Prima">Prima</option>
+          <option value="Profuturo">Profuturo</option>
+          <option value="Habitat">Habitat</option>
+        </select>
+      </div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;flex-direction:row">
+        <input type="checkbox" id="sc-comision-flujo" style="width:auto" onchange="onComisionFlujoChange()">
+        <label style="margin:0">Estoy en "comisión por flujo" <small style="display:block;color:var(--text3);font-weight:400">(poco común — solo si te afiliaste antes de 2013 y elegiste quedarte ahí. Si no sabes, probablemente NO aplica.)</small></label>
+      </div>
+      <div class="field" id="sc-comision-flujo-pct-wrap" style="display:none">
+        <label>% de comisión por flujo (mensual)</label>
+        <input id="sc-comision-flujo-pct" type="number" step="0.01" placeholder="Ej. 1.55">
+      </div>
+    </div>
+    <div class="field">
+      <label>Tipo de sueldo</label>
+      <select id="sc-tipo-sueldo">
+        <option value="variable">Variable (bono/comisión cambia cada mes)</option>
+        <option value="fijo">Fijo (siempre el mismo monto)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Fecha de inicio en tu trabajo actual</label>
+      <input id="sc-fecha-inicio" type="date">
+      <small style="color:var(--text3)">Si cambias de trabajo, actualiza esta fecha — así se reajusta bien la proyección de renta de 5ta y de tu gratificación/CTS (no se prorratea desde antes de que empezaras).</small>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px;flex-direction:row">
+      <input type="checkbox" id="sc-tiene-eps" style="width:auto">
+      <label style="margin:0">Tengo EPS <small style="display:block;color:var(--text3);font-weight:400">(si no, se asume EsSalud puro — cambia la bonificación extraordinaria de gratificación: 6.75% con EPS, 9% sin EPS)</small></label>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin:6px 0 2px;padding:8px;background:var(--bg3);border-radius:6px">
+      📌 Ya no hace falta que ingreses tu gratificación a mano — la app la calcula sola usando tu básica y el promedio de tu bono variable de cada semestre (a partir de las boletas que registres), siguiendo la fórmula legal (D.S. 005-2002-TR).
+    </div>
+    <div class="field">
+      <label>¿Cambiaste de trabajo este año? Ingreso bruto ya percibido en el empleo anterior <small>(opcional)</small></label>
+      <input id="sc-ingreso-anterior" type="number" step="0.01" placeholder="0.00">
+    </div>
+    <div class="field">
+      <label>Retención de 5ta ya efectuada en el empleo anterior este año <small>(opcional)</small></label>
+      <input id="sc-retencion-anterior" type="number" step="0.01" placeholder="0.00">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="cerrarConfigSueldo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarConfigSueldo()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="sueldo-parametros-overlay" onclick="if(event.target===this)cerrarParametrosSueldo()">
+  <div class="modal" style="width:420px;max-height:85vh;overflow-y:auto">
+    <div class="modal-title"><span>✏ Editar parámetros del año</span><button class="modal-close" onclick="cerrarParametrosSueldo()">✕</button></div>
+    <div class="field"><label>Año</label><input id="sp-anio" type="number" readonly style="opacity:.6"></div>
+    <div class="field"><label>UIT</label><input id="sp-uit" type="number" step="0.01"></div>
+    <div class="field"><label>AFP — Aporte obligatorio (%)</label><input id="sp-afp-aporte" type="number" step="0.01"></div>
+    <div class="field"><label>AFP — Prima de seguro (%)</label><input id="sp-afp-prima" type="number" step="0.01"></div>
+    <div class="field"><label>ONP — Tasa (%)</label><input id="sp-onp-tasa" type="number" step="0.01"></div>
+    <div style="font-size:11px;color:var(--text3);margin:10px 0 6px">Tramos progresivos (tasas fijas por ley — normalmente no cambian, solo los montos en soles al cambiar la UIT, que ya se recalculan solos):</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      Hasta 5 UIT: 8% · De 5 a 20 UIT: 14% · De 20 a 35 UIT: 17% · De 35 a 45 UIT: 20% · Más de 45 UIT: 30%
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="cerrarParametrosSueldo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarParametrosSueldo()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="sueldo-simulador-overlay" onclick="if(event.target===this)cerrarSimuladorNeto()">
+  <div class="modal" style="width:400px;max-height:85vh;overflow-y:auto">
+    <div class="modal-title"><span>🧮 Simular sueldo neto</span><button class="modal-close" onclick="cerrarSimuladorNeto()">✕</button></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Útil para saber qué neto recibirías con un sueldo distinto (ej. una oferta de otro trabajo). Usa tu configuración actual (AFP/ONP, EPS) y asume ese sueldo todo el año + 2 gratificaciones completas, sin bono variable.</div>
+    <div class="field"><label>Sueldo bruto mensual a simular</label><input id="sim-bruto" type="number" step="0.01" placeholder="Ej. 8000"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="calcularSimuladorNeto()">Calcular</button>
+    <div id="sim-resultado" style="display:none;margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- ══ PAGE: MINIJUEGOS ══ -->
+<div class="page" id="page-minijuegos">
+<div class="container">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">🎮 Minijuegos</div>
+    <button class="config-action-btn neutral" id="mj-btn-volver" style="font-size:10px;padding:4px 9px;display:none" onclick="mjVolverAlMenu()">← Volver al menú</button>
+  </div>
+
+  <div id="mj-menu" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px"></div>
+
+  <div id="mj-juego-area" style="display:none">
+    <div class="card" style="padding:16px 20px;text-align:center">
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px" id="mj-titulo-juego"></div>
+      <div id="mj-scores" style="display:flex;justify-content:center;gap:24px;margin-bottom:12px;font-size:13px">
+        <div>Puntaje: <b id="mj-score-actual">0</b></div>
+        <div>Mejor: <b id="mj-score-mejor">0</b></div>
+      </div>
+      <div id="mj-canvas-wrap" style="display:flex;justify-content:center">
+        <canvas id="mj-canvas" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;max-width:100%;touch-action:none"></canvas>
+      </div>
+      <div id="mj-dom-area"></div>
+      <div id="mj-mensaje" style="margin-top:12px;font-size:12px;color:var(--text3)"></div>
+      <button class="btn btn-primary" style="margin-top:10px" id="mj-btn-jugar" onclick="reiniciarMinijuego()">▶ Jugar / Reiniciar</button>
+      <div style="font-size:10px;color:var(--text3);margin-top:10px" id="mj-controles"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
 <!-- ══ PAGE: COMBUSTIBLE ══ -->
 <div class="page" id="page-combustible">
 <div class="container">
@@ -1954,6 +2225,17 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <!-- Cards grid -->
     <div class="tc-grid" id="tc-cards-grid"></div>
 
+    <!-- Consumos Frecuentes: acceso rápido de 1 toque -->
+    <div class="card" style="padding:18px;margin-bottom:32px" id="tc-frecuentes-wrap">
+      <div class="section-header">
+        <div class="section-title">⚡ Consumos Frecuentes</div>
+        <button class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="abrirConsumoFrecuenteModal()">+ Nuevo</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Toca uno para registrarlo al instante, con la fecha y hora de ahora mismo.</div>
+      <div id="tc-frecuentes-sugerencias" style="margin-bottom:12px"></div>
+      <div id="tc-frecuentes-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px"></div>
+    </div>
+
     <!-- Resumen global -->
     <div class="card" style="padding:18px;margin-bottom:32px" id="tc-global-wrap">
       <div class="section-header">
@@ -2135,7 +2417,10 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     </div>
     <div class="field-row">
       <div class="field"><label>Cuenta</label>
-        <select id="f-account"></select>
+        <select id="f-account">
+          <option value="BCP">BCP</option><option value="BBVA">BBVA</option><option value="Efectivo">Efectivo</option>
+          <option value="Ahorro Soles">Ahorro Soles</option><option value="Ahorro Dólares">Ahorro Dólares</option>
+        </select>
       </div>
       <div class="field"><label>Fecha</label><input id="f-date" type="date"></div>
     </div>
@@ -2426,8 +2711,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '08/08/26 - 23:11'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Relojes Mundiales: (1) ahora se puede reordenar las ciudades con flechas ▲▼ en el panel de Config → Administrar (ej. mover São Paulo al primer lugar) — el orden elegido se guarda en Firestore y se refleja igual en el dashboard; (2) la hora en el dashboard se agrandó de 14px a 22px, casi al borde de la tarjeta, para que se lea mejor de un vistazo.';
+const APP_VERSION_DATE = '21/08/26 - 13:19'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Sincronización grande: se actualizó tu app con TODAS las funciones nuevas que se agregaron en la versión de Miguel desde el 9 de agosto. Lo más destacado: 🎮 Minijuegos (14 juegos), ⚡ Consumos Frecuentes (registro con 1 toque + detección automática de lo que se repite), 🔥 racha de registro diario, detección de duplicados al guardar, 🌎 país detectado automáticamente en cada movimiento, 📅 Proyección de cierre de mes (con gráficos de cascada y tendencia), y varias correcciones de bugs. También se incluyó "💼 Análisis de Sueldos" (vacío, para que configures tus propios datos si quieres usarlo — no trae nada de la información de Miguel). Tu color de acento personalizable, tema claro por defecto, y el resto de tus preferencias se mantuvieron intactos.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -2471,7 +2756,8 @@ let state={
   currentTab:'todos',editId:null
 };
 
-let mainChart=null,projChart=null;
+let mainChart=null,projChart=null,cierreWaterfallChart=null,cierreTendenciaChart=null;
+let sueldoChart=null,currentSueldoChartTab=0;
 let hiddenMode=false,ahorroMoneda='PEN';
 let demoMode=false, realStateBackup=null;
 let selectedAccounts=new Set();
@@ -2609,21 +2895,6 @@ function toast(msg, tipo){
 }
 // Anima un número de un valor a otro (para que los saldos no "salten" de golpe).
 // Respeta la preferencia de reducir movimiento del sistema operativo.
-function animarNumero(el, desde, hasta, formatear, ms){
-  if(!el) return;
-  const prefiereQuieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(prefiereQuieto || desde===hasta || isNaN(desde) || isNaN(hasta)){
-    el.textContent=formatear(hasta); return;
-  }
-  const dur=ms||420, t0=performance.now();
-  function paso(t){
-    const p=Math.min(1,(t-t0)/dur);
-    const suave=1-Math.pow(1-p,3); // easing suave al final
-    el.textContent=formatear(desde+(hasta-desde)*suave);
-    if(p<1) requestAnimationFrame(paso);
-  }
-  requestAnimationFrame(paso);
-}
 // Muestra esqueletos grises mientras cargan los datos, para que la pantalla
 // no se vea vacía o a medio armar durante la carga inicial.
 // ══════════════════════════════════════════════════════
@@ -2877,17 +3148,12 @@ function getAccountCurrency(k){
   return 'PEN';
 }
 function getAllAccountKeys(){
-  // Solo cuentas que TÚ creaste en "Gestionar Cuentas" — ya no hay fallback
-  // a BCP/BBVA/Efectivo/Ahorro Soles/Ahorro Dólares, ni se mezclan claves
-  // sueltas de state.cuentas que podrían ser residuos de pruebas viejas.
-  return Object.keys(state.customCuentas||{});
+  const existing=new Set([...Object.keys(state.cuentas||{}), ...Object.keys(state.customCuentas||{})]);
+  if(!existing.size){['BCP','BBVA','Efectivo','Ahorro Soles','Ahorro Dólares'].forEach(k=>existing.add(k));}
+  return [...existing];
 }
 function openTransferModal(){
   const keys=getAllAccountKeys();
-  if(keys.length<2){
-    alert('Necesitas al menos 2 cuentas creadas para transferir entre ellas. Ve a ⚙ Config → Gestionar cuentas.');
-    return;
-  }
   const selO=document.getElementById('tr-origen'), selD=document.getElementById('tr-destino');
   selO.innerHTML=keys.map(k=>`<option value="${k}">${escapeHtml(k)}</option>`).join('');
   selD.innerHTML=keys.map(k=>`<option value="${k}">${escapeHtml(k)}</option>`).join('');
@@ -3361,7 +3627,7 @@ function fabPick(kind){
 // ── Badges "🆕 Nueva función" — un puntito rojo que se guarda en localStorage
 // y desaparece la primera vez que el usuario hace clic en ese botón ──
 function nuevaFuncionBadge(key, elId){
-  if(localStorage.getItem('seen_'+key)==='1') return;
+  if(localStorage.getItem('nathy_seen_'+key)==='1') return;
   const el=document.getElementById(elId);
   if(!el || el.querySelector('.new-feature-dot')) return;
   // Solo se fuerza "relative" si el elemento no tiene YA una posición propia
@@ -3373,7 +3639,7 @@ function nuevaFuncionBadge(key, elId){
   dot.className='new-feature-dot';
   el.appendChild(dot);
   el.addEventListener('click', function marcarVista(){
-    localStorage.setItem('seen_'+key,'1');
+    localStorage.setItem('nathy_seen_'+key,'1');
     dot.remove();
     el.removeEventListener('click', marcarVista);
   });
@@ -3464,6 +3730,8 @@ function showPage(name){
   if(name==='tc-tracker')  renderTCTracker();
   if(name==='inversiones') renderInversiones();
   if(name==='calendario')  renderCalendario();
+  if(name==='sueldos')     renderSueldos();
+  if(name==='minijuegos')  initMinijuegos();
 }
 
 // ── HELPERS ───────────────────────────────────────────
@@ -3481,45 +3749,31 @@ function calcMonth(y,m){
   });
   return{ingresos:ing,gastos:gas,resultado:ing-gas};
 }
-// Devuelve la lista de cuentas OPERATIVAS (no ahorro, no "otras") sin
-// duplicados: si una cuenta personalizada usa el mismo nombre que una de
-// las 3 operativas por defecto (BCP/BBVA/Efectivo), la personalizada manda
-// y el default con ese nombre NO se cuenta aparte. Esto evita el bug real
-// que reportó Nathy: "Disponible" mostraba el doble del saldo real porque
-// se sumaba una vez como cuenta por defecto y otra vez como personalizada.
-// Devuelve la lista de cuentas OPERATIVAS (no ahorro, no "otras") que
-// REALMENTE existen — es decir, que tú creaste explícitamente desde
-// "Gestionar Cuentas". La app ya NO asume que existen BCP/BBVA/Efectivo por
-// defecto: si no las creaste, no cuentan para nada (ni aparecen, ni suman).
+// Devuelve la lista de cuentas OPERATIVAS a sumar, sin duplicados: si una
+// cuenta personalizada usa el mismo nombre que BCP/BBVA/Efectivo, la
+// personalizada manda y el default con ese nombre no se cuenta aparte —
+// evita sumar el mismo saldo dos veces.
 function getCuentasOperativasUnicas(){
   return Object.entries(state.customCuentas||{}).filter(([,v])=>v.type==='operativa').map(([k])=>k);
 }
-// Suma el saldo operativo total ("Disponible") a partir de un objeto de
-// saldos ya reconstruido (ver reconstructSaldoAt/state.cuentas). Usar SIEMPRE
-// esta función en vez de sumar cuentas a mano.
 function sumaDisponibleDe(saldos){
   return getCuentasOperativasUnicas().reduce((sum,k)=>sum+((saldos||{})[k]||0),0);
 }
-// Mismo criterio pero para cuentas de AHORRO — solo cuenta las que existen
-// realmente en state.customCuentas, nada de "Ahorro Soles"/"Ahorro Dólares"
-// por defecto si no las creaste tú misma. moneda: 'PEN' o 'USD'.
+// Mismo cuidado pero para cuentas de AHORRO. moneda: 'PEN' o 'USD'.
 function sumaAhorroDe(saldos, moneda){
-  let tot=0;
-  Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
-    if(v.type!=='ahorro') return;
+  const claveDefault = moneda==='USD' ? 'Ahorro Dólares' : 'Ahorro Soles';
+  const customAhorro = Object.entries(state.customCuentas||{}).filter(([,v])=>v.type==='ahorro');
+  const customSet = new Set(customAhorro.map(([k])=>k));
+  let tot = customSet.has(claveDefault) ? 0 : ((saldos||{})[claveDefault]||0);
+  customAhorro.forEach(([k,v])=>{
     const esUSD = v.currency==='USD';
     if((moneda==='USD')===esUSD) tot += ((saldos||{})[k]||0);
   });
   return tot;
 }
-// ¿Hay algún dato (movimiento o snapshot) EN o ANTES del mes (y,m)? — a
-// diferencia de solo mirar el mes exacto, esto reconoce que una cuenta creada
-// en un mes anterior sigue "teniendo saldo válido" en los meses siguientes
-// aunque no haya habido ningún movimiento nuevo ese mes específico. Sin este
-// chequeo, un mes sin actividad propia mostraba "—" en vez del saldo real
-// (que reconstructSaldoAt sí sabe calcular perfectamente, arrastrándolo del
-// mes anterior) — por eso "Disponible Anterior" se veía vacío en un mes
-// "tranquilo" aunque las cuentas llevaran saldo desde antes.
+// ¿Hay algún dato (movimiento o snapshot) EN o ANTES del mes (y,m)? — así un
+// mes sin actividad propia sigue mostrando el saldo real arrastrado del mes
+// anterior, en vez de "—" (reconstructSaldoAt ya sabe calcularlo bien).
 function tieneDatosHasta(y,m){
   const cutoff=new Date(y,m+1,0,23,59,59);
   const hasMov=state.movimientos.some(mv=>new Date(mv.date+'T12:00:00')<=cutoff);
@@ -3535,11 +3789,131 @@ function getDisponible(y,m){
   return sumaDisponibleDe(s);
 }
 
+// ══════════════════════════════════════════════════════
+//  PROYECCIÓN DE CIERRE DE MES — cuánto vas a tener al final del mes,
+//  considerando lo que ya tienes + lo fijo que aún falta (sueldo, gastos
+//  recurrentes, tarjetas). Fórmula (separada en soles y dólares):
+//
+//    Disponible actual (S/, cuentas operativas)
+//  + Ingresos fijos pendientes de este mes (pagados a una CUENTA)
+//  − Gastos fijos pendientes de este mes (pagados con una CUENTA)
+//  − Deuda "a pagar" de tarjetas de crédito este mes
+//  = Proyección de cierre
+//
+//  Los pagos frecuentes pagados CON TARJETA no se restan aparte — ya
+//  quedan reflejados en la línea de "tarjetas a pagar" una vez facturados,
+//  restarlos también sería contar el mismo gasto 2 veces.
+//
+//  Para el monto de cada pago frecuente pendiente, se usa el monto REAL
+//  que se registró el mes pasado (más preciso que el "fijo" configurado,
+//  útil para sueldos con bono variable) — si nunca se registró antes, se
+//  usa el monto fijo configurado como respaldo.
+// ══════════════════════════════════════════════════════
+// Busca hacia atrás (hasta 12 meses) el último monto REAL registrado de un
+// pago frecuente — no se limita al mes inmediatamente anterior, por si un
+// mes se saltó el registro (vacaciones, olvido, etc.) igual encuentra el
+// último real disponible en vez de caer directo al monto fijo configurado.
+function ultimoMontoRegistradoPF(pf, y, m){
+  if(!pf.pagosRegistrados) return null;
+  let yy=y, mm=m;
+  for(let i=0;i<12;i++){
+    mm--; if(mm<0){ mm=11; yy--; }
+    const reg=pf.pagosRegistrados[tcMonthKey(yy,mm)];
+    if(reg && typeof reg.monto==='number') return reg.monto;
+  }
+  return null;
+}
+// ¿Esta cuenta es de tipo AHORRO? (la por defecto "Ahorro Soles"/"Ahorro
+// Dólares", o una personalizada marcada como tipo "ahorro"). Se usa para
+// excluir de la Proyección de cierre los pagos frecuentes que entran/salen
+// de una cuenta de ahorro — esas no forman parte del "disponible" que se
+// está proyectando (mismo criterio ya usado en "Disponible actual").
+function esCuentaDeAhorro(nombreCuenta){
+  if(nombreCuenta==='Ahorro Soles'||nombreCuenta==='Ahorro Dólares') return true;
+  const c=(state.customCuentas||{})[nombreCuenta];
+  return !!(c && c.type==='ahorro');
+}
+function calcularProyeccionCierre(){
+  const hoy=new Date();
+  const y=hoy.getFullYear(), m=hoy.getMonth();
+  const mk=tcMonthKey(y,m);
+
+  // Mismo cálculo RECONSTRUIDO que usa el dashboard (snapshots + historial)
+  // — NO el campo "vivo" de state.cuentas, que puede desincronizarse (ver
+  // el mismo problema que ya detectamos con el bot de Telegram).
+  const disponibleActual=getDisponible(y,m) ?? sumaDisponibleDe(state.cuentas);
+
+  // Pagos frecuentes pendientes de este mes (mensuales, no registrados aún)
+  const pendientes=(state.pagosFrecuentes||[]).filter(p=>
+    (p.frecuencia||'mensual')==='mensual' && !(p.pagosRegistrados&&p.pagosRegistrados[mk])
+  );
+  const detalle=[];
+  let ingPen=0, ingUsd=0, gastoPen=0, gastoUsd=0;
+  pendientes.forEach(pf=>{
+    let monto, esEstimado;
+    if(pf.tipoMonto==='base_descuentos'){
+      // "Base con descuentos" (ej. Préstamo Ripley) — el monto real a pagar
+      // este mes es el BASE menos lo que ya se descontó/acumuló, igual
+      // criterio que ya usa la propia tarjeta de Pagos Frecuentes.
+      const totalDesc=(pf.descuentosPendientes||[]).reduce((s,d)=>s+d.monto,0);
+      monto=Math.max(0,(pf.montoFijo||0)-totalDesc);
+      esEstimado=false; // es un cálculo exacto, no una estimación
+    } else {
+      // Ingreso/gasto normal (sueldo, intereses, alquiler...): se usa el
+      // ÚLTIMO monto real registrado (buscando hacia atrás si hace falta),
+      // y solo si nunca se registró nada, se cae al monto fijo configurado.
+      const ultimoReal=ultimoMontoRegistradoPF(pf,y,m);
+      monto=ultimoReal!==null?ultimoReal:(pf.montoFijo||0);
+      esEstimado=(ultimoReal===null);
+    }
+    if(monto<=0) return;
+    // Si el pago frecuente entra/sale de una cuenta de AHORRO, no afecta el
+    // "disponible" que se está proyectando — se excluye por completo.
+    if(pf.metodoPago==='cuenta' && esCuentaDeAhorro(pf.destino)) return;
+    const esUSD=pf.currency==='USD';
+    const esIngreso=pf.tipo==='ingreso';
+    const pagaConTarjeta=pf.metodoPago==='tarjeta';
+    if(esIngreso){
+      if(esUSD) ingUsd+=monto; else ingPen+=monto;
+      detalle.push({nombre:pf.nombre,monto,moneda:esUSD?'USD':'PEN',signo:1,esEstimado});
+    } else if(!pagaConTarjeta){
+      // Solo se resta del disponible si sale de una CUENTA — si es con
+      // tarjeta, ya se refleja en "tarjetas a pagar" cuando se facture.
+      if(esUSD) gastoUsd+=monto; else gastoPen+=monto;
+      detalle.push({nombre:pf.nombre,monto,moneda:esUSD?'USD':'PEN',signo:-1,esEstimado});
+    }
+  });
+
+  // Tarjetas a pagar este mes — reusa EXACTO el mismo cálculo que ya se ve
+  // en cada tarjeta individual ("A pagar {mes}"), para que coincida 1 a 1.
+  const {pagoMes,pagoAnio}=getSiguienteMesCalendario();
+  const pendienteMk=tcMonthKey(pagoAnio,pagoMes);
+  let tarjetaPen=0, tarjetaUsd=0;
+  const detalleTarjetas=[];
+  (state.tarjetas||[]).forEach(t=>{
+    const movsDelPeriodo=(t.movs&&t.movs[pendienteMk])||[];
+    const {pen,usd}=sumTCByCurrency(movsDelPeriodo.filter(mv=>!mv.pagado), t.currency);
+    if(pen>0||usd>0){
+      tarjetaPen+=pen; tarjetaUsd+=usd;
+      detalleTarjetas.push({nombre:`${t.banco}${t.cat?' '+t.cat:''}`,pen,usd});
+    }
+  });
+
+  const proyeccionPen=disponibleActual+ingPen-gastoPen-tarjetaPen;
+  const proyeccionUsd=ingUsd-gastoUsd-tarjetaUsd; // no hay "disponible" en dólares (cuentas operativas son siempre soles)
+
+  return {
+    disponibleActual, ingPen, ingUsd, gastoPen, gastoUsd, tarjetaPen, tarjetaUsd,
+    proyeccionPen, proyeccionUsd, detalle, detalleTarjetas,
+  };
+}
+
 // ── RENDER MAIN ───────────────────────────────────────
 function isPageActive(name){ const e=document.getElementById('page-'+name); return e&&e.classList.contains('active'); }
 
 function render(){
   updateTitles();
+  renderPaisConfigBtn();
   // Las siguientes son específicas de la página Finanzas — evita recalcularlas
   // (incl. la tabla anual, que reconstruye saldos de los 12 meses) cuando el
   // usuario está viendo otra página, donde ese trabajo sería invisible.
@@ -3919,20 +4293,26 @@ function renderSummaryCards(){
   else{pe.textContent='—';pe.style.color='var(--text3)';}
   document.getElementById('sub-disp-prev').textContent=MONTHS[prev.month]+' '+prev.year;
 
-  // Disponible actual = mes SELECCIONADO reconstruido desde movimientos.
-  // El atajo de usar el saldo EN VIVO (state.cuentas) solo tiene sentido si
-  // el mes que se está viendo es de verdad el mes actual real (útil para
-  // alguien recién empezando, sin snapshots históricos todavía) — si no,
-  // mostraba el saldo de HOY al navegar a un mes pasado sin datos (ej. antes
-  // de haber creado las cuentas), aunque la tabla de Cuentas sí mostrara S/0
-  // correctamente para ese mes. Ahora un mes pasado sin datos muestra S/0,
-  // igual que sus propias filas de cuentas.
+  // Disponible actual = mes SELECCIONADO reconstruido desde movimientos. El
+  // atajo de usar el saldo EN VIVO (state.cuentas) solo aplica si el mes que
+  // se ve es de verdad el mes actual real — si no, un mes pasado sin datos
+  // mostraba el saldo de HOY en vez de lo que correspondía a ese mes.
   const dcRaw=getDisponible(state.currentYear,state.currentMonth);
   const hoyReal=new Date();
   const esMesActualReal = state.currentYear===hoyReal.getFullYear() && state.currentMonth===hoyReal.getMonth();
   const dc = dcRaw !== null ? dcRaw : (esMesActualReal ? sumaDisponibleDe(state.cuentas) : 0);
   document.getElementById('sum-disp-cur').textContent=M(fmtS(dc));
   document.getElementById('sum-disp-cur').style.color=dc>=0?'var(--accent)':'var(--red)';
+
+  // Proyección de cierre: siempre es la del mes REAL actual (no cambia
+  // aunque estés navegando meses pasados en este dashboard — el concepto
+  // de "cierre de este mes" no depende de qué mes estés mirando acá).
+  const projCard=document.getElementById('sum-proyeccion-cierre');
+  if(projCard){
+    const proj=calcularProyeccionCierre();
+    projCard.textContent=M(fmtS(proj.proyeccionPen));
+  }
+
   if(dp!==null){
     const diff=dc-dp;
     document.getElementById('sub-disp-cur').innerHTML=`<span style="color:${diff>=0?'var(--green)':'var(--red)'}">${M((diff>=0?'+':'')+fmtS(Math.abs(diff)))}</span> vs anterior`;
@@ -3940,11 +4320,10 @@ function renderSummaryCards(){
 
   // Reconstruir saldos del mes seleccionado para los cards
   const curSaldoCards=reconstructSaldoAt(state.currentYear,state.currentMonth);
-  // Sum ALL ahorro-type accounts for display — usa sumaAhorroDe() (ver arriba)
-  // para no contar dos veces si una cuenta personalizada repite el nombre
-  // "Ahorro Soles"/"Ahorro Dólares".
-  let aS=sumaAhorroDe(curSaldoCards,'PEN');
-  let aD=sumaAhorroDe(curSaldoCards,'USD');
+  // Sum ALL ahorro-type accounts for display — sin contar dos veces si una
+  // personalizada repite el nombre de "Ahorro Soles"/"Ahorro Dólares".
+  const aS=sumaAhorroDe(curSaldoCards,'PEN');
+  const aD=sumaAhorroDe(curSaldoCards,'USD');
   document.getElementById('sum-ahorro-soles').textContent=M(fmtS(aS));
   const intS=getMovs(state.currentYear,state.currentMonth).filter(m=>m.type==='ahorro'&&(
     m.account==='Ahorro Soles'||
@@ -4169,36 +4548,47 @@ function renderAccountsTables(){
     }).join('');
   }
 
-  // Build account lists ÚNICAMENTE desde lo que el usuario creó en
-  // "Gestionar Cuentas" (state.customCuentas) — la app ya NO asume que
-  // existen BCP/BBVA/Efectivo/Ahorro Soles/Ahorro Dólares por defecto. Si
-  // nunca las creaste, no aparecen ni cuentan para nada.
+  // Build account lists dynamically from what actually exists in state.cuentas
   const custom=state.customCuentas||{};
+  const defaultOp=['BCP','BBVA','Efectivo'];
+  const defaultAh=['Ahorro Soles','Ahorro Dólares'];
+  const defaultIcons={BCP:'🟦',BBVA:'🔵',Efectivo:'💵','Ahorro Soles':'🏦','Ahorro Dólares':'💲'};
+  const defaultAhCur={'Ahorro Soles':'S/','Ahorro Dólares':'$'};
 
-  // Cuentas table: todas las operativas y "otras" que existan (ahorro va a
-  // la otra tabla)
+  // Cuentas table: operativa defaults + all custom (op, otras — NOT ahorro defaults)
   const allOpRows=[];
+  // Add default operativa only if they exist in state.cuentas
+  defaultOp.forEach(k=>{
+    const tieneSaldo = curSaldo[k]!==undefined && curSaldo[k]!==0;
+    if(state.cuentas[k]!==undefined || tieneSaldo)
+      allOpRows.push({k,l:k,ic:defaultIcons[k],s:'S/',otras:false});
+  });
+  // Add all custom accounts (op, otras — ahorro custom go in savings table)
   Object.entries(custom).forEach(([k,v])=>{
     if(v.type==='ahorro') return; // skip, goes in savings table
     allOpRows.push({k,l:k,ic:v.type==='otras'?'📋':'💳',s:v.currency==='USD'?'$':'S/',otras:v.type==='otras'});
   });
 
-  // Ahorro table: todas las cuentas de tipo ahorro que existan
+  // Ahorro table: default ahorro + custom ahorro
   const ahRows=[];
+  defaultAh.forEach(k=>{
+    // Ojo: antes esto era "curSaldo[k]!==0", pero para una cuenta borrada
+    // curSaldo[k] es undefined, y undefined!==0 es TRUE en JS — por eso las
+    // cuentas por defecto seguían apareciendo aunque las borraras.
+    const tieneSaldo = curSaldo[k]!==undefined && curSaldo[k]!==0;
+    if(state.cuentas[k]!==undefined || tieneSaldo)
+      ahRows.push({k,l:k,ic:defaultIcons[k],s:defaultAhCur[k],otras:false});
+  });
   Object.entries(custom).forEach(([k,v])=>{
     if(v.type==='ahorro')
       ahRows.push({k,l:k,ic:'🏦',s:v.currency==='USD'?'$':'S/',otras:false});
   });
 
-  // Si una cuenta personalizada se creó con el MISMO nombre que una de las
-  // 5 cuentas por defecto (ej. "Efectivo"), quedaba dos veces en la tabla —
-  // una fila por ser "default" y otra por ser "custom", ambas leyendo el
-  // mismo saldo. Se deduplica por nombre, quedándose con la versión custom
-  // (tiene más info: color, moneda, mes de inicio propios).
+  // Si una cuenta personalizada se crea con el MISMO nombre que una de las 5
+  // cuentas por defecto, quedaría dos veces en la tabla — se deduplica por
+  // nombre, quedándose con la versión personalizada (tiene más info propia).
   function dedupePorNombre(rows){
     const vistos=new Set(); const out=[];
-    // Recorre de atrás hacia adelante para que, si hay choque, gane la
-    // entrada "custom" (que siempre se agrega después de la "default").
     for(let i=rows.length-1;i>=0;i--){
       if(vistos.has(rows[i].k)) continue;
       vistos.add(rows[i].k);
@@ -4209,9 +4599,7 @@ function renderAccountsTables(){
   const allOpRowsDeduped=dedupePorNombre(allOpRows);
   const ahRowsDeduped=dedupePorNombre(ahRows);
 
-  document.getElementById('accounts-tbody').innerHTML=allOpRowsDeduped.length?makeRows(ordenarPorPreferencia(allOpRowsDeduped),'op'):'<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:12px;font-size:12px">Aún no tienes cuentas — créalas en ⚙ Config → Gestionar cuentas</td></tr>';
-  const subtitleEl=document.getElementById('cuentas-subtitle');
-  if(subtitleEl) subtitleEl.textContent=allOpRowsDeduped.length ? allOpRowsDeduped.map(r=>r.l).join(' · ') : '';
+  document.getElementById('accounts-tbody').innerHTML=allOpRowsDeduped.length?makeRows(ordenarPorPreferencia(allOpRowsDeduped),'op'):'<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:12px;font-size:12px">Carga el histórico Excel para ver tus cuentas</td></tr>';
 
   // Filas de TOTAL por moneda — coinciden con lo que muestran las tarjetas
   // "Ahorro Soles" y "Ahorro Dólares" de arriba (mismo criterio de suma).
@@ -4627,6 +5015,7 @@ function renderMovimientos(){
     const sign=m.type==='expense'?'-':'+';
     const amtStr=sign+(m.currency==='USD'?fmtD(m.amount):fmtS(m.amount));
     const dateStr=new Date(m.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'})+(m.hora?' · '+m.hora:'');
+    const paisHtml=m.paisCode?` <span title="${escapeHtml(m.pais||'')}">${codigoPaisAEmoji(m.paisCode)}</span>`:'';
     const catHtml=m.cat?`<span class="cat-pill" style="background:${allColors[m.cat]||'#666'}22;color:${allColors[m.cat]||'#999'}">${m.cat}</span>`:'';
     const noteHtml=m.note?`<div class="mov-note">📝 ${escapeHtml(m.note)}</div>`:'';
     const checkbox=movBulkMode?`<input type="checkbox" onclick="event.stopPropagation()" onchange="onMovCheckToggle('${m.id}',this.checked)" ${movBulkSelected.has(m.id)?'checked':''} style="margin-right:8px;flex-shrink:0">`:'';
@@ -4635,7 +5024,7 @@ function renderMovimientos(){
       <div class="swipe-delete-bg" onclick="deleteMovimiento('${m.id}',event)">🗑 Eliminar</div>
       <div class="mov-item ${cls} swipe-target" ${clickHandler} ontouchstart="swipeStart(event,this)" ontouchmove="swipeMove(event,this)" ontouchend="swipeEnd(event,this,'${m.id}')">
       <div class="mov-left">${checkbox}<div class="mov-dot ${cls}">${ic}</div>
-        <div><div class="mov-name">${escapeHtml(m.desc)}${catHtml}</div><div class="mov-meta">${dateStr} · ${m.account}</div>${noteHtml}</div>
+        <div><div class="mov-name">${escapeHtml(m.desc)}${catHtml}</div><div class="mov-meta">${dateStr} · ${m.account}${paisHtml}</div>${noteHtml}</div>
       </div>
       <div style="text-align:right;flex-shrink:0;margin-left:8px">
         <div class="mov-amount ${cls}">${M(amtStr)}</div>
@@ -4834,9 +5223,6 @@ function renderChart(){
   } else if(currentChartTab===1||currentChartTab===2||currentChartTab===3||currentChartTab===4){
     const isS=currentChartTab===1,isD=currentChartTab===2,isT=currentChartTab===4;
     const col=isS?'#a78bfa':isD?'#f0a53c':isT?'#5b8def':'#2dd4bf';
-    // Suma TODAS las cuentas de ahorro de la moneda indicada (la cuenta por
-    // defecto + las personalizadas tipo "ahorro"), no solo la cuenta fija —
-    // así el gráfico refleja el mismo total que la tarjeta de arriba.
     const data=[];
     for(let i=0;i<12;i++){
       if(tieneDatosHasta(state.currentYear,i)){
@@ -4946,7 +5332,7 @@ function renderChart(){
       const disponible=sumaDisponibleDe(s);
       // Suma TODAS las cuentas de ahorro (default + personalizadas), sin
       // contar dos veces si alguna personalizada repite el nombre de una
-      // cuenta de ahorro por defecto (mismo cuidado que sumaAhorroDe()).
+      // cuenta de ahorro por defecto.
       const ahorroPEN=sumaAhorroDe(s,'PEN'), ahorroUSD=sumaAhorroDe(s,'USD');
       const ahorro=ahorroPEN+(ahorroUSD*rate);
       return +(disponible+ahorro+invValorAhora-deudaTCTotalAhora).toFixed(2);
@@ -5958,6 +6344,7 @@ function openModal(){
   updateAccountSelects(); // asegura que cuentas nuevas (incl. tipo "otras") aparezcan siempre
   setType('income');
   document.getElementById('modal-overlay').classList.add('open');
+  detectarPaisEnSegundoPlano(); // respaldo, por si el caché venció o el permiso se dio recién
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 let currentType='income';
@@ -5968,13 +6355,7 @@ function setType(t){
     el.className='radio-btn';
     if(x===t)el.classList.add('selected-'+x);
   });
-  // Al elegir "Ahorro", preseleccionar la primera cuenta de ahorro que
-  // exista de verdad (ya no asume que se llama "Ahorro Soles" — puede que
-  // ni siquiera tengas una cuenta con ese nombre).
-  if(t==='ahorro'){
-    const primeraAhorro=Object.entries(state.customCuentas||{}).find(([,v])=>v.type==='ahorro');
-    if(primeraAhorro) document.getElementById('f-account').value=primeraAhorro[0];
-  }
+  if(t==='ahorro')document.getElementById('f-account').value='Ahorro Soles';
 }
 function editMovimiento(id){
   const m=state.movimientos.find(x=>x.id===id);if(!m)return;
@@ -6007,6 +6388,125 @@ function deleteMovimiento(id,e){
   revertAccount(m);state.movimientos=state.movimientos.filter(x=>x.id!==id);
   saveState();render();
 }
+// ── DETECCIÓN DE DUPLICADOS ───────────────────────────
+// Compara descripción (sin importar mayúsculas/espacios) + monto + fecha —
+// si ya existe algo así, avisa antes de guardar (no bloquea, solo
+// confirma) para pescar el típico "toqué guardar 2 veces sin querer".
+function _dupNorm(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function detectarDuplicadoMovimiento(desc,amount,date,type,excludeId){
+  return (state.movimientos||[]).find(m=>
+    m.id!==excludeId && m.type===type && m.date===date &&
+    Math.abs(m.amount-amount)<0.01 && _dupNorm(m.desc)===_dupNorm(desc)
+  );
+}
+function detectarDuplicadoConsumoTC(tarjetaId,desc,monto,fecha,excludeId){
+  const t=getTarjeta(tarjetaId); if(!t||!t.movs) return null;
+  for(const arr of Object.values(t.movs)){
+    const found=(arr||[]).find(m=>m.id!==excludeId && m.fecha===fecha && Math.abs(m.monto-monto)<0.01 && _dupNorm(m.desc)===_dupNorm(desc));
+    if(found) return found;
+  }
+  return null;
+}
+
+// ── RACHA DE REGISTRO DIARIO ──────────────────────────
+// Cuenta días CONSECUTIVOS (terminando hoy o ayer) en los que se registró
+// al menos un movimiento normal o un consumo de tarjeta — igual que una
+// racha de Duolingo. Si hoy todavía no registraste nada, no se rompe la
+// racha todavía (se sigue contando desde ayer), recién se rompe si pasa un
+// día completo sin ningún registro.
+function calcularRachaRegistro(){
+  const fechas=new Set();
+  (state.movimientos||[]).forEach(m=>{ if(m.date) fechas.add(m.date); });
+  (state.tarjetas||[]).forEach(t=>Object.values(t.movs||{}).forEach(arr=>(arr||[]).forEach(m=>{ if(m.fecha) fechas.add(m.fecha); })));
+  const fmtFecha=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const hoy=new Date();
+  const hoyStr=fmtFecha(hoy);
+  const cursor=new Date(hoy);
+  if(!fechas.has(hoyStr)) cursor.setDate(cursor.getDate()-1); // hoy aún no cuenta como "roto"
+  let racha=0;
+  while(fechas.has(fmtFecha(cursor))){
+    racha++;
+    cursor.setDate(cursor.getDate()-1);
+  }
+  return {racha, registroHoy:fechas.has(hoyStr)};
+}
+function renderRachaRegistro(){
+  const badge=document.getElementById('dash-racha-badge');
+  if(!badge) return;
+  const {racha, registroHoy}=calcularRachaRegistro();
+  if(racha<1){ badge.style.display='none'; return; }
+  badge.style.display='inline-block';
+  badge.style.color=registroHoy?'var(--accent)':'var(--text3)';
+  badge.textContent=`🔥 ${racha} día${racha===1?'':'s'} seguido${racha===1?'':'s'}`+(registroHoy?'':' — ¡registra algo hoy para no perderla!');
+}
+
+// ── DETECCIÓN DE PAÍS (silenciosa, en segundo plano) ─────────────────
+// Usa geolocalización del navegador + reverse-geocoding gratis de
+// OpenStreetMap (sin API key). El resultado se cachea unas horas en
+// localStorage para no pedir ubicación en cada movimiento — se dispara en
+// segundo plano al cargar la app y al abrir los modales de registro, así
+// para cuando el usuario le da "Guardar" ya suele estar listo. NUNCA
+// bloquea el guardado: si no hay permiso, falla, o aún no terminó de
+// detectar, el movimiento se guarda igual, simplemente sin país.
+const PAIS_CACHE_KEY='nathy_mf_pais_cache';
+const PAIS_CACHE_HORAS=6; // se vuelve a chequear cada 6h (por si viajas)
+let paisDetectando=false;
+function getPaisCache(){
+  try{
+    const raw=localStorage.getItem(PAIS_CACHE_KEY);
+    if(!raw) return null;
+    const data=JSON.parse(raw);
+    if(Date.now()-data.ts>PAIS_CACHE_HORAS*3600*1000) return null;
+    return data;
+  }catch(e){ return null; }
+}
+function setPaisCache(pais,code){
+  try{ localStorage.setItem(PAIS_CACHE_KEY, JSON.stringify({pais,code,ts:Date.now()})); }catch(e){}
+}
+function codigoPaisAEmoji(code){
+  if(!code||code.length!==2) return '🏳️';
+  return code.toUpperCase().replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt(0)));
+}
+// Dispara la detección en segundo plano (fire-and-forget) — no hace falta
+// esperar su resultado en ningún lado, solo va llenando el caché.
+function detectarPaisEnSegundoPlano(){
+  if(paisDetectando||getPaisCache()) return;
+  if(!navigator.geolocation||state.deteccionPaisActiva===false) return;
+  paisDetectando=true;
+  navigator.geolocation.getCurrentPosition(
+    async(pos)=>{
+      try{
+        const {latitude,longitude}=pos.coords;
+        const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=3&addressdetails=1`,{headers:{'Accept-Language':'es'}});
+        const data=await res.json();
+        const code=data.address&&data.address.country_code?data.address.country_code.toUpperCase():null;
+        const pais=data.address&&data.address.country?data.address.country:null;
+        if(pais&&code) setPaisCache(pais,code);
+      }catch(e){ /* silencioso a propósito */ }
+      finally{ paisDetectando=false; }
+    },
+    ()=>{ paisDetectando=false; }, // permiso denegado u otro error -> silencioso
+    {timeout:6000,maximumAge:3600000}
+  );
+}
+
+function togglePaisDeteccion(){
+  state.deteccionPaisActiva = state.deteccionPaisActiva===false ? true : false;
+  saveState();
+  renderPaisConfigBtn();
+  if(state.deteccionPaisActiva!==false) detectarPaisEnSegundoPlano();
+}
+function renderPaisConfigBtn(){
+  const btn=document.getElementById('cfg-pais-btn');
+  const status=document.getElementById('cfg-pais-status');
+  if(!btn) return;
+  const activo=state.deteccionPaisActiva!==false;
+  btn.textContent=activo?'🟢 Activado':'⚪ Desactivado';
+  if(status) status.textContent=activo
+    ? 'Detectando ubicación en segundo plano para guardar el país de cada consumo'
+    : 'Desactivado — los movimientos nuevos no guardarán país';
+}
+
 function saveMovimiento(){
   const desc=document.getElementById('f-desc').value.trim();
   const amount=parseFloat(document.getElementById('f-amount').value);
@@ -6017,6 +6517,13 @@ function saveMovimiento(){
   const cat=document.getElementById('f-cat').value;
   const note=document.getElementById('f-note').value.trim();
   if(!desc||isNaN(amount)||amount<=0||!date){alert('Completa todos los campos.');return;}
+  if(!state.editId){
+    const dup=detectarDuplicadoMovimiento(desc,amount,date,currentType);
+    if(dup){
+      const sym=currency==='USD'?'$':'S/';
+      if(!confirm(`⚠️ Ya registraste "${dup.desc}" por ${sym} ${amount.toFixed(2)} ese mismo día${dup.hora?' a las '+dup.hora:''}. ¿Seguro que quieres agregarlo de nuevo (no es sin querer)?`)) return;
+    }
+  }
   if(state.editId){const old=state.movimientos.find(x=>x.id===state.editId);if(old)revertAccount(old);state.movimientos=state.movimientos.filter(x=>x.id!==state.editId);}
   const mov={id:state.editId||Date.now().toString(),type:currentType,desc,amount,account,date,currency};
   // Firestore rechaza campos con valor "undefined" — si no hay categoría o
@@ -6025,6 +6532,12 @@ function saveMovimiento(){
   if(cat) mov.cat=cat;
   if(note) mov.note=note;
   if(hora) mov.hora=hora;
+  // País: solo si YA se detectó en segundo plano (caché lista) — nunca se
+  // espera a que termine, para no demorar el guardado ni un segundo.
+  if(!state.editId){
+    const paisCache=getPaisCache();
+    if(paisCache){ mov.pais=paisCache.pais; mov.paisCode=paisCache.code; }
+  }
   if(currency==='PEN'){
     if(currentType==='income')state.cuentas[account]=(state.cuentas[account]||0)+amount;
     else if(currentType==='expense')state.cuentas[account]=(state.cuentas[account]||0)-amount;
@@ -6323,7 +6836,108 @@ function renderMetasAhorro(){
   }).join('');
 }
 
+let cierreDetalleAbierto=false;
+function toggleCierreDetalle(){
+  cierreDetalleAbierto=!cierreDetalleAbierto;
+  document.getElementById('cierre-detalle-lista').style.display=cierreDetalleAbierto?'block':'none';
+  document.getElementById('cierre-detalle-arrow').textContent=cierreDetalleAbierto?'▲':'▼';
+}
+function renderCierreProyeccion(){
+  const c=calcularProyeccionCierre();
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tickColor=isDark?'#e0e0e2':'#3a3b44';
+  const gridColor=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)';
+  const verde=isDark?'#4ade80':'#16a34a', rojo=isDark?'#f87171':'#dc2626', accent=getComputedStyle(document.documentElement).getPropertyValue('--accent')||'#5b8def';
+  const fmtN=v=>v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+
+  const hoy=new Date();
+  document.getElementById('cierre-titulo').textContent=`📅 Proyección de cierre — ${tcMesesLong()[hoy.getMonth()]} ${hoy.getFullYear()}`;
+  document.getElementById('cierre-hero-pen').textContent='S/ '+fmtN(c.proyeccionPen);
+  document.getElementById('cierre-hero-pen').style.color=c.proyeccionPen>=0?'var(--accent)':'var(--red)';
+  const usdEl=document.getElementById('cierre-hero-usd');
+  if(Math.abs(c.proyeccionUsd)>0.004){ usdEl.style.display='block'; usdEl.textContent='$ '+fmtN(c.proyeccionUsd)+' aparte, en dólares'; }
+  else { usdEl.style.display='none'; }
+
+  // Comparación vs. cómo cerró el mes pasado (mismo criterio que "Disponible")
+  const mesAnt=hoy.getMonth()===0?11:hoy.getMonth()-1, anioAnt=hoy.getMonth()===0?hoy.getFullYear()-1:hoy.getFullYear();
+  const cierreAnterior=getDisponible(anioAnt,mesAnt);
+  const vsEl=document.getElementById('cierre-vs-anterior');
+  if(cierreAnterior!==null && cierreAnterior>0){
+    const pct=((c.proyeccionPen-cierreAnterior)/Math.abs(cierreAnterior))*100;
+    vsEl.innerHTML=`${pct>=0?'↑':'↓'} ${Math.abs(pct).toFixed(0)}% ${pct>=0?'más':'menos'} que como cerraste ${tcMesesLong()[mesAnt]}`;
+    vsEl.style.color=pct>=0?verde:rojo;
+  } else { vsEl.textContent=''; }
+
+  // ── Desglose (cascada) ──
+  const acumIng=c.disponibleActual+c.ingPen;
+  const acumGasto=acumIng-c.gastoPen;
+  if(cierreWaterfallChart){cierreWaterfallChart.destroy();cierreWaterfallChart=null;}
+  cierreWaterfallChart=new Chart(document.getElementById('cierre-waterfall'),{
+    type:'bar',
+    data:{
+      labels:['Disponible','+ Ingresos','− Gastos','− Tarjetas','= Cierre'],
+      datasets:[{
+        data:[[0,c.disponibleActual],[c.disponibleActual,acumIng],[acumGasto,acumIng],[c.proyeccionPen,acumGasto],[0,c.proyeccionPen]],
+        backgroundColor:[accent,verde,rojo,rojo,c.proyeccionPen>=0?verde:rojo],
+        borderRadius:4,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const[a,b]=ctx.raw;return 'S/ '+fmtN(Math.abs(b-a));}}}},
+      scales:{
+        y:{ticks:{color:tickColor,callback:v=>'S/'+(v/1000).toFixed(1)+'k'},grid:{color:gridColor}},
+        x:{ticks:{color:tickColor,font:{size:10}},grid:{display:false}},
+      }
+    }
+  });
+  document.getElementById('cierre-desglose-lista').innerHTML=`
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>💰 Disponible actual</span><span style="font-weight:600">S/ ${fmtN(c.disponibleActual)}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>➕ Ingresos pendientes</span><span style="font-weight:600;color:${verde}">+ S/ ${fmtN(c.ingPen)}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>➖ Gastos pendientes</span><span style="font-weight:600;color:${rojo}">− S/ ${fmtN(c.gastoPen)}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span>💳 Tarjetas a pagar</span><span style="font-weight:600;color:${rojo}">− S/ ${fmtN(c.tarjetaPen)}</span></div>
+  `;
+
+  // ── Detalle de lo pendiente (colapsable) ──
+  const filas=[...c.detalle.map(d=>({
+      label:(d.signo>0?'➕ ':'➖ ')+escapeHtml(d.nombre)+(d.esEstimado?' <small style="color:var(--text3)">(estimado, sin registro previo)</small>':''),
+      monto:d.monto,moneda:d.moneda,signo:d.signo,
+    })),
+    ...c.detalleTarjetas.map(t=>({label:'💳 '+escapeHtml(t.nombre)+' (a pagar)',monto:t.pen||t.usd,moneda:t.pen?'PEN':'USD',signo:-1})),
+  ];
+  document.getElementById('cierre-detalle-lista').innerHTML = filas.length
+    ? filas.map(f=>`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);padding:5px 0"><span>${f.label}</span><span style="color:${f.signo>0?verde:rojo};font-weight:600">${f.signo>0?'+':'−'} ${f.moneda==='USD'?'$':'S/'} ${fmtN(f.monto)}</span></div>`).join('')
+    : `<div style="font-size:12px;color:var(--text3)">Sin pagos frecuentes pendientes ni tarjetas por pagar este mes.</div>`;
+  document.getElementById('cierre-detalle-lista').style.display=cierreDetalleAbierto?'block':'none';
+
+  // ── Tendencia: últimos 6 meses reales + proyección de este mes ──
+  const labelsT=[], dataT=[], coloresT=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
+    const val=getDisponible(d.getFullYear(),d.getMonth());
+    labelsT.push(MONTHS_SHORT[d.getMonth()]);
+    dataT.push(val===null?null:+val.toFixed(2));
+    coloresT.push(isDark?'#2c2c2a':'#e5e5e5');
+  }
+  labelsT.push(MONTHS_SHORT[hoy.getMonth()]+' (proy.)');
+  dataT.push(+c.proyeccionPen.toFixed(2));
+  coloresT.push(accent);
+  if(cierreTendenciaChart){cierreTendenciaChart.destroy();cierreTendenciaChart=null;}
+  cierreTendenciaChart=new Chart(document.getElementById('cierre-tendencia'),{
+    type:'bar',
+    data:{labels:labelsT,datasets:[{data:dataT,backgroundColor:coloresT,borderRadius:4}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{color:tickColor,callback:v=>'S/'+(v/1000).toFixed(1)+'k'},grid:{color:gridColor}},
+        x:{ticks:{color:tickColor},grid:{display:false}},
+      }
+    }
+  });
+}
 function renderProyeccion(){
+  renderCierreProyeccion();
   renderMetasAhorro();
   const goalS=parseFloat(document.getElementById('proj-goal-soles').value)||20000;
   const goalD=parseFloat(document.getElementById('proj-goal-dolar').value)||3000;
@@ -6537,9 +7151,15 @@ function exportXLSX(){
   const resData=[['Mes','Ingresos','Gastos','Resultado']];
   for(let i=0;i<12;i++){const c=calcMonth(state.currentYear,i);resData.push([MONTHS[i],+c.ingresos.toFixed(2),+c.gastos.toFixed(2),+c.resultado.toFixed(2)]);}
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(resData),'Resumen Anual');
-  // Sheet 3: saldos — solo las cuentas que TÚ creaste (state.customCuentas),
-  // ya no se asume que existen BCP/BBVA/Efectivo/Ahorro Soles/Ahorro Dólares.
+  // Sheet 3: saldos — incluye TODAS las cuentas (default + personalizadas),
+  // no solo las 5 fijas, para que la exportación no omita ahorros en otros bancos.
   const saldos=[['Cuenta','Tipo','Moneda','Saldo']];
+  ['BCP','BBVA','Efectivo','Ahorro Soles','Ahorro Dólares'].forEach(k=>{
+    if(state.cuentas[k]===undefined) return;
+    if((state.customCuentas||{})[k]) return; // evita fila duplicada si una cuenta personalizada repite este nombre
+    const esAhorro=k.startsWith('Ahorro');
+    saldos.push([k, esAhorro?'ahorro':'operativa', k==='Ahorro Dólares'?'USD':'PEN', state.cuentas[k]||0]);
+  });
   Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
     saldos.push([k, v.type||'operativa', v.currency||'PEN', state.cuentas[k]||0]);
   });
@@ -7794,10 +8414,7 @@ function saveNewCuenta(){
   if(!name){alert('Ingresa un nombre.');return;}
   // Evita el choque de nombres que causaba cuentas "duplicadas" en la tabla
   // (una fila por ser cuenta por defecto, otra por ser personalizada, ambas
-  // con el mismo nombre y leyendo el mismo saldo). saveNewCuenta() solo se
-  // usa para CREAR cuentas nuevas (editar el saldo de una existente es la
-  // función aparte editCuenta()), así que cualquier nombre ya en uso es
-  // siempre un choque real, nunca "estoy editando la misma cuenta".
+  // con el mismo nombre y leyendo el mismo saldo).
   const nombresEnUso=new Set([...Object.keys(state.customCuentas||{}), ...Object.keys(state.cuentas||{})]);
   if(nombresEnUso.has(name)){
     alert('Ya existe una cuenta llamada "'+name+'". Usa otro nombre, o edítala desde la lista de abajo.');
@@ -7943,20 +8560,20 @@ function deleteCategoria(name){
 }
 
 function updateAccountSelects(){
-  // Solo las cuentas que TÚ creaste explícitamente en "Gestionar Cuentas" —
-  // ya no hay ningún fallback a BCP/BBVA/Efectivo/Ahorro Soles/Ahorro
-  // Dólares si todavía no has creado ninguna cuenta propia.
-  const keys=Object.keys(state.customCuentas||{});
+  // Build list from all existing accounts + custom
+  const existing=new Set([
+    ...Object.keys(state.cuentas||{}),
+    ...Object.keys(state.customCuentas||{})
+  ]);
+  // Ensure standard defaults are present if they have no balance yet
+  if(!existing.size){['BCP','BBVA','Efectivo','Ahorro Soles','Ahorro Dólares'].forEach(k=>existing.add(k));}
+  const keys=[...existing];
   ['f-account','srv-edit-account'].forEach(id=>{
     const sel=document.getElementById(id); if(!sel) return;
     const cur=sel.value;
-    if(!keys.length){
-      sel.innerHTML='<option value="">Crea una cuenta primero (⚙ Config → Gestionar cuentas)</option>';
-      return;
-    }
     sel.innerHTML=keys.map(k=>`<option value="${k}">${k}</option>`).join('');
     if(keys.includes(cur)) sel.value=cur;
-    else sel.value=keys[0];
+    else if(keys.length) sel.value=keys[0];
   });
 }
 
@@ -7972,7 +8589,7 @@ function getAllCategorias(){
 function updateCategorySelects(){
   const cats = Object.keys(getAllCategorias());
   // f-cat y tc-m-cat sí permiten "Sin categoría"; bm-cat (presupuesto) no.
-  ['f-cat','tc-m-cat'].forEach(id=>{
+  ['f-cat','tc-m-cat','cf-cat'].forEach(id=>{
     const sel=document.getElementById(id); if(!sel) return;
     const cur=sel.value;
     sel.innerHTML='<option value="">Sin categoría</option>'+cats.map(c=>`<option value="${c}">${escapeHtml(c)}</option>`).join('');
@@ -8129,6 +8746,170 @@ function renderTarjetas(){
   renderTCGlobal();
   renderTCChartsExtra();
   try{ renderTCHeatmap(); }catch(err){ console.error('Error renderizando Mapa de Consumos con Tarjeta:', err); }
+  renderConsumosFrecuentes();
+}
+
+// ── CONSUMOS FRECUENTES (registro de 1 toque) ─────────
+const CF_SUGERENCIA_MIN_REPETICIONES=3; // 3 o más veces (mismo nombre Y mismo monto)
+const CF_SUGERENCIA_DIAS=60; // "últimos 2 meses" ≈ 60 días
+function cfNombreNormalizado(desc){ return (desc||'').trim().toLowerCase().replace(/\s+/g,' '); }
+// Recorre los consumos de TODAS las tarjetas (todos los meses) de los
+// últimos ~2 meses, agrupa por descripción (sin importar mayúsculas/
+// espacios) y devuelve los que se repitieron más de 3 veces — excluyendo
+// los que ya son un acceso rápido, o los que el usuario ya descartó antes.
+function cfClaveGrupo(desc,monto){ return cfNombreNormalizado(desc)+'|'+Number(monto).toFixed(2); }
+function detectarConsumosFrecuentesSugeridos(){
+  const limite=new Date(); limite.setDate(limite.getDate()-CF_SUGERENCIA_DIAS);
+  const limiteStr=limite.getFullYear()+'-'+String(limite.getMonth()+1).padStart(2,'0')+'-'+String(limite.getDate()).padStart(2,'0');
+  const yaExisten=new Set((state.consumosFrecuentes||[]).map(cf=>cfClaveGrupo(cf.nombre,cf.monto)));
+  const ignorados=new Set(state.consumosFrecuentesIgnorados||[]);
+  const grupos={}; // "nombreNormalizado|monto" -> [{monto,tarjetaId,currency,cat,fecha,descOriginal}]
+  (state.tarjetas||[]).forEach(t=>{
+    Object.values(t.movs||{}).forEach(arr=>(arr||[]).forEach(m=>{
+      if(!m.desc || m.fecha<limiteStr || !m.monto) return;
+      const key=cfClaveGrupo(m.desc,m.monto);
+      if(!cfNombreNormalizado(m.desc) || yaExisten.has(key) || ignorados.has(key)) return;
+      if(!grupos[key]) grupos[key]=[];
+      grupos[key].push({monto:m.monto,tarjetaId:t.id,currency:m.currency||t.currency||'PEN',cat:m.cat||'',fecha:m.fecha,descOriginal:m.desc});
+    }));
+  });
+  const moda=(arr)=>{
+    const cuenta={};
+    arr.forEach(v=>{ if(v!==undefined&&v!=='') cuenta[v]=(cuenta[v]||0)+1; });
+    const entries=Object.entries(cuenta).sort((a,b)=>b[1]-a[1]);
+    return entries.length?entries[0][0]:null;
+  };
+  const sugerencias=[];
+  Object.entries(grupos).forEach(([key,matches])=>{
+    if(matches.length<CF_SUGERENCIA_MIN_REPETICIONES) return;
+    matches.sort((a,b)=>b.fecha.localeCompare(a.fecha)); // más reciente primero, para desempates
+    const nombreSugerido=matches[0].descOriginal.trim(); // conserva may/min tal como se escribió la última vez, sin espacios de sobra
+    const montoSugerido=matches[0].monto; // el monto ya es el mismo en todo el grupo (es parte de la clave)
+    const tarjetaSugerida=moda(matches.map(m=>m.tarjetaId));
+    const currencySugerida=moda(matches.map(m=>m.currency))||'PEN';
+    const catSugerida=moda(matches.map(m=>m.cat).filter(Boolean))||'';
+    sugerencias.push({key,nombre:nombreSugerido,monto:montoSugerido,tarjetaId:tarjetaSugerida,currency:currencySugerida,cat:catSugerida,veces:matches.length});
+  });
+  return sugerencias.sort((a,b)=>b.veces-a.veces);
+}
+function renderConsumosFrecuentesSugerencias(){
+  const cont=document.getElementById('tc-frecuentes-sugerencias'); if(!cont) return;
+  const sugerencias=detectarConsumosFrecuentesSugeridos();
+  if(!sugerencias.length){ cont.innerHTML=''; return; }
+  cont.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px">💡 Consumos que se repiten seguido — ¿los agrego como acceso rápido?</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+    ${sugerencias.map(s=>{
+      const sym=s.currency==='USD'?'$':'S/';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg3);border:1px dashed var(--accent);border-radius:8px;padding:8px 10px">
+        <div style="font-size:12px">${escapeHtml(s.nombre)} — ${sym} ${s.monto.toFixed(2)} <span style="color:var(--text3)">(${s.veces} veces en los últimos 2 meses)</span></div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="config-action-btn neutral" style="font-size:10px;padding:3px 8px" onclick="cfIgnorarSugerencia('${s.key}')">Ignorar</button>
+          <button class="btn btn-primary" style="font-size:10px;padding:3px 8px" onclick="cfAceptarSugerencia('${s.key}')">+ Agregar</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>`;
+}
+function cfAceptarSugerencia(key){
+  const s=detectarConsumosFrecuentesSugeridos().find(x=>x.key===key);
+  if(!s) return;
+  if(!Array.isArray(state.consumosFrecuentes)) state.consumosFrecuentes=[];
+  state.consumosFrecuentes.push({id:'cf'+Date.now(),nombre:s.nombre,monto:s.monto,currency:s.currency,tarjetaId:s.tarjetaId,cat:s.cat});
+  saveState();
+  renderConsumosFrecuentes();
+  toast('⚡ "'+s.nombre+'" agregado como acceso rápido');
+}
+function cfIgnorarSugerencia(key){
+  if(!Array.isArray(state.consumosFrecuentesIgnorados)) state.consumosFrecuentesIgnorados=[];
+  if(!state.consumosFrecuentesIgnorados.includes(key)) state.consumosFrecuentesIgnorados.push(key);
+  saveState();
+  renderConsumosFrecuentes();
+}
+
+function renderConsumosFrecuentes(){
+  renderConsumosFrecuentesSugerencias();
+  const cont=document.getElementById('tc-frecuentes-grid'); if(!cont) return;
+  const lista=state.consumosFrecuentes||[];
+  if(!lista.length){
+    cont.innerHTML='<div style="grid-column:1/-1;color:var(--text3);font-size:12px;padding:6px 0">Todavía no tienes ninguno — crea uno con "+ Nuevo" (ej. Bembos S/24.80).</div>';
+    return;
+  }
+  cont.innerHTML=lista.map(cf=>{
+    const t=getTarjeta(cf.tarjetaId);
+    const sym=cf.currency==='USD'?'$':'S/';
+    return `<div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer" onclick="registrarConsumoFrecuente('${cf.id}')">
+      <span onclick="event.stopPropagation();abrirConsumoFrecuenteModal('${cf.id}')" title="Editar" style="position:absolute;top:3px;right:5px;font-size:10px;color:var(--text3);cursor:pointer">✏</span>
+      <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(cf.nombre)}</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent);margin-top:2px">${sym} ${cf.monto.toFixed(2)}</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t?t.banco+(t.cat?' '+t.cat:''):'⚠️ sin tarjeta'}</div>
+    </div>`;
+  }).join('');
+}
+function abrirConsumoFrecuenteModal(id){
+  updateCategorySelects();
+  const sel=document.getElementById('cf-tarjeta');
+  sel.innerHTML=(state.tarjetas||[]).map(t=>`<option value="${t.id}">${escapeHtml(t.banco)}${t.cat?' '+escapeHtml(t.cat):''}</option>`).join('');
+  if(!(state.tarjetas||[]).length){ alert('Primero agrega al menos una tarjeta.'); return; }
+  document.getElementById('cf-cat-hint').textContent='';
+  const cf=id?(state.consumosFrecuentes||[]).find(x=>x.id===id):null;
+  document.getElementById('cf-modal-title').textContent=cf?'⚡ Editar consumo frecuente':'⚡ Nuevo consumo frecuente';
+  document.getElementById('cf-nombre').value=cf?cf.nombre:'';
+  document.getElementById('cf-monto').value=cf?cf.monto:'';
+  document.getElementById('cf-currency').value=cf?(cf.currency||'PEN'):'PEN';
+  document.getElementById('cf-tarjeta').value=cf?cf.tarjetaId:sel.value;
+  document.getElementById('cf-cat').value=cf?(cf.cat||''):'';
+  document.getElementById('cf-overlay').dataset.editId=id||'';
+  document.getElementById('cf-btn-eliminar').style.display=id?'inline-block':'none';
+  document.getElementById('cf-overlay').classList.add('open');
+}
+function cerrarConsumoFrecuenteModal(){ document.getElementById('cf-overlay').classList.remove('open'); }
+function guardarConsumoFrecuenteModal(){
+  const nombre=(document.getElementById('cf-nombre').value||'').trim();
+  const monto=parseFloat(document.getElementById('cf-monto').value);
+  const currency=document.getElementById('cf-currency').value||'PEN';
+  const tarjetaId=document.getElementById('cf-tarjeta').value;
+  const cat=document.getElementById('cf-cat').value||'';
+  if(!nombre||!monto||monto<=0){ alert('Completa el nombre y un monto válido.'); return; }
+  if(!tarjetaId){ alert('Elige una tarjeta.'); return; }
+  const editId=document.getElementById('cf-overlay').dataset.editId;
+  if(!Array.isArray(state.consumosFrecuentes)) state.consumosFrecuentes=[];
+  if(editId){
+    const cf=state.consumosFrecuentes.find(x=>x.id===editId);
+    if(cf) Object.assign(cf,{nombre,monto,currency,tarjetaId,cat});
+  } else {
+    state.consumosFrecuentes.push({id:'cf'+Date.now(),nombre,monto,currency,tarjetaId,cat});
+  }
+  saveState();
+  cerrarConsumoFrecuenteModal();
+  renderConsumosFrecuentes();
+  toast(editId?'Consumo frecuente actualizado':'Consumo frecuente creado');
+}
+function eliminarConsumoFrecuente(id){
+  if(!confirm('¿Eliminar este consumo frecuente? (esto no borra los consumos ya registrados con él, solo el acceso rápido)')) return;
+  state.consumosFrecuentes=(state.consumosFrecuentes||[]).filter(x=>x.id!==id);
+  saveState();
+  renderConsumosFrecuentes();
+}
+// Registra el consumo YA MISMO con fecha/hora actual — sin abrir ningún formulario.
+function registrarConsumoFrecuente(id){
+  const cf=(state.consumosFrecuentes||[]).find(x=>x.id===id);
+  if(!cf) return;
+  const t=getTarjeta(cf.tarjetaId);
+  if(!t){ alert('La tarjeta de este acceso rápido ya no existe. Edítalo para elegir otra.'); return; }
+  const fecha=todayISO(), hora=horaLimaActual();
+  const mk=getBillingMonthKey(fecha, t);
+  if(!t.movs) t.movs={};
+  if(!t.movs[mk]) t.movs[mk]=[];
+  const nuevoMov={id:'tcm'+Date.now(),desc:cf.nombre,fecha,hora,monto:cf.monto,pagado:false,cat:cf.cat||'',currency:cf.currency||'PEN'};
+  const paisCache=getPaisCache();
+  if(paisCache){ nuevoMov.pais=paisCache.pais; nuevoMov.paisCode=paisCache.code; }
+  t.movs[mk].push(nuevoMov);
+  const sym=nuevoMov.currency==='USD'?'$':'S/';
+  logActividad('tc_consumo', `${cf.nombre} — ${sym} ${cf.monto.toFixed(2)} (${t.banco}${t.cat?' '+t.cat:''})`, {tarjetaId:t.id, monthKey:mk, consumoId:nuevoMov.id});
+  saveState();
+  renderTarjetas();
+  if(t.id===currentTCId && document.getElementById('tc-detail-view').style.display!=='none') renderTCDetail();
+  toast(`✅ ${cf.nombre} — ${sym}${cf.monto.toFixed(2)} registrado (${hora})`);
 }
 
 // Suma un arreglo de consumos separando soles y dólares — cada consumo puede
@@ -8345,7 +9126,7 @@ function renderTCDetail(){
     const mFmt=mSym+' '+Math.abs(m.monto).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
     return `<tr class="${m.pagado?'paid-row':''}" id="tc-row-${m.id}">
     <td><input type="checkbox" class="tc-check tc-sel-cb" data-id="${m.id}" data-monto="${m.monto}" data-currency="${mCur}" onchange="onTCSelChange()"></td>
-    <td>${escapeHtml(m.desc)}</td>
+    <td>${escapeHtml(m.desc)}${m.paisCode?` <span title="${escapeHtml(m.pais||'')}">${codigoPaisAEmoji(m.paisCode)}</span>`:''}</td>
     <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${m.fecha}${m.hora?`<br><span style="color:var(--text3);font-size:10px">${m.hora}</span>`:''}</td>
     <td style="font-size:11px;color:${m.cat?'var(--text2)':'var(--text3)'}">${m.cat||'Sin categoría'}</td>
     <td><input type="checkbox" class="tc-paid-check" ${m.pagado?'checked':''} onchange="toggleTCPaid('${m.id}',this.checked)" title="Marcar como pagado">${m.metodoPago==='puntos'?'<span title="Pagado con puntos" style="font-size:11px;margin-left:3px">🎁</span>':''}</td>
@@ -8507,6 +9288,7 @@ function openAddMovTC(){
   updateCategorySelects(); // asegura que categorías nuevas aparezcan siempre
   document.getElementById('tc-m-cat').value='';
   document.getElementById('tc-mov-overlay').classList.add('open');
+  detectarPaisEnSegundoPlano();
 }
 // Igual que openAddMovTC(), pero para cuando se agrega desde la lista principal
 // de Tarjetas (sin haber entrado antes al detalle de ninguna) — por eso pide
@@ -8526,6 +9308,7 @@ function openAddMovTCFromList(){
   document.getElementById('tc-m-cat').value='';
   onConsumoTarjetaChange(); // fija la moneda según la primera tarjeta seleccionada
   document.getElementById('tc-mov-overlay').classList.add('open');
+  detectarPaisEnSegundoPlano();
 }
 
 function editTCMov(movId){
@@ -8545,6 +9328,7 @@ function editTCMov(movId){
   updateCategorySelects(); // asegura que categorías nuevas aparezcan siempre
   document.getElementById('tc-m-cat').value=m.cat||'';
   document.getElementById('tc-mov-overlay').classList.add('open');
+  detectarPaisEnSegundoPlano();
 }
 
 function closeTCMovModal(){ document.getElementById('tc-mov-overlay').classList.remove('open'); }
@@ -8561,6 +9345,13 @@ function saveTCMov(){
   const tarjetaId=document.getElementById('tc-m-tarjeta').value;
   const t=getTarjeta(tarjetaId); if(!t) return;
   if(!t.movs) t.movs={};
+  if(!editingTCMovId){
+    const dup=detectarDuplicadoConsumoTC(tarjetaId,desc,monto,fecha);
+    if(dup){
+      const sym=currency==='USD'?'$':'S/';
+      if(!confirm(`⚠️ Ya registraste "${dup.desc}" por ${sym} ${monto.toFixed(2)} ese mismo día${dup.hora?' a las '+dup.hora:''} en esta tarjeta. ¿Seguro que quieres agregarlo de nuevo (no es sin querer)?`)) return;
+    }
+  }
 
   if(editingTCMovId){
     // Find the mov in ANY month (it may have been in a different period)
@@ -8591,6 +9382,8 @@ function saveTCMov(){
     if(!t.movs[newMk]) t.movs[newMk]=[];
     const nuevoMov={id:'tcm'+Date.now(),desc,fecha,monto,pagado,cat,currency};
     if(hora) nuevoMov.hora=hora;
+    const paisCache=getPaisCache();
+    if(paisCache){ nuevoMov.pais=paisCache.pais; nuevoMov.paisCode=paisCache.code; }
     t.movs[newMk].push(nuevoMov);
     const symTC=currency==='USD'?'$':'S/';
     logActividad('tc_consumo', `${desc} — ${symTC} ${monto.toFixed(2)} (${t.banco}${t.cat?' '+t.cat:''})`, {tarjetaId, monthKey:newMk, consumoId:nuevoMov.id});
@@ -9395,7 +10188,7 @@ function applyTCHistorico(){
 // ══════════════════════════════════════════════════════
 // ── RELOJES MUNDIALES ────────────────────────────────
 // Lima siempre primero (es "casa") y fija; las demás (Madrid/Moscú/Miami) son
-// las que Nathy pidió ver por defecto — se pueden quitar igual que cualquier
+// las que Miguel pidió ver por defecto — se pueden quitar igual que cualquier
 // zona agregada después. Lo que el usuario agregue se guarda en
 // state.relojesExtra (persistido en Firestore).
 const RELOJES_DEFAULT=[
@@ -9542,6 +10335,8 @@ function guardarReloj(){
 }
 function eliminarReloj(id){
   if(id.startsWith('d-')){
+    // Es una de las 4 por defecto — se puede quitar igual, se guarda la
+    // exclusión en state.relojesOcultos para no perderla si se agregan más.
     if(!Array.isArray(state.relojesOcultos)) state.relojesOcultos=[];
     if(!state.relojesOcultos.includes(id)) state.relojesOcultos.push(id);
   } else {
@@ -9565,6 +10360,7 @@ function renderDashboard(){
   const name  = (state.ownerName||'').trim() || (currentUser ? currentUser.split('@')[0].replace(/^[a-z]/,ch=>ch.toUpperCase()) : '');
   const el=document.getElementById('dash-greeting');
   if(el) el.textContent = greet+' '+name+' 👋';
+  renderRachaRegistro();
 
   // ── Disponible actual ──────────────────────────────
   const saldoCur  = reconstructSaldoAt(curY, curM);
@@ -11585,7 +12381,9 @@ let editingTcOpVentaId=null;
 
 // Cuentas de soles disponibles (excluye Ahorro Dólares y cualquier cuenta en USD)
 function tcOpCuentasSoles(){
-  return getAllAccountKeys().filter(k=>getAccountCurrency(k)!=='USD');
+  const keys=[...new Set([...Object.keys(state.cuentas||{}),...Object.keys(state.customCuentas||{})])];
+  const base=keys.length?keys:['BCP','BBVA','Efectivo','Ahorro Soles'];
+  return base.filter(k=>k!=='Ahorro Dólares' && ((state.customCuentas||{})[k]||{}).currency!=='USD');
 }
 
 // Revierte y elimina un movimiento previamente creado por una operación de cambio
@@ -11604,7 +12402,7 @@ function openTcOpCompraModal(){
   // Cuentas de ahorro en dólares disponibles (default + personalizadas)
   const selUsd=document.getElementById('tcopc-cuenta-usd');
   const cuentasUsd=getAllAccountKeys().filter(k=>getAccountCurrency(k)==='USD');
-  selUsd.innerHTML=cuentasUsd.map(k=>`<option value="${k}">${escapeHtml(k)}</option>`).join('');
+  selUsd.innerHTML=(cuentasUsd.length?cuentasUsd:['Ahorro Dólares']).map(k=>`<option value="${k}">${escapeHtml(k)}</option>`).join('');
   document.getElementById('tcopc-fecha').value=todayLocalISO();
   document.getElementById('tcopc-soles').value='';
   document.getElementById('tcopc-tc').value='';
@@ -12468,6 +13266,1803 @@ function renderCalendario(){
   }).join('');
 }
 
+// ══════════════════════════════════════════════════════
+//  ANÁLISIS DE SUELDOS — renta de 5ta categoría, AFP/ONP,
+//  proyección anual. Parámetros por año (UIT, tramos, tasas)
+//  editables porque cambian cada enero. La retención mensual
+//  sigue el procedimiento oficial de SUNAT (Art. 40 del
+//  Reglamento de la LIR): NO es "impuesto anual ÷ 12" parejo,
+//  usa divisores distintos según el mes, restando lo ya
+//  retenido en los meses previos del mismo año.
+// ══════════════════════════════════════════════════════
+
+// Tramos progresivos de renta de 5ta — las TASAS son fijas por ley (no
+// cambian de año a año), solo los montos en soles cambian porque están
+// expresados en UIT y la UIT sí sube cada enero.
+const SUELDO_TRAMOS_UIT=[
+  {hastaUIT:5,tasa:0.08},{hastaUIT:20,tasa:0.14},{hastaUIT:35,tasa:0.17},
+  {hastaUIT:45,tasa:0.20},{hastaUIT:Infinity,tasa:0.30},
+];
+function sueldoParametrosDefault(anio){
+  return {anio, uit:5500, deduccionUIT:7, afpAporte:10, afpPrima:1.37, onpTasa:13};
+}
+function getSueldoParametros(anio){
+  if(!state.sueldoParametros) state.sueldoParametros={};
+  if(!state.sueldoParametros[anio]) state.sueldoParametros[anio]=sueldoParametrosDefault(anio);
+  return state.sueldoParametros[anio];
+}
+function calcularImpuestoAnualSueldo(rentaNeta,params){
+  if(rentaNeta<=0) return 0;
+  let impuesto=0,restante=rentaNeta,limiteAnterior=0;
+  for(const tramo of SUELDO_TRAMOS_UIT){
+    const limiteTramo=tramo.hastaUIT===Infinity?Infinity:tramo.hastaUIT*params.uit;
+    const anchoTramo=limiteTramo-limiteAnterior;
+    const montoEnTramo=Math.min(restante,anchoTramo);
+    if(montoEnTramo<=0) break;
+    impuesto+=montoEnTramo*tramo.tasa;
+    restante-=montoEnTramo;
+    limiteAnterior=limiteTramo;
+    if(restante<=0) break;
+  }
+  return impuesto;
+}
+// Divisor oficial SUNAT según el mes (0=enero…11=diciembre)
+function sueldoDivisorMes(mesIdx){
+  if(mesIdx<=2) return 12;   // ene-mar
+  if(mesIdx===3) return 9;   // abr
+  if(mesIdx<=6) return 8;    // may-jul
+  if(mesIdx===7) return 5;   // ago
+  if(mesIdx<=10) return 4;   // sep-nov
+  return 1;                  // dic: ajuste final, resto completo
+}
+function getBoletasSueldo(){ return state.sueldoBoletas||[]; }
+function getBoletasAnioSueldo(anio){ return getBoletasSueldo().filter(b=>b.anio===anio).sort((a,b)=>a.mes-b.mes); }
+
+// ── GRATIFICACIÓN Y CTS ──────────────────────────────
+// Fórmulas legales verificadas: Ley 27735 (gratificación), Ley 30334
+// (bonificación extraordinaria 6.75%/9%), D.S. 005-2002-TR Art.3 (promedio
+// de remuneración variable: si se percibió 3+ veces en el semestre, se
+// suma lo percibido en los 6 meses y se divide entre 6), D.Leg. 650 (CTS:
+// (RC÷12) × meses completos, RC incluye 1/6 de la última gratificación).
+function fechaInicioComoMes(cfg){
+  if(!cfg.fechaInicio) return null;
+  const d=new Date(cfg.fechaInicio+'T12:00:00');
+  return {anio:d.getFullYear(),mes:d.getMonth(),dia:d.getDate()};
+}
+// Promedio del bono variable en un semestre (mismo año) — como estamos
+// PROYECTANDO (puede que aún no pasen todos los meses), se usa el
+// promedio de los meses que SÍ tengas registrados como estimado, que se
+// va afinando conforme registres más boletas de ese semestre.
+function promedioVariableSemestre(anio,mesesSemestre){
+  const boletas=getBoletasAnioSueldo(anio).filter(b=>mesesSemestre.includes(b.mes));
+  if(boletas.length<3) return {promedio:0,cuenta:false,mesesRegistrados:boletas.length};
+  const suma=boletas.reduce((s,b)=>s+(b.bono||0),0);
+  return {promedio:suma/6,cuenta:true,mesesRegistrados:boletas.length,completo:boletas.length===6};
+}
+// Última básica CONOCIDA en cualquier boleta registrada (de cualquier año o
+// mes) — se usa como respaldo cuando no hay ninguna boleta dentro del
+// semestre/periodo exacto que se está calculando, para poder dar una
+// estimación (con el sueldo fijo) aunque todavía no se haya registrado nada
+// de ese periodo específico. Prioriza la boleta más reciente EN O ANTES del
+// límite dado; si no hay ninguna antes, usa la más reciente que exista
+// (mejor una estimación con datos "futuros" que ninguna estimación).
+function ultimaBasicaConocida(anioLimite,mesLimite){
+  const todas=getBoletasSueldo().slice().sort((a,b)=>(a.anio-b.anio)||(a.mes-b.mes));
+  if(!todas.length) return 0;
+  const antesOEnLimite=todas.filter(b=>b.anio<anioLimite||(b.anio===anioLimite&&b.mes<=mesLimite));
+  return antesOEnLimite.length?antesOEnLimite[antesOEnLimite.length-1].basica:todas[0].basica;
+}
+// tipoSemestre: 'jul' (enero-junio, se paga en julio) o 'dic' (julio-diciembre, se paga en diciembre)
+function calcularGratificacion(anio,tipoSemestre){
+  const cfg=state.sueldoConfig||{};
+  const mesesSemestre=tipoSemestre==='jul'?[0,1,2,3,4,5]:[6,7,8,9,10,11];
+  const mesReferencia=tipoSemestre==='jul'?5:11; // básica de junio o de noviembre (mes anterior al pago)
+  const boletas=getBoletasAnioSueldo(anio);
+  const boletaRef=boletas.find(b=>b.mes===mesReferencia)||boletas.slice().reverse().find(b=>mesesSemestre.includes(b.mes));
+  const basica=boletaRef?boletaRef.basica:ultimaBasicaConocida(anio,mesReferencia);
+  const {promedio:promedioVar,cuenta}=promedioVariableSemestre(anio,mesesSemestre);
+  // Prorrateo por días (no solo meses completos) para el mes en que
+  // empezaste a trabajar — si arrancaste, por ejemplo, el 10 de diciembre,
+  // ese mes no cuenta como "mes completo" sino como 21/30 de un mes. Esto
+  // también evita inflar el "1/6 de gratificación" que se usa en el CTS.
+  const {mesesCompletos,dias}=mesesYDiasDesdeInicio(mesesSemestre.map(m=>({anio,mes:m})),cfg);
+  const remComputable=basica+(cuenta?promedioVar:0);
+  const baseGrat=(remComputable/6)*mesesCompletos+(remComputable/180)*dias;
+  const pctBonif=cfg.tieneEPS?0.0675:0.09;
+  const bonificacion=baseGrat*pctBonif;
+  return {baseGrat,bonificacion,total:baseGrat+bonificacion,mesesCompletos,dias,basica,promedioVar,cuenta,esEstimado:!boletaRef};
+}
+// mesDeposito: 4=mayo (periodo nov[año-1]-abr[año]), 10=noviembre (periodo may-oct del mismo año)
+// Para CTS, la ley SÍ prorratea por días (no solo meses completos) cuando
+// empiezas a mitad de un mes — usando el criterio estándar laboral peruano
+// de "meses de 30 días" (no los días reales del calendario). Ej.: si
+// empezaste el 10 de diciembre, ese mes cuenta como 30-10+1=21 días, no
+// como mes completo ni como 0.
+function mesesYDiasDesdeInicio(rangoMeses,cfg){
+  const inicio=fechaInicioComoMes(cfg);
+  if(!inicio) return {mesesCompletos:rangoMeses.length,dias:0};
+  let mesesCompletos=0,dias=0;
+  rangoMeses.forEach(mp=>{
+    const despues=mp.anio>inicio.anio||(mp.anio===inicio.anio&&mp.mes>inicio.mes);
+    const esMesInicio=mp.anio===inicio.anio&&mp.mes===inicio.mes;
+    if(despues) mesesCompletos++;
+    else if(esMesInicio) dias+=Math.max(0,30-inicio.dia+1);
+    // meses ANTES del inicio: no cuentan nada (ni días ni mes)
+  });
+  return {mesesCompletos,dias};
+}
+function calcularCTS(anioDeposito,mesDeposito){
+  const cfg=state.sueldoConfig||{};
+  let mesesPeriodo,mesReferencia,gratRelevante;
+  if(mesDeposito===4){
+    mesesPeriodo=[{anio:anioDeposito-1,mes:10},{anio:anioDeposito-1,mes:11},{anio:anioDeposito,mes:0},{anio:anioDeposito,mes:1},{anio:anioDeposito,mes:2},{anio:anioDeposito,mes:3}];
+    mesReferencia={anio:anioDeposito,mes:3};
+    gratRelevante=calcularGratificacion(anioDeposito-1,'dic');
+  } else {
+    mesesPeriodo=[{anio:anioDeposito,mes:4},{anio:anioDeposito,mes:5},{anio:anioDeposito,mes:6},{anio:anioDeposito,mes:7},{anio:anioDeposito,mes:8},{anio:anioDeposito,mes:9}];
+    mesReferencia={anio:anioDeposito,mes:9};
+    gratRelevante=calcularGratificacion(anioDeposito,'jul');
+  }
+  const todas=getBoletasSueldo();
+  const boletaRef=todas.find(b=>b.anio===mesReferencia.anio&&b.mes===mesReferencia.mes)
+    ||todas.slice().reverse().find(b=>mesesPeriodo.some(mp=>mp.anio===b.anio&&mp.mes===b.mes));
+  const basica=boletaRef?boletaRef.basica:ultimaBasicaConocida(mesReferencia.anio,mesReferencia.mes);
+  const boletasPeriodo=todas.filter(b=>mesesPeriodo.some(mp=>mp.anio===b.anio&&mp.mes===b.mes));
+  let promedioVar=0,cuentaVar=false;
+  if(boletasPeriodo.length>=3){ promedioVar=boletasPeriodo.reduce((s,b)=>s+(b.bono||0),0)/6; cuentaVar=true; }
+  // El 1/6 de gratificación solo se suma si en el semestre anterior
+  // llegaste a trabajar AL MENOS 1 mes completo — si solo tuviste unos
+  // días (ej. entraste a mitad del último mes del semestre), no llegó a
+  // generarse una gratificación real que pueda prorratearse dentro del CTS.
+  const sextoGratificacion=(gratRelevante.mesesCompletos>=1)?(gratRelevante.baseGrat||0)/6:0;
+  const rc=basica+(cuentaVar?promedioVar:0)+sextoGratificacion;
+  const {mesesCompletos,dias}=mesesYDiasDesdeInicio(mesesPeriodo,cfg);
+  const cts=(rc/12)*mesesCompletos+(rc/360)*dias;
+  return {cts,rc,basica,promedioVar,cuentaVar,sextoGratificacion,mesesCompletos,dias,esEstimado:!boletaRef};
+}
+
+// Calcula la renta de 5ta ESTIMADA para (anio,mesIdx) según lo que ya se
+// registró de meses anteriores del mismo año + lo ingresado este mes,
+// proyectando los meses que faltan con el mismo ingreso de este mes. La
+// gratificación (SÍ afecta renta de 5ta) se suma automáticamente para las
+// 2 del año — la bonificación extraordinaria del 9%/6.75% NO se suma
+// porque es inafecta.
+// ingresoRecurrente = básica+bono (se asume que se repite cada mes futuro).
+// ingresoUnico = otros+utilidades (ya percibido, NO se proyecta a futuro —
+// sería un error asumir que las utilidades se repiten todos los meses).
+// Así lo indica el propio procedimiento de SUNAT (orientacion.sunat.gob.pe,
+// Paso 1): la proyección futura usa la remuneración ORDINARIA, mientras que
+// "pagos extraordinarios... participaciones [utilidades]... horas extras"
+// solo se suman como lo YA percibido en meses anteriores, sin proyectarse.
+function calcularRenta5taMes(anio,mesIdx,ingresoRecurrente,ingresoUnico){
+  ingresoUnico=ingresoUnico||0;
+  const cfg=state.sueldoConfig||{};
+  const params=getSueldoParametros(anio);
+  const boletasPrevias=getBoletasAnioSueldo(anio).filter(b=>b.mes<mesIdx);
+  const ingresoAcumuladoPrevio=boletasPrevias.reduce((s,b)=>s+(b.basica||0)+(b.bono||0)+(b.otros||0)+(b.utilidades||0),0)+(cfg.ingresoAnterior||0);
+  // Se prefiere la retención REAL (de tu boleta) sobre nuestro estimado
+  // viejo — así el cálculo se autocorrige con datos reales en vez de
+  // arrastrar un error de un mes anterior.
+  const retencionAcumuladaPrevia=boletasPrevias.reduce((s,b)=>s+(b.retencion5taReal!=null?b.retencion5taReal:(b.retencion5taEstimada||0)),0)+(cfg.retencionAnterior||0);
+  const mesesQueFaltan=11-mesIdx; // meses DESPUÉS del actual
+  const gratJul=calcularGratificacion(anio,'jul').baseGrat;
+  const gratDic=calcularGratificacion(anio,'dic').baseGrat;
+  const rentaBrutaAnualProyectada=ingresoAcumuladoPrevio+ingresoRecurrente+ingresoUnico+(ingresoRecurrente*mesesQueFaltan)+gratJul+gratDic;
+  const rentaNeta=Math.max(0,rentaBrutaAnualProyectada-params.deduccionUIT*params.uit);
+  const impuestoAnual=calcularImpuestoAnualSueldo(rentaNeta,params);
+  const divisor=sueldoDivisorMes(mesIdx);
+  let retencionMes=(mesIdx===11)?(impuestoAnual-retencionAcumuladaPrevia):(impuestoAnual-retencionAcumuladaPrevia)/divisor;
+  return {retencionMes:Math.max(0,retencionMes),impuestoAnual,rentaBrutaAnualProyectada,rentaNeta};
+}
+// AFP/ONP se descuentan sobre el ingreso computable del MES (no proyectado)
+function calcularDescuentosPensionMes(ingresoMes){
+  const cfg=state.sueldoConfig||{};
+  const params=getSueldoParametros((new Date()).getFullYear());
+  if(cfg.sistemaPension==='onp'){
+    const total=ingresoMes*(params.onpTasa/100);
+    return {aporte:total,prima:0,comisionFlujo:0,total};
+  }
+  const aporte=ingresoMes*(params.afpAporte/100);
+  const prima=ingresoMes*(params.afpPrima/100);
+  const comisionFlujo=cfg.comisionFlujo?ingresoMes*((cfg.comisionFlujoPct||0)/100):0;
+  return {aporte,prima,comisionFlujo,total:aporte+prima+comisionFlujo};
+}
+
+function abrirConfigSueldo(){
+  const cfg=state.sueldoConfig||{};
+  document.getElementById('sc-sistema').value=cfg.sistemaPension||'afp';
+  document.getElementById('sc-afp-nombre').value=cfg.afpNombre||'Integra';
+  document.getElementById('sc-comision-flujo').checked=!!cfg.comisionFlujo;
+  document.getElementById('sc-comision-flujo-pct').value=cfg.comisionFlujoPct||'';
+  document.getElementById('sc-tipo-sueldo').value=cfg.tipoSueldo||'variable';
+  document.getElementById('sc-fecha-inicio').value=cfg.fechaInicio||'';
+  document.getElementById('sc-tiene-eps').checked=!!cfg.tieneEPS;
+  document.getElementById('sc-ingreso-anterior').value=cfg.ingresoAnterior||'';
+  document.getElementById('sc-retencion-anterior').value=cfg.retencionAnterior||'';
+  onSistemaPensionChange();
+  onComisionFlujoChange();
+  document.getElementById('sueldo-config-overlay').classList.add('open');
+}
+function cerrarConfigSueldo(){ document.getElementById('sueldo-config-overlay').classList.remove('open'); }
+function onSistemaPensionChange(){
+  document.getElementById('sc-afp-wrap').style.display=document.getElementById('sc-sistema').value==='afp'?'block':'none';
+}
+function onComisionFlujoChange(){
+  document.getElementById('sc-comision-flujo-pct-wrap').style.display=document.getElementById('sc-comision-flujo').checked?'block':'none';
+}
+function guardarConfigSueldo(){
+  state.sueldoConfig={
+    sistemaPension:document.getElementById('sc-sistema').value,
+    afpNombre:document.getElementById('sc-afp-nombre').value,
+    comisionFlujo:document.getElementById('sc-comision-flujo').checked,
+    comisionFlujoPct:parseFloat(document.getElementById('sc-comision-flujo-pct').value)||0,
+    tipoSueldo:document.getElementById('sc-tipo-sueldo').value,
+    fechaInicio:document.getElementById('sc-fecha-inicio').value||'',
+    tieneEPS:document.getElementById('sc-tiene-eps').checked,
+    ingresoAnterior:parseFloat(document.getElementById('sc-ingreso-anterior').value)||0,
+    retencionAnterior:parseFloat(document.getElementById('sc-retencion-anterior').value)||0,
+  };
+  cerrarConfigSueldo();
+  recalcularTodosLosAnios();
+  saveState();
+  renderSueldos();
+}
+
+function abrirParametrosSueldo(){
+  const anio=(new Date()).getFullYear();
+  const p=getSueldoParametros(anio);
+  document.getElementById('sp-anio').value=p.anio;
+  document.getElementById('sp-uit').value=p.uit;
+  document.getElementById('sp-afp-aporte').value=p.afpAporte;
+  document.getElementById('sp-afp-prima').value=p.afpPrima;
+  document.getElementById('sp-onp-tasa').value=p.onpTasa;
+  document.getElementById('sueldo-parametros-overlay').classList.add('open');
+}
+function cerrarParametrosSueldo(){ document.getElementById('sueldo-parametros-overlay').classList.remove('open'); }
+function guardarParametrosSueldo(){
+  const anio=parseInt(document.getElementById('sp-anio').value);
+  if(!state.sueldoParametros) state.sueldoParametros={};
+  state.sueldoParametros[anio]={
+    anio,
+    uit:parseFloat(document.getElementById('sp-uit').value)||5500,
+    deduccionUIT:7,
+    afpAporte:parseFloat(document.getElementById('sp-afp-aporte').value)||10,
+    afpPrima:parseFloat(document.getElementById('sp-afp-prima').value)||1.37,
+    onpTasa:parseFloat(document.getElementById('sp-onp-tasa').value)||13,
+  };
+  cerrarParametrosSueldo();
+  recalcularTodosLosAnios();
+  saveState();
+  renderSueldos();
+}
+// Recalcula todos los años que tengan boletas registradas — se usa cuando
+// cambia algo "global" (config o parámetros del año) que puede afectar
+// cálculos ya guardados.
+function recalcularTodosLosAnios(){
+  const anios=[...new Set(getBoletasSueldo().map(b=>b.anio))];
+  anios.forEach(a=>recalcularBoletasAnio(a));
+}
+
+function guardarBoletaSueldo(){
+  const mes=parseInt(document.getElementById('sb-mes').value);
+  const anio=parseInt(document.getElementById('sb-anio').value);
+  const basica=parseFloat(document.getElementById('sb-basica').value)||0;
+  const bono=parseFloat(document.getElementById('sb-bono').value)||0;
+  const otros=parseFloat(document.getElementById('sb-otros').value)||0;
+  const utilidades=parseFloat(document.getElementById('sb-utilidades').value)||0;
+  const rentaRealInput=document.getElementById('sb-renta-real').value;
+  const rentaReal=rentaRealInput!==''?parseFloat(rentaRealInput):null;
+  if(!basica&&!bono&&!otros&&!utilidades){ alert('Ingresa al menos la remuneración básica.'); return; }
+  const ingresoRecurrente=basica+bono;
+  const ingresoUnico=otros+utilidades;
+  const ingresoMes=ingresoRecurrente+ingresoUnico;
+  const pension=calcularDescuentosPensionMes(ingresoMes);
+  if(!Array.isArray(state.sueldoBoletas)) state.sueldoBoletas=[];
+  const idx=state.sueldoBoletas.findIndex(b=>b.anio===anio&&b.mes===mes);
+  const boleta={
+    id:idx>=0?state.sueldoBoletas[idx].id:'sb-'+Date.now(),
+    anio,mes,basica,bono,otros,utilidades,
+    retencion5taEstimada:0, // se recalcula ahora mismo, junto con TODOS los meses
+    retencion5taReal:rentaReal,
+    pensionAporte:pension.aporte,pensionPrima:pension.prima,pensionComision:pension.comisionFlujo,
+  };
+  if(idx>=0) state.sueldoBoletas[idx]=boleta; else state.sueldoBoletas.push(boleta);
+  // Recalcula TODOS los meses del año en orden — así enero/febrero/etc. ya
+  // no se quedan con el estimado viejo de cuando aún faltaban meses por
+  // registrar (esto era la causa real de la "gran diferencia" reportada).
+  recalcularBoletasAnio(anio);
+  saveState();
+  const boletaActualizada=state.sueldoBoletas.find(b=>b.anio===anio&&b.mes===mes);
+  const calcActual=calcularRenta5taMes(anio,mes,ingresoRecurrente,ingresoUnico);
+  renderResultadoMesSueldo(boletaActualizada,calcActual,pension);
+  renderSueldos();
+}
+// Recalcula retencion5taEstimada de TODAS las boletas de un año, en orden
+// cronológico (enero→diciembre) — necesario porque cada mes depende de lo
+// ya retenido en los meses anteriores, y de la gratificación proyectada
+// (que a su vez depende de boletas de meses que pueden haberse agregado
+// DESPUÉS de las que ya estaban registradas).
+function recalcularBoletasAnio(anio){
+  const meses=getBoletasAnioSueldo(anio); // ya viene ordenado por mes
+  meses.forEach(b=>{
+    const calc=calcularRenta5taMes(anio,b.mes,b.basica+b.bono,b.otros+(b.utilidades||0));
+    const idx=state.sueldoBoletas.findIndex(x=>x.id===b.id);
+    if(idx>=0) state.sueldoBoletas[idx].retencion5taEstimada=calc.retencionMes;
+  });
+}
+function eliminarBoletaSueldo(id){
+  const boleta=(state.sueldoBoletas||[]).find(b=>b.id===id);
+  state.sueldoBoletas=(state.sueldoBoletas||[]).filter(b=>b.id!==id);
+  if(boleta) recalcularBoletasAnio(boleta.anio);
+  saveState();
+  renderSueldos();
+}
+function renderResultadoMesSueldo(boleta,calc,pension){
+  const cont=document.getElementById('sueldo-resultado-mes');
+  const ingresoMes=boleta.basica+boleta.bono+boleta.otros+(boleta.utilidades||0);
+  const netoEstimado=ingresoMes-pension.total-calc.retencionMes;
+  let filaComparacion='';
+  if(boleta.retencion5taReal!==null&&boleta.retencion5taReal!==undefined){
+    const diff=boleta.retencion5taReal-calc.retencionMes;
+    const color=Math.abs(diff)<2?'var(--green)':'var(--red)';
+    filaComparacion=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border2);font-size:12px">
+      Tu boleta real dice <b>${fmtS(boleta.retencion5taReal)}</b> — diferencia con lo estimado: <span style="color:${color};font-weight:600">${fmtS(Math.abs(diff))}</span>
+    </div>`;
+  }
+  cont.style.display='block';
+  cont.innerHTML=`<div class="card" style="padding:16px 20px;border:1px solid var(--accent)">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Resultado — ${MONTHS[boleta.mes]} ${boleta.anio}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;font-size:12px">
+      <div><div style="color:var(--text3)">Ingreso del mes</div><div style="font-weight:600">${fmtS(ingresoMes)}</div></div>
+      <div><div style="color:var(--text3)">AFP/ONP</div><div style="font-weight:600">${fmtS(pension.total)}</div></div>
+      <div><div style="color:var(--text3)">Renta 5ta estimada</div><div style="font-weight:600">${fmtS(calc.retencionMes)}</div></div>
+      <div><div style="color:var(--text3)">Neto estimado</div><div style="font-weight:700;color:var(--accent)">${fmtS(netoEstimado)}</div></div>
+    </div>
+    ${filaComparacion}
+  </div>`;
+}
+
+function renderSueldos(){
+  const cfg=state.sueldoConfig;
+  const sinConfig=document.getElementById('sueldo-sin-config');
+  const contenido=document.getElementById('sueldo-contenido');
+  if(!cfg){
+    sinConfig.style.display='block';
+    contenido.style.display='none';
+    return;
+  }
+  sinConfig.style.display='none';
+  contenido.style.display='block';
+
+  const hoy=new Date();
+  const anioActual=hoy.getFullYear();
+  document.getElementById('sb-anio').value=document.getElementById('sb-anio').value||anioActual;
+  if(!document.getElementById('sb-anio').value) document.getElementById('sb-anio').value=anioActual;
+  document.getElementById('sb-mes').value=hoy.getMonth();
+
+  // Parámetros del año actual, resumen
+  const params=getSueldoParametros(anioActual);
+  document.getElementById('sueldo-anio-parametros').textContent=params.anio;
+  document.getElementById('sueldo-parametros-resumen').innerHTML=`
+    <div><div style="color:var(--text3)">UIT</div><div style="font-weight:600">${fmtS(params.uit)}</div></div>
+    <div><div style="color:var(--text3)">Deducción (7 UIT)</div><div style="font-weight:600">${fmtS(params.deduccionUIT*params.uit)}</div></div>
+    <div><div style="color:var(--text3)">${cfg.sistemaPension==='onp'?'ONP':'AFP '+(cfg.afpNombre||'')}</div><div style="font-weight:600">${cfg.sistemaPension==='onp'?params.onpTasa+'%':(params.afpAporte+'% + '+params.afpPrima+'%')}${cfg.comisionFlujo?' + '+(cfg.comisionFlujoPct||0)+'%':''}</div></div>
+    <div><div style="color:var(--text3)">Tipo de sueldo</div><div style="font-weight:600">${cfg.tipoSueldo==='fijo'?'Fijo':'Variable'}</div></div>
+  `;
+
+  // Tabla de boletas registradas (año actual)
+  const boletas=getBoletasAnioSueldo(anioActual);
+  const tbody=document.getElementById('sueldo-boletas-tbody');
+  tbody.innerHTML=boletas.length?boletas.map(b=>{
+    const ingreso=b.basica+b.bono+b.otros+(b.utilidades||0);
+    const tieneReal=b.retencion5taReal!==null&&b.retencion5taReal!==undefined;
+    const diff=tieneReal?b.retencion5taReal-b.retencion5taEstimada:null;
+    const diffTxt=tieneReal?`<span style="color:${Math.abs(diff)<2?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${fmtS(diff)}</span>`:'—';
+    const utilTxt=b.utilidades?` <span title="Incluye S/${b.utilidades.toFixed(2)} de utilidades" style="cursor:help">💰</span>`:'';
+    return `<tr>
+      <td>${MONTHS[b.mes]}</td>
+      <td style="text-align:right">${fmtS(ingreso)}${utilTxt}</td>
+      <td style="text-align:right">${fmtS(b.retencion5taEstimada)}</td>
+      <td style="text-align:right">${tieneReal?fmtS(b.retencion5taReal):'—'}</td>
+      <td style="text-align:right">${diffTxt}</td>
+      <td style="text-align:right"><span style="cursor:pointer;color:var(--text3)" onclick="eliminarBoletaSueldo('${b.id}')">✕</span></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:12px">Todavía no registraste ninguna boleta este año.</td></tr>';
+
+  // Proyección anual (usa la última boleta registrada como punto de partida)
+  const proyCont=document.getElementById('sueldo-proyeccion-anual');
+  if(boletas.length){
+    const ultima=boletas[boletas.length-1];
+    const calc=calcularRenta5taMes(ultima.anio,ultima.mes,ultima.basica+ultima.bono,ultima.otros+(ultima.utilidades||0));
+    const ingresoAcumulado=boletas.reduce((s,b)=>s+b.basica+b.bono+b.otros+(b.utilidades||0),0);
+    const retencionAcumulada=boletas.reduce((s,b)=>s+b.retencion5taEstimada,0);
+    const tasaEfectiva=calc.rentaBrutaAnualProyectada>0?(calc.impuestoAnual/calc.rentaBrutaAnualProyectada*100):0;
+    proyCont.innerHTML=`
+      <div style="background:var(--bg3);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text3)">Ingreso bruto anual proyectado</div><div style="font-size:18px;font-weight:600">${fmtS(calc.rentaBrutaAnualProyectada)}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text3)">Renta 5ta anual proyectada</div><div style="font-size:18px;font-weight:600">${fmtS(calc.impuestoAnual)}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text3)">Tasa efectiva</div><div style="font-size:18px;font-weight:600">${tasaEfectiva.toFixed(1)}%</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text3)">Retenido en el año a la fecha</div><div style="font-size:18px;font-weight:600">${fmtS(retencionAcumulada)}</div></div>
+    `;
+  } else {
+    proyCont.innerHTML='<div style="color:var(--text3);font-size:12px;grid-column:1/-1">Registra al menos una boleta para ver la proyección.</div>';
+  }
+
+  // Gratificación y CTS
+  const gratJul=calcularGratificacion(anioActual,'jul');
+  const gratDic=calcularGratificacion(anioActual,'dic');
+  const ctsMayo=calcularCTS(anioActual,4);
+  const ctsNov=calcularCTS(anioActual,10);
+  const tarjetaGrat=(titulo,g)=>`<div style="background:var(--bg3);border-radius:8px;padding:12px">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${titulo} <small>(${g.mesesCompletos} meses${g.dias?' + '+g.dias+' días':''})</small></div>
+    <div style="font-size:16px;font-weight:600">${fmtS(g.total)}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:2px">Base ${fmtS(g.baseGrat)} + bonif. ${fmtS(g.bonificacion)}${g.cuenta?'':' · sin bono variable aún (menos de 3 meses registrados)'}</div>
+    ${g.esEstimado?'<div style="font-size:10px;color:var(--amber, #b8860b);margin-top:2px">⚠️ Estimado con tu último sueldo fijo conocido — sube tus boletas de este periodo para exactitud</div>':''}
+  </div>`;
+  const tarjetaCTS=(titulo,c)=>`<div style="background:var(--bg3);border-radius:8px;padding:12px">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${titulo} <small>(${c.mesesCompletos} meses${c.dias?' + '+c.dias+' días':''})</small></div>
+    <div style="font-size:16px;font-weight:600">${fmtS(c.cts)}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:2px">Remun. computable ${fmtS(c.rc)} (incluye 1/6 grat.: ${fmtS(c.sextoGratificacion)})</div>
+    ${c.esEstimado?'<div style="font-size:10px;color:var(--amber, #b8860b);margin-top:2px">⚠️ Estimado con tu último sueldo fijo conocido — sube tus boletas de este periodo para exactitud</div>':''}
+  </div>`;
+  document.getElementById('sueldo-grat-cts').innerHTML=
+    tarjetaGrat('🎁 Gratificación julio '+anioActual,gratJul)+
+    tarjetaGrat('🎁 Gratificación diciembre '+anioActual,gratDic)+
+    tarjetaCTS('🏦 CTS mayo '+anioActual,ctsMayo)+
+    tarjetaCTS('🏦 CTS noviembre '+anioActual,ctsNov);
+
+  renderSueldoChart();
+}
+function setSueldoChartTab(i){
+  currentSueldoChartTab=i;
+  [0,1,2].forEach(n=>document.getElementById('sct'+n).classList.toggle('active',n===i));
+  renderSueldoChart();
+}
+function renderSueldoChart(){
+  const canvasEl=document.getElementById('sueldo-chart');
+  if(!canvasEl) return;
+  if(sueldoChart){ sueldoChart.destroy(); sueldoChart=null; }
+  const anioActual=(new Date()).getFullYear();
+  const boletas=getBoletasAnioSueldo(anioActual);
+  const legend=document.getElementById('sueldo-chart-legend');
+  if(!boletas.length){
+    legend.innerHTML='<span>Registra boletas para ver la evolución del año.</span>';
+    return;
+  }
+  const labels=boletas.map(b=>MONTHS_SHORT[b.mes]);
+  const ctx=canvasEl.getContext('2d');
+  if(currentSueldoChartTab===0){
+    const ingresos=boletas.map(b=>+(b.basica+b.bono+b.otros+(b.utilidades||0)).toFixed(2));
+    const retEst=boletas.map(b=>+b.retencion5taEstimada.toFixed(2));
+    const retReal=boletas.map(b=>b.retencion5taReal!==null&&b.retencion5taReal!==undefined?+b.retencion5taReal.toFixed(2):null);
+    const baseOpts=chartOpts(v=>'S/'+(v/1000).toFixed(1)+'k');
+    sueldoChart=new Chart(ctx,{data:{labels,datasets:[
+      {type:'bar',label:'Ingreso',data:ingresos,backgroundColor:'rgba(91,141,239,.25)',borderColor:'#5b8def',borderWidth:1.5,borderRadius:3,yAxisID:'y'},
+      {type:'line',label:'5ta estimada',data:retEst,borderColor:'#f0a53c',borderWidth:2,pointRadius:3,tension:.3,yAxisID:'y1'},
+      {type:'line',label:'5ta real',data:retReal,borderColor:'#f05c5c',borderWidth:2,pointRadius:3,tension:.3,borderDash:[4,3],yAxisID:'y1'},
+    ]},options:{...baseOpts,scales:{
+      x:baseOpts.scales.x,
+      y:{position:'left',grid:baseOpts.scales.y.grid,ticks:baseOpts.scales.y.ticks},
+      y1:{position:'right',grid:{display:false},ticks:{...baseOpts.scales.y.ticks,callback:v=>'S/'+v.toFixed(0)}},
+    }}});
+    legend.innerHTML=`<span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#5b8def;display:inline-block"></span>Ingreso</span><span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:2px;background:#f0a53c;display:inline-block"></span>5ta estimada</span><span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:2px;background:#f05c5c;display:inline-block"></span>5ta real</span>`;
+  } else if(currentSueldoChartTab===1){
+    const netos=boletas.map(b=>{
+      const ingreso=b.basica+b.bono+b.otros+(b.utilidades||0);
+      const pension=(b.pensionAporte||0)+(b.pensionPrima||0)+(b.pensionComision||0);
+      return +(ingreso-pension-b.retencion5taEstimada).toFixed(2);
+    });
+    sueldoChart=new Chart(ctx,{data:{labels,datasets:[
+      {type:'line',label:'Neto estimado',data:netos,borderColor:'#2dd4bf',borderWidth:2,pointRadius:4,tension:.3,fill:{target:'origin',above:'#2dd4bf22'}},
+    ]},options:chartOpts(v=>'S/'+(v/1000).toFixed(1)+'k')});
+    legend.innerHTML=`<span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#2dd4bf;display:inline-block"></span>Neto mensual estimado</span>`;
+  } else {
+    const tasas=boletas.map(b=>{
+      const calc=calcularRenta5taMes(b.anio,b.mes,b.basica+b.bono,b.otros+(b.utilidades||0));
+      return calc.rentaBrutaAnualProyectada>0?+(calc.impuestoAnual/calc.rentaBrutaAnualProyectada*100).toFixed(2):0;
+    });
+    sueldoChart=new Chart(ctx,{data:{labels,datasets:[
+      {type:'line',label:'Tasa efectiva %',data:tasas,borderColor:'#a78bfa',borderWidth:2,pointRadius:4,tension:.3,fill:{target:'origin',above:'#a78bfa22'}},
+    ]},options:chartOpts(v=>v.toFixed(1)+'%')});
+    legend.innerHTML=`<span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#a78bfa;display:inline-block"></span>Tasa efectiva de impuesto (% del ingreso anual proyectado)</span>`;
+  }
+}
+
+// ── SIMULADOR DE SUELDO NETO (ej. evaluar una oferta de otro trabajo) ──
+// Escenario hipotético: asume el mismo bruto mensual los 12 meses + 2
+// gratificaciones completas (sin bono variable, porque es un sueldo que
+// aún no existe). Usa tu configuración actual (AFP/ONP, EPS). El impuesto
+// se reparte como promedio mensual (no con los divisores de SUNAT, que
+// solo tienen sentido para un año real en curso, no para un escenario
+// hipotético "de cero").
+function abrirSimuladorNeto(){
+  document.getElementById('sim-bruto').value='';
+  document.getElementById('sim-resultado').style.display='none';
+  document.getElementById('sueldo-simulador-overlay').classList.add('open');
+}
+function cerrarSimuladorNeto(){ document.getElementById('sueldo-simulador-overlay').classList.remove('open'); }
+function calcularSimuladorNeto(){
+  const bruto=parseFloat(document.getElementById('sim-bruto').value)||0;
+  if(bruto<=0){ alert('Ingresa un sueldo bruto mensual válido.'); return; }
+  const cfg=state.sueldoConfig||{};
+  const params=getSueldoParametros((new Date()).getFullYear());
+  const ingresoAnualOrdinario=bruto*12;
+  const gratAnual=bruto*2; // 2 gratificaciones completas, sin variable
+  const pctBonif=cfg.tieneEPS?0.0675:0.09;
+  const bonifExtraAnual=gratAnual*pctBonif; // inafecta, no se suma a la renta
+  const rentaBrutaAnual=ingresoAnualOrdinario+gratAnual;
+  const rentaNeta=Math.max(0,rentaBrutaAnual-params.deduccionUIT*params.uit);
+  const impuestoAnual=calcularImpuestoAnualSueldo(rentaNeta,params);
+  const impuestoMensualPromedio=impuestoAnual/12;
+  const pension=calcularDescuentosPensionMes(bruto);
+  const netoMensual=bruto-pension.total-impuestoMensualPromedio;
+  const cont=document.getElementById('sim-resultado');
+  cont.style.display='block';
+  cont.innerHTML=`
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text3)">Neto mensual estimado (sueldo ordinario)</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent)">${fmtS(netoMensual)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+      <div><div style="color:var(--text3)">AFP/ONP mensual</div><div style="font-weight:600">${fmtS(pension.total)}</div></div>
+      <div><div style="color:var(--text3)">Renta 5ta mensual (prom.)</div><div style="font-weight:600">${fmtS(impuestoMensualPromedio)}</div></div>
+      <div><div style="color:var(--text3)">Renta 5ta anual total</div><div style="font-weight:600">${fmtS(impuestoAnual)}</div></div>
+      <div><div style="color:var(--text3)">Tasa efectiva</div><div style="font-weight:600">${(rentaBrutaAnual>0?impuestoAnual/rentaBrutaAnual*100:0).toFixed(1)}%</div></div>
+    </div>
+    <div style="border-top:1px solid var(--border2);margin-top:10px;padding-top:10px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Gratificación anual (jul+dic, 2 sueldos)</span><span style="font-weight:600">${fmtS(gratAnual)}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>Bonificación extraordinaria (${(pctBonif*100).toFixed(2)}%, inafecta)</span><span style="font-weight:600;color:var(--green)">+${fmtS(bonifExtraAnual)}</span></div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px">⚠️ Simplificado: asume el mismo sueldo todo el año, sin bono variable ni CTS. Para tu sueldo real usa el registro de boletas de arriba, que sí calcula con precisión mes a mes.</div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+//  MINIJUEGOS — 14 clásicos hechos con Canvas 2D / HTML nativo, sin
+//  librerías externas. Los mejores puntajes se guardan en Firestore
+//  (state.minijuegosHighScores). Los de física/animación continua (Dino,
+//  Snake, Flappy, Breakout) usan <canvas>; el resto (grillas, turnos) usan
+//  divs normales — es más simple hacer clic-por-celda con DOM que con
+//  coordenadas de canvas.
+// ══════════════════════════════════════════════════════
+const MJ_JUEGOS=[
+  {id:'dino',    nombre:'Dino Runner',    icono:'🦖', tipo:'canvas', menorEsMejor:false},
+  {id:'snake',   nombre:'Snake',          icono:'🐍', tipo:'canvas', menorEsMejor:false},
+  {id:'flappy',  nombre:'Flappy Bird',    icono:'🐤', tipo:'canvas', menorEsMejor:false},
+  {id:'breakout',nombre:'Breakout',       icono:'🧱', tipo:'canvas', menorEsMejor:false},
+  {id:'whack',   nombre:'Whack-a-mole',   icono:'🔨', tipo:'dom',    menorEsMejor:false},
+  {id:'piano',   nombre:'Piano Tiles',    icono:'🎹', tipo:'dom',    menorEsMejor:false},
+  {id:'2048',    nombre:'2048',           icono:'🔢', tipo:'dom',    menorEsMejor:false},
+  {id:'mines',   nombre:'Buscaminas',     icono:'💣', tipo:'dom',    menorEsMejor:true},
+  {id:'puzzle15',nombre:'Puzzle 15',      icono:'🧩', tipo:'dom',    menorEsMejor:true},
+  {id:'wordle',  nombre:'Wordle ES',      icono:'🔤', tipo:'dom',    menorEsMejor:false},
+  {id:'memoria', nombre:'Memoria',        icono:'🃏', tipo:'dom',    menorEsMejor:true},
+  {id:'simon',   nombre:'Simón dice',     icono:'🎵', tipo:'dom',    menorEsMejor:false},
+  {id:'tictactoe',nombre:'Tres en raya',  icono:'❌', tipo:'dom',    menorEsMejor:false},
+  {id:'conecta4',nombre:'Conecta 4',      icono:'🔴', tipo:'dom',    menorEsMejor:false},
+];
+let mjJuegoActual=null;
+let mjRafId=null;      // requestAnimationFrame (juegos de canvas con física)
+let mjTimeoutId=null;  // setTimeout (bucles a intervalos, ej. Snake)
+let mjIntervalId=null; // setInterval (temporizadores, ej. Whack-a-mole)
+function mjDetenerBucles(){
+  if(mjRafId){ cancelAnimationFrame(mjRafId); mjRafId=null; }
+  if(mjTimeoutId){ clearTimeout(mjTimeoutId); mjTimeoutId=null; }
+  if(mjIntervalId){ clearInterval(mjIntervalId); mjIntervalId=null; }
+}
+let mjCtx=null;
+let mjKeyHandler=null;
+
+function getMjHighScores(){
+  if(!state.minijuegosHighScores) state.minijuegosHighScores={};
+  return state.minijuegosHighScores;
+}
+function mjGuardarHighScoreSiCorresponde(juego, score){
+  const hs=getMjHighScores();
+  const cfg=MJ_JUEGOS.find(j=>j.id===juego);
+  const actual=hs[juego];
+  const esMejor = actual===undefined || (cfg.menorEsMejor ? score<actual : score>actual);
+  if(esMejor){ hs[juego]=score; saveState(); return true; }
+  return false;
+}
+
+function initMinijuegos(){
+  mjRenderMenu();
+  document.getElementById('mj-juego-area').style.display='none';
+  document.getElementById('mj-btn-volver').style.display='none';
+  document.getElementById('mj-menu').style.display='grid';
+}
+function mjRenderMenu(){
+  const hs=getMjHighScores();
+  document.getElementById('mj-menu').innerHTML=MJ_JUEGOS.map(j=>{
+    const score=hs[j.id];
+    const scoreTxt=score!==undefined?`Mejor: ${score}`:'Sin jugar';
+    return `<div onclick="mjAbrirJuego('${j.id}')" style="cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center">
+      <div style="font-size:28px">${j.icono}</div>
+      <div style="font-size:12px;font-weight:600;margin-top:4px">${j.nombre}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${scoreTxt}</div>
+    </div>`;
+  }).join('');
+}
+function mjVolverAlMenu(){
+  mjDetenerBucles();
+  if(mjKeyHandler){ document.removeEventListener('keydown', mjKeyHandler); mjKeyHandler=null; }
+  mjJuegoActual=null;
+  mjRenderMenu();
+  document.getElementById('mj-juego-area').style.display='none';
+  document.getElementById('mj-btn-volver').style.display='none';
+  document.getElementById('mj-menu').style.display='grid';
+}
+function mjAbrirJuego(id){
+  mjDetenerBucles();
+  mjJuegoActual=id;
+  const cfg=MJ_JUEGOS.find(j=>j.id===id);
+  document.getElementById('mj-menu').style.display='none';
+  document.getElementById('mj-btn-volver').style.display='inline-block';
+  document.getElementById('mj-juego-area').style.display='block';
+  document.getElementById('mj-titulo-juego').textContent=`${cfg.icono} ${cfg.nombre}`;
+  document.getElementById('mj-score-mejor').textContent=getMjHighScores()[id]!==undefined?getMjHighScores()[id]:'—';
+  document.getElementById('mj-score-actual').textContent='0';
+  document.getElementById('mj-mensaje').textContent='Dale a "Jugar" para empezar 🎮';
+  document.getElementById('mj-btn-jugar').style.display='inline-block';
+
+  const canvasWrap=document.getElementById('mj-canvas-wrap');
+  const domArea=document.getElementById('mj-dom-area');
+  if(cfg.tipo==='canvas'){
+    canvasWrap.style.display='flex'; domArea.style.display='none'; domArea.innerHTML='';
+    const canvas=document.getElementById('mj-canvas');
+    const anchoDisponible=Math.min(640, (canvas.parentElement.clientWidth||360)-4);
+    canvas.width=anchoDisponible;
+    canvas.height=Math.round(anchoDisponible*0.42);
+    mjCtx=canvas.getContext('2d');
+    let touchStartX=0, touchStartY=0;
+    canvas.ontouchstart=(e)=>{
+      const t=e.touches[0]; touchStartX=t.clientX; touchStartY=t.clientY;
+      if(id==='dino') mjDinoSaltar();
+      else if(id==='flappy') mjFlappyVolar();
+    };
+    canvas.ontouchmove=(e)=>{
+      if(id!=='breakout') return;
+      e.preventDefault();
+      const rect=canvas.getBoundingClientRect();
+      mjBreakoutMoverA(e.touches[0].clientX-rect.left);
+    };
+    canvas.ontouchend=(e)=>{
+      if(id!=='snake') return;
+      const t=e.changedTouches[0];
+      const dx=t.clientX-touchStartX, dy=t.clientY-touchStartY;
+      if(Math.abs(dx)<20 && Math.abs(dy)<20) return;
+      if(Math.abs(dx)>Math.abs(dy)) mjSnakeCambiarDireccion(dx>0?'right':'left');
+      else mjSnakeCambiarDireccion(dy>0?'down':'up');
+    };
+    canvas.onclick=()=>{ if(id==='dino') mjDinoSaltar(); else if(id==='flappy') mjFlappyVolar(); };
+  } else {
+    canvasWrap.style.display='none'; domArea.style.display='block';
+  }
+
+  // Controles de teclado — cada juego decide qué hacer con cada tecla.
+  if(mjKeyHandler) document.removeEventListener('keydown', mjKeyHandler);
+  mjKeyHandler=(e)=>{
+    if(!document.getElementById('page-minijuegos').classList.contains('active')) return;
+    mjManejarTecla(e);
+  };
+  document.addEventListener('keydown', mjKeyHandler);
+
+  const initFns={
+    dino:mjDinoInit, snake:mjSnakeInit, flappy:mjFlappyInit, breakout:mjBreakoutInit,
+    whack:mjWhackInit, piano:mjPianoInit, '2048':mj2048Init, mines:mjMinesInit,
+    puzzle15:mjPuzzle15Init, wordle:mjWordleInit, memoria:mjMemoriaInit, simon:mjSimonInit,
+    tictactoe:mjTicTacToeInit, conecta4:mjConecta4Init,
+  };
+  const controles={
+    dino:'Espacio / ↑ / toca la pantalla para saltar',
+    snake:'Flechas del teclado / desliza para moverte',
+    flappy:'Espacio / toca la pantalla para volar',
+    breakout:'Flechas ← → / arrastra para mover la barra',
+    whack:'Toca los topos antes de que se escondan',
+    piano:'Toca los bloques negros según van cayendo',
+    '2048':'Flechas del teclado / desliza para mover las fichas',
+    mines:'Toca para revelar · mantén presionado para marcar bandera',
+    puzzle15:'Toca una ficha junto al espacio vacío para moverla',
+    wordle:'Escribe una palabra de 5 letras y presiona Enter',
+    memoria:'Toca 2 cartas para voltearlas y buscar la pareja',
+    simon:'Repite la secuencia de colores tocándolos en orden',
+    tictactoe:'Toca una casilla — juegas contra la máquina',
+    conecta4:'Toca una columna para soltar tu ficha',
+  };
+  document.getElementById('mj-controles').textContent=controles[id]||'';
+  if(initFns[id]) initFns[id]();
+}
+function mjManejarTecla(e){
+  if(mjJuegoActual==='dino' && (e.code==='Space'||e.code==='ArrowUp')){ e.preventDefault(); mjDinoSaltar(); }
+  else if(mjJuegoActual==='snake'){
+    const dirs={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+    if(dirs[e.code]){ e.preventDefault(); mjSnakeCambiarDireccion(dirs[e.code]); }
+  }
+  else if(mjJuegoActual==='flappy' && e.code==='Space'){ e.preventDefault(); mjFlappyVolar(); }
+  else if(mjJuegoActual==='breakout' && (e.code==='ArrowLeft'||e.code==='ArrowRight')){ e.preventDefault(); mjBreakoutMoverTeclado(e.code==='ArrowLeft'?-1:1); }
+  else if(mjJuegoActual==='2048'){
+    const dirs={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+    if(dirs[e.code]){ e.preventDefault(); mj2048Mover(dirs[e.code]); }
+  }
+}
+function reiniciarMinijuego(){
+  const startFns={
+    dino:mjDinoStart, snake:mjSnakeStart, flappy:mjFlappyStart, breakout:mjBreakoutStart,
+    whack:mjWhackStart, piano:mjPianoStart, '2048':mj2048Start, mines:mjMinesStart,
+    puzzle15:mjPuzzle15Start, wordle:mjWordleStart, memoria:mjMemoriaStart, simon:mjSimonStart,
+    tictactoe:mjTicTacToeStart, conecta4:mjConecta4Start,
+  };
+  if(startFns[mjJuegoActual]) startFns[mjJuegoActual]();
+}
+function mjSetScore(n){ document.getElementById('mj-score-actual').textContent=n; }
+function mjSetMejor(n){ document.getElementById('mj-score-mejor').textContent=n; }
+function mjMensaje(txt){ document.getElementById('mj-mensaje').textContent=txt; }
+function mjFinDeJuego(txt, score){
+  const esRecord=mjGuardarHighScoreSiCorresponde(mjJuegoActual, score);
+  mjSetMejor(getMjHighScores()[mjJuegoActual]);
+  mjMensaje((esRecord?'🏆 ¡Nuevo récord! ':'')+txt);
+}
+
+// Dibuja un rectángulo con esquinas redondeadas (compatibilidad amplia,
+// sin depender de ctx.roundRect nativo).
+function mjRoundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  ctx.fill();
+}
+function mjCssVar(name,fallback){ return (getComputedStyle(document.documentElement).getPropertyValue(name)||fallback).trim(); }
+
+// ── DINO RUNNER ──────────────────────────────────────
+let mjDino;
+function mjDinoInit(){
+  const c=document.getElementById('mj-canvas');
+  mjDino={
+    x:30, y:0, w:22, h:24, vy:0, enSuelo:true,
+    suelo:c.height-20, obstaculos:[], nubes:[{x:c.width*0.3,y:14},{x:c.width*0.7,y:24}], velocidad:4, score:0, corriendo:false, tick:0,
+  };
+  mjDino.y=mjDino.suelo-mjDino.h;
+  mjDinoDibujarIdle();
+}
+function mjDinoDibujarFondo(){
+  const c=document.getElementById('mj-canvas');
+  const d=mjDino;
+  const bg2=mjCssVar('--bg3','#f4f4f4'), bg1=mjCssVar('--bg2','#fff');
+  const grad=mjCtx.createLinearGradient(0,0,0,c.height);
+  grad.addColorStop(0,bg1); grad.addColorStop(1,bg2);
+  mjCtx.fillStyle=grad;
+  mjCtx.fillRect(0,0,c.width,c.height);
+  // Nubes
+  mjCtx.fillStyle=mjCssVar('--border','#ddd');
+  (d.nubes||[]).forEach(n=>{
+    mjCtx.beginPath();
+    mjCtx.arc(n.x,n.y,7,0,Math.PI*2);
+    mjCtx.arc(n.x+8,n.y-2,6,0,Math.PI*2);
+    mjCtx.arc(n.x+16,n.y,7,0,Math.PI*2);
+    mjCtx.fill();
+  });
+  // Piso con textura punteada
+  mjCtx.strokeStyle=mjCssVar('--text3','#888');
+  mjCtx.lineWidth=2;
+  mjCtx.beginPath(); mjCtx.moveTo(0,d.suelo); mjCtx.lineTo(c.width,d.suelo); mjCtx.stroke();
+  mjCtx.fillStyle=mjCssVar('--text3','#888');
+  const desfase=(d.tick||0)%20;
+  for(let x=-desfase;x<c.width;x+=20) mjCtx.fillRect(x,d.suelo+4,8,2);
+}
+function mjDinoDibujarIdle(){
+  mjDinoDibujarFondo();
+  mjDinoDibujarPersonaje();
+}
+function mjDinoDibujarPersonaje(){
+  const d=mjDino;
+  const accent=mjCssVar('--accent','#5b8def');
+  const corriendoAnim=d.enSuelo && d.corriendo && (d.tick||0)%20<10;
+  mjCtx.fillStyle=accent;
+  // Cuerpo (redondeado) + cabeza
+  mjRoundRect(mjCtx, d.x, d.y+4, d.w-4, d.h-8, 4);
+  mjRoundRect(mjCtx, d.x+d.w-14, d.y, 16, 14, 4); // cabeza
+  // Ojo
+  mjCtx.fillStyle=mjCssVar('--bg1','#fff');
+  mjCtx.beginPath(); mjCtx.arc(d.x+d.w-4, d.y+6, 1.6, 0, Math.PI*2); mjCtx.fill();
+  // Patas (alternan si está corriendo, para dar sensación de movimiento)
+  mjCtx.fillStyle=accent;
+  if(corriendoAnim){ mjCtx.fillRect(d.x+3, d.y+d.h-6, 4, 6); mjCtx.fillRect(d.x+d.w-10, d.y+d.h-8, 4, 8); }
+  else { mjCtx.fillRect(d.x+3, d.y+d.h-8, 4, 8); mjCtx.fillRect(d.x+d.w-10, d.y+d.h-6, 4, 6); }
+}
+function mjDinoDibujarCactus(o,suelo){
+  const verde='#5a9c5a';
+  mjCtx.fillStyle=verde;
+  mjRoundRect(mjCtx, o.x, suelo-o.h, o.w, o.h, 3);
+  // Brazos del cactus (decorativo, en obstáculos más anchos)
+  if(o.w>=14){
+    mjRoundRect(mjCtx, o.x-4, suelo-o.h+6, 6, 10, 2);
+    mjRoundRect(mjCtx, o.x+o.w-2, suelo-o.h+10, 6, 10, 2);
+  }
+}
+function mjDinoSaltar(){
+  if(!mjDino.corriendo){ mjDinoStart(); return; }
+  if(mjDino.enSuelo){ mjDino.vy=-9.5; mjDino.enSuelo=false; }
+}
+function mjDinoStart(){
+  mjDinoInit();
+  mjDino.corriendo=true;
+  document.getElementById('mj-mensaje').textContent='';
+  mjDetenerBucles();
+  mjDinoLoop();
+}
+function mjDinoLoop(){
+  if(!document.getElementById('page-minijuegos').classList.contains('active')) return;
+  const c=document.getElementById('mj-canvas');
+  const d=mjDino;
+  d.tick++;
+
+  // Física de salto
+  d.vy+=0.5; d.y+=d.vy;
+  if(d.y>=d.suelo-d.h){ d.y=d.suelo-d.h; d.vy=0; d.enSuelo=true; }
+
+  // Generar obstáculos
+  if(d.tick%Math.max(45,80-Math.floor(d.velocidad*3))===0){
+    const h=14+Math.floor(Math.random()*14);
+    d.obstaculos.push({x:c.width, w:10+Math.floor(Math.random()*8), h});
+  }
+  d.obstaculos.forEach(o=>o.x-=d.velocidad);
+  d.obstaculos=d.obstaculos.filter(o=>o.x+o.w>0);
+  (d.nubes||[]).forEach(n=>{ n.x-=d.velocidad*0.25; if(n.x<-20){ n.x=c.width+20; n.y=10+Math.random()*20; } });
+
+  // Colisión (AABB simple)
+  for(const o of d.obstaculos){
+    const oy=d.suelo-o.h;
+    if(d.x<o.x+o.w && d.x+d.w>o.x && d.y<oy+o.h && d.y+d.h>oy){
+      mjDinoGameOver();
+      return;
+    }
+  }
+
+  d.score++; if(d.tick%10===0) d.velocidad=Math.min(11, d.velocidad+0.05);
+  document.getElementById('mj-score-actual').textContent=Math.floor(d.score/5);
+
+  // Dibujar
+  mjDinoDibujarFondo();
+  d.obstaculos.forEach(o=>mjDinoDibujarCactus(o,d.suelo));
+  mjDinoDibujarPersonaje();
+
+  mjRafId=requestAnimationFrame(mjDinoLoop);
+}
+function mjDinoGameOver(){
+  mjDino.corriendo=false;
+  const puntaje=Math.floor(mjDino.score/5);
+  mjFinDeJuego('💥 Perdiste — dale a "Jugar" para reintentar.', puntaje);
+}
+
+// ── SNAKE ────────────────────────────────────────────
+let mjSnake;
+const MJ_SNAKE_COLS=20;
+function mjSnakeInit(){
+  const c=document.getElementById('mj-canvas');
+  const cell=Math.floor(c.width/MJ_SNAKE_COLS);
+  const filas=Math.floor(c.height/cell);
+  mjSnake={
+    cell, filas, cuerpo:[{x:5,y:Math.floor(filas/2)}], dir:'right', dirSiguiente:'right',
+    comida:{x:12,y:Math.floor(filas/2)}, score:0, corriendo:false, tick:0,
+  };
+  mjSnakeDibujarIdle();
+}
+function mjSnakeColocarComida(){
+  const s=mjSnake;
+  let pos;
+  do {
+    pos={x:Math.floor(Math.random()*MJ_SNAKE_COLS), y:Math.floor(Math.random()*s.filas)};
+  } while(s.cuerpo.some(seg=>seg.x===pos.x&&seg.y===pos.y));
+  s.comida=pos;
+}
+function mjSnakeDibujarIdle(){
+  const c=document.getElementById('mj-canvas');
+  mjCtx.clearRect(0,0,c.width,c.height);
+  mjSnakeDibujar();
+}
+function mjSnakeDibujar(){
+  const c=document.getElementById('mj-canvas');
+  const s=mjSnake;
+  const accent=mjCssVar('--accent','#5b8def');
+  mjCtx.fillStyle=mjCssVar('--bg3','#f4f4f4');
+  mjCtx.fillRect(0,0,c.width,c.height);
+  // Cuadrícula tenue, para que se note el "tablero"
+  mjCtx.strokeStyle=mjCssVar('--border','#e5e5e5');
+  mjCtx.lineWidth=1;
+  for(let x=0;x<=MJ_SNAKE_COLS;x++){ mjCtx.beginPath(); mjCtx.moveTo(x*s.cell,0); mjCtx.lineTo(x*s.cell,s.filas*s.cell); mjCtx.stroke(); }
+  for(let y=0;y<=s.filas;y++){ mjCtx.beginPath(); mjCtx.moveTo(0,y*s.cell); mjCtx.lineTo(MJ_SNAKE_COLS*s.cell,y*s.cell); mjCtx.stroke(); }
+  // Cuerpo con esquinas redondeadas, un poco más claro que la cabeza
+  s.cuerpo.forEach((seg,i)=>{
+    mjCtx.fillStyle=i===0?accent:accent+'cc';
+    mjRoundRect(mjCtx, seg.x*s.cell+1, seg.y*s.cell+1, s.cell-2, s.cell-2, i===0?5:3);
+  });
+  // Ojitos en la cabeza, según la dirección
+  if(s.cuerpo.length){
+    const head=s.cuerpo[0];
+    const cx=head.x*s.cell+s.cell/2, cy=head.y*s.cell+s.cell/2;
+    const off={up:[-3,-4],down:[-3,3],left:[-4,-3],right:[3,-3]}[s.dir]||[3,-3];
+    mjCtx.fillStyle='#fff';
+    mjCtx.beginPath(); mjCtx.arc(cx+off[0]-1,cy+off[1],1.6,0,Math.PI*2); mjCtx.arc(cx+off[0]+4,cy+off[1],1.6,0,Math.PI*2); mjCtx.fill();
+  }
+  // Comida estilo manzana (círculo rojo + tallito verde)
+  const fx=s.comida.x*s.cell+s.cell/2, fy=s.comida.y*s.cell+s.cell/2;
+  mjCtx.fillStyle='#e05252';
+  mjCtx.beginPath(); mjCtx.arc(fx,fy,Math.max(3,s.cell/2-3),0,Math.PI*2); mjCtx.fill();
+  mjCtx.fillStyle='#5a9c5a';
+  mjCtx.fillRect(fx-1,fy-s.cell/2+1,2,4);
+}
+function mjSnakeCambiarDireccion(dir){
+  if(!mjSnake.corriendo){ mjSnakeStart(); return; }
+  const opuestos={up:'down',down:'up',left:'right',right:'left'};
+  if(opuestos[dir]===mjSnake.dir) return; // no puede ir directo hacia atrás
+  mjSnake.dirSiguiente=dir;
+}
+function mjSnakeStart(){
+  mjSnakeInit();
+  mjSnakeColocarComida();
+  mjSnake.corriendo=true;
+  document.getElementById('mj-mensaje').textContent='';
+  document.getElementById('mj-score-actual').textContent='0';
+  mjDetenerBucles();
+  mjSnakeLoopTick();
+}
+function mjSnakeLoopTick(){
+  if(!document.getElementById('page-minijuegos').classList.contains('active')) return;
+  const s=mjSnake;
+  s.dir=s.dirSiguiente;
+  const head={...s.cuerpo[0]};
+  if(s.dir==='up') head.y--; else if(s.dir==='down') head.y++;
+  else if(s.dir==='left') head.x--; else head.x++;
+
+  // Colisión con pared o con su propio cuerpo
+  const chocoPared = head.x<0||head.x>=MJ_SNAKE_COLS||head.y<0||head.y>=s.filas;
+  const chocoCuerpo = s.cuerpo.some(seg=>seg.x===head.x&&seg.y===head.y);
+  if(chocoPared||chocoCuerpo){ mjSnakeGameOver(); return; }
+
+  s.cuerpo.unshift(head);
+  if(head.x===s.comida.x && head.y===s.comida.y){
+    s.score+=10;
+    document.getElementById('mj-score-actual').textContent=s.score;
+    mjSnakeColocarComida();
+  } else {
+    s.cuerpo.pop();
+  }
+  mjSnakeDibujar();
+
+  const velocidadMs=Math.max(70, 140-Math.floor(s.score/2));
+  mjTimeoutId=setTimeout(mjSnakeLoopTick, velocidadMs);
+}
+function mjSnakeGameOver(){
+  mjSnake.corriendo=false;
+  mjFinDeJuego('💥 Perdiste — dale a "Jugar" para reintentar.', mjSnake.score);
+}
+
+// ── FLAPPY BIRD ──────────────────────────────────────
+let mjFlappy;
+function mjFlappyInit(){
+  const c=document.getElementById('mj-canvas');
+  mjFlappy={x:40, y:c.height/2, w:16, h:16, vy:0, tuberias:[], score:0, corriendo:false, tick:0, hueco:70};
+  mjFlappyDibujarIdle();
+}
+function mjFlappyDibujarFondo(){
+  const c=document.getElementById('mj-canvas');
+  const grad=mjCtx.createLinearGradient(0,0,0,c.height);
+  grad.addColorStop(0,mjCssVar('--bg2','#eaf4ff')); grad.addColorStop(1,mjCssVar('--bg3','#f4f4f4'));
+  mjCtx.fillStyle=grad;
+  mjCtx.fillRect(0,0,c.width,c.height);
+}
+function mjFlappyDibujarIdle(){
+  mjFlappyDibujarFondo();
+  mjFlappyDibujarPajaro();
+}
+function mjFlappyDibujarPajaro(){
+  const f=mjFlappy;
+  const accent=mjCssVar('--accent','#f0a53c');
+  const angulo=Math.max(-0.4,Math.min(0.9,(f.vy||0)*0.08)); // inclina según sube/baja
+  mjCtx.save();
+  mjCtx.translate(f.x,f.y);
+  mjCtx.rotate(angulo);
+  // Cuerpo
+  mjCtx.fillStyle=accent;
+  mjCtx.beginPath(); mjCtx.ellipse(0,0,f.w/2,f.w/2-1,0,0,Math.PI*2); mjCtx.fill();
+  // Ala
+  mjCtx.fillStyle=mjCssVar('--accent2','#d98f2e');
+  mjCtx.beginPath(); mjCtx.ellipse(-2,2,5,3,0.3,0,Math.PI*2); mjCtx.fill();
+  // Pico
+  mjCtx.fillStyle='#e8a13c';
+  mjCtx.beginPath(); mjCtx.moveTo(f.w/2-2,-1); mjCtx.lineTo(f.w/2+5,1); mjCtx.lineTo(f.w/2-2,4); mjCtx.closePath(); mjCtx.fill();
+  // Ojo
+  mjCtx.fillStyle='#fff';
+  mjCtx.beginPath(); mjCtx.arc(3,-3,2.6,0,Math.PI*2); mjCtx.fill();
+  mjCtx.fillStyle='#222';
+  mjCtx.beginPath(); mjCtx.arc(3.8,-3,1.2,0,Math.PI*2); mjCtx.fill();
+  mjCtx.restore();
+}
+function mjFlappyVolar(){
+  if(!mjFlappy.corriendo){ mjFlappyStart(); return; }
+  mjFlappy.vy=-6.2;
+}
+function mjFlappyStart(){
+  mjFlappyInit();
+  mjFlappy.corriendo=true;
+  mjMensaje('');
+  mjDetenerBucles();
+  mjFlappyLoop();
+}
+function mjFlappyLoop(){
+  if(!document.getElementById('page-minijuegos').classList.contains('active')) return;
+  const c=document.getElementById('mj-canvas');
+  const f=mjFlappy;
+  f.tick++;
+  f.vy+=0.35; f.y+=f.vy;
+
+  if(f.tick%75===0){
+    const gapY=30+Math.random()*(c.height-f.hueco-60);
+    f.tuberias.push({x:c.width, gapY, w:24, pasada:false});
+  }
+  f.tuberias.forEach(t=>t.x-=3);
+  f.tuberias=f.tuberias.filter(t=>t.x+t.w>0);
+
+  // Colisión con suelo/techo
+  if(f.y-f.w/2<0 || f.y+f.w/2>c.height){ mjFlappyGameOver(); return; }
+  // Colisión con tuberías + puntaje al pasarlas
+  for(const t of f.tuberias){
+    const dentroX = f.x+f.w/2>t.x && f.x-f.w/2<t.x+t.w;
+    const dentroHueco = f.y-f.w/2>t.gapY && f.y+f.w/2<t.gapY+f.hueco;
+    if(dentroX && !dentroHueco){ mjFlappyGameOver(); return; }
+    if(!t.pasada && t.x+t.w<f.x){ t.pasada=true; f.score++; mjSetScore(f.score); }
+  }
+
+  mjFlappyDibujarFondo();
+  const verdeTubo='#5a9c5a', verdeOscuro='#457a45';
+  f.tuberias.forEach(t=>{
+    mjCtx.fillStyle=verdeTubo;
+    mjCtx.fillRect(t.x, 0, t.w, t.gapY);
+    mjCtx.fillRect(t.x, t.gapY+f.hueco, t.w, c.height-(t.gapY+f.hueco));
+    // Remates de la tubería (más anchos, para verse tipo Mario)
+    mjCtx.fillStyle=verdeOscuro;
+    mjCtx.fillRect(t.x-3, t.gapY-10, t.w+6, 10);
+    mjCtx.fillRect(t.x-3, t.gapY+f.hueco, t.w+6, 10);
+  });
+  mjFlappyDibujarPajaro();
+
+  mjRafId=requestAnimationFrame(mjFlappyLoop);
+}
+function mjFlappyGameOver(){
+  mjFlappy.corriendo=false;
+  mjFinDeJuego('💥 Chocaste — dale a "Jugar" para reintentar.', mjFlappy.score);
+}
+
+// ── BREAKOUT ─────────────────────────────────────────
+let mjBreakout;
+function mjBreakoutInit(){
+  const c=document.getElementById('mj-canvas');
+  const cols=8, rows=4, padding=3, top=16;
+  const brickW=(c.width-padding*(cols+1))/cols, brickH=10;
+  const ladrillos=[];
+  for(let r=0;r<rows;r++) for(let col=0;col<cols;col++){
+    ladrillos.push({x:padding+col*(brickW+padding), y:top+r*(brickH+padding), w:brickW, h:brickH, viva:true, fila:r});
+  }
+  mjBreakout={
+    paddleW:50, paddleH:8, paddleX:(c.width-50)/2, paddleY:c.height-14,
+    ballX:c.width/2, ballY:c.height-24, ballR:5, ballVX:0, ballVY:0,
+    ladrillos, score:0, corriendo:false,
+  };
+  mjBreakoutDibujarIdle();
+}
+function mjBreakoutDibujarIdle(){
+  const c=document.getElementById('mj-canvas');
+  mjCtx.clearRect(0,0,c.width,c.height);
+  mjBreakoutDibujar();
+}
+function mjBreakoutMoverA(x){
+  const c=document.getElementById('mj-canvas');
+  mjBreakout.paddleX=Math.max(0, Math.min(c.width-mjBreakout.paddleW, x-mjBreakout.paddleW/2));
+}
+function mjBreakoutMoverTeclado(dir){
+  const c=document.getElementById('mj-canvas');
+  mjBreakout.paddleX=Math.max(0, Math.min(c.width-mjBreakout.paddleW, mjBreakout.paddleX+dir*20));
+}
+function mjBreakoutStart(){
+  mjBreakoutInit();
+  mjBreakout.corriendo=true;
+  mjBreakout.ballVX=2.2*(Math.random()>0.5?1:-1);
+  mjBreakout.ballVY=-3;
+  mjMensaje('');
+  mjDetenerBucles();
+  mjBreakoutLoop();
+}
+function mjBreakoutDibujar(){
+  const c=document.getElementById('mj-canvas');
+  const b=mjBreakout;
+  const text1=mjCssVar('--text1','#333');
+  const coloresFila=['#e05252','#f0a53c','#e8c547','#5a9c5a'];
+  mjCtx.fillStyle=mjCssVar('--bg3','#f4f4f4');
+  mjCtx.fillRect(0,0,c.width,c.height);
+  b.ladrillos.forEach(l=>{
+    if(!l.viva) return;
+    mjCtx.fillStyle=coloresFila[l.fila%coloresFila.length];
+    mjRoundRect(mjCtx,l.x,l.y,l.w,l.h,2);
+  });
+  // Paleta con esquinas redondeadas
+  mjCtx.fillStyle=mjCssVar('--accent','#5b8def');
+  mjRoundRect(mjCtx,b.paddleX,b.paddleY,b.paddleW,b.paddleH,4);
+  // Pelota con un brillito (da sensación de esfera, no círculo plano)
+  mjCtx.fillStyle=text1;
+  mjCtx.beginPath(); mjCtx.arc(b.ballX,b.ballY,b.ballR,0,Math.PI*2); mjCtx.fill();
+  mjCtx.fillStyle='rgba(255,255,255,.5)';
+  mjCtx.beginPath(); mjCtx.arc(b.ballX-b.ballR*0.3,b.ballY-b.ballR*0.3,b.ballR*0.35,0,Math.PI*2); mjCtx.fill();
+}
+function mjBreakoutLoop(){
+  if(!document.getElementById('page-minijuegos').classList.contains('active')) return;
+  const c=document.getElementById('mj-canvas');
+  const b=mjBreakout;
+  b.ballX+=b.ballVX; b.ballY+=b.ballVY;
+  if(b.ballX-b.ballR<0||b.ballX+b.ballR>c.width) b.ballVX*=-1;
+  if(b.ballY-b.ballR<0) b.ballVY*=-1;
+  // Paleta
+  if(b.ballY+b.ballR>=b.paddleY && b.ballY-b.ballR<=b.paddleY+b.paddleH && b.ballX>=b.paddleX && b.ballX<=b.paddleX+b.paddleW && b.ballVY>0){
+    const golpe=(b.ballX-(b.paddleX+b.paddleW/2))/(b.paddleW/2); // -1..1
+    b.ballVX=golpe*3.5; b.ballVY=-Math.abs(b.ballVY);
+  }
+  // Ladrillos
+  for(const l of b.ladrillos){
+    if(!l.viva) continue;
+    if(b.ballX+b.ballR>l.x && b.ballX-b.ballR<l.x+l.w && b.ballY+b.ballR>l.y && b.ballY-b.ballR<l.y+l.h){
+      l.viva=false; b.ballVY*=-1; b.score+=10; mjSetScore(b.score);
+      break;
+    }
+  }
+  if(b.ladrillos.every(l=>!l.viva)){ mjBreakoutGanaste(); return; }
+  if(b.ballY-b.ballR>c.height){ mjBreakoutGameOver(); return; }
+
+  mjBreakoutDibujar();
+  mjRafId=requestAnimationFrame(mjBreakoutLoop);
+}
+function mjBreakoutGameOver(){
+  mjBreakout.corriendo=false;
+  mjFinDeJuego('💥 Se te cayó la bola — dale a "Jugar" para reintentar.', mjBreakout.score);
+}
+function mjBreakoutGanaste(){
+  mjBreakout.corriendo=false;
+  mjFinDeJuego('🎉 ¡Rompiste todos los ladrillos!', mjBreakout.score);
+}
+
+// ── WHACK-A-MOLE ─────────────────────────────────────
+let mjWhack;
+function mjWhackInit(){
+  mjWhack={score:0,tiempo:30,corriendo:false,activo:-1};
+  const area=document.getElementById('mj-dom-area');
+  area.innerHTML=`<div id="mj-whack-tiempo" style="font-size:12px;color:var(--text3);margin-bottom:8px">Tiempo: 30s</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(88vw,420px);margin:0 auto">
+      ${[0,1,2,3,4,5,6,7,8].map(i=>`<div id="mj-hole-${i}" onclick="mjWhackGolpear(${i})" style="aspect-ratio:1;background:radial-gradient(circle at 50% 60%,var(--bg1),var(--bg3));box-shadow:inset 0 3px 6px rgba(0,0,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer">🕳️</div>`).join('')}
+    </div>`;
+}
+function mjWhackStart(){
+  mjWhackInit();
+  mjWhack.corriendo=true;
+  mjMensaje('');
+  mjDetenerBucles();
+  mjWhackTick();
+  mjIntervalId=setInterval(mjWhackTick, 800);
+  mjTimeoutId=setInterval(()=>{
+    mjWhack.tiempo--;
+    document.getElementById('mj-whack-tiempo').textContent='Tiempo: '+mjWhack.tiempo+'s';
+    if(mjWhack.tiempo<=0) mjWhackFin();
+  }, 1000);
+}
+function mjWhackTick(){
+  if(!mjWhack.corriendo) return;
+  if(mjWhack.activo>=0){ const el=document.getElementById('mj-hole-'+mjWhack.activo); if(el) el.textContent='🕳️'; }
+  mjWhack.activo=Math.floor(Math.random()*9);
+  const el=document.getElementById('mj-hole-'+mjWhack.activo);
+  if(el) el.textContent='🐹';
+}
+function mjWhackGolpear(i){
+  if(!mjWhack.corriendo) return;
+  if(i===mjWhack.activo){
+    mjWhack.score+=10; mjSetScore(mjWhack.score);
+    document.getElementById('mj-hole-'+i).textContent='💥';
+    mjWhack.activo=-1;
+  }
+}
+function mjWhackFin(){
+  mjWhack.corriendo=false;
+  mjDetenerBucles();
+  mjFinDeJuego('⏰ Se acabó el tiempo.', mjWhack.score);
+}
+
+// ── PIANO TILES ──────────────────────────────────────
+let mjPiano;
+function mjPianoInit(){
+  mjPiano={cols:4,bloques:[],score:0,corriendo:false,velocidad:3,alturaTotal:300};
+  const area=document.getElementById('mj-dom-area');
+  area.innerHTML=`<div id="mj-piano-wrap" style="position:relative;width:min(88vw,340px);aspect-ratio:4/5;margin:0 auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+    ${[0,1,2,3].map(c=>`<div onclick="mjPianoTocar(${c})" style="position:absolute;left:${c*25}%;top:0;width:25%;height:100%;border-right:${c<3?'1px solid var(--border)':'none'}"></div>`).join('')}
+  </div>`;
+  // El alto real puede variar según pantalla (por el aspect-ratio responsivo)
+  // — se mide una vez acá para que la física de las fichas cayendo use el
+  // tamaño de verdad, no un número fijo que ya no coincide con lo que se ve.
+  const wrap=document.getElementById('mj-piano-wrap');
+  if(wrap && wrap.clientHeight>0) mjPiano.alturaTotal=wrap.clientHeight;
+}
+function mjPianoStart(){
+  mjPianoInit();
+  mjPiano.corriendo=true;
+  mjMensaje('');
+  mjDetenerBucles();
+  mjPianoAgregarBloque();
+  mjPianoLoop();
+}
+function mjPianoAgregarBloque(){
+  const col=Math.floor(Math.random()*mjPiano.cols);
+  mjPiano.bloques.push({col,y:-60,alto:60,tocado:false});
+}
+function mjPianoLoop(){
+  if(!document.getElementById('page-minijuegos').classList.contains('active')) return;
+  const wrap=document.getElementById('mj-piano-wrap');
+  if(!wrap) return;
+  const alturaTotal=mjPiano.alturaTotal||300;
+  mjPiano.bloques.forEach(b=>b.y+=mjPiano.velocidad);
+  if(mjPiano.bloques.length && mjPiano.bloques[mjPiano.bloques.length-1].y>90) mjPianoAgregarBloque();
+  // Perdiste si un bloque llegó abajo sin tocarlo
+  const perdido=mjPiano.bloques.some(b=>!b.tocado && b.y+b.alto>=alturaTotal);
+  mjPiano.bloques=mjPiano.bloques.filter(b=>b.y<alturaTotal+10);
+  wrap.querySelectorAll('.mj-piano-bloque').forEach(el=>el.remove());
+  mjPiano.bloques.forEach(b=>{
+    const div=document.createElement('div');
+    div.className='mj-piano-bloque';
+    div.style.cssText=`position:absolute;left:${b.col*25}%;top:${b.y}px;width:25%;height:${b.alto}px;background:${b.tocado?'transparent':'linear-gradient(180deg,var(--text2,var(--text1)),var(--text1))'};border-radius:${b.tocado?'0':'0 0 6px 6px'};box-shadow:${b.tocado?'none':'inset 0 -4px 8px rgba(0,0,0,.25)'};`;
+    wrap.appendChild(div);
+  });
+  if(perdido){ mjPianoGameOver(); return; }
+  if(mjPiano.corriendo){
+    if(mjPiano.score>0 && mjPiano.score%10===0) mjPiano.velocidad=Math.min(9, 3+mjPiano.score/10);
+    mjTimeoutId=setTimeout(mjPianoLoop, 30);
+  }
+}
+function mjPianoTocar(col){
+  if(!mjPiano.corriendo) return;
+  const candidato=mjPiano.bloques.find(b=>b.col===col && !b.tocado && b.y+b.alto>0 && b.y<(mjPiano.alturaTotal||300));
+  if(candidato){
+    candidato.tocado=true;
+    mjPiano.score++; mjSetScore(mjPiano.score);
+  } else {
+    mjPianoGameOver();
+  }
+}
+function mjPianoGameOver(){
+  mjPiano.corriendo=false;
+  mjDetenerBucles();
+  mjFinDeJuego('💥 Fallaste un bloque.', mjPiano.score);
+}
+
+// ── 2048 ──────────────────────────────────────────────
+let mj2048;
+function mj2048Init(){
+  mj2048={grid:Array.from({length:4},()=>Array(4).fill(0)),score:0,corriendo:false};
+  mj2048Render();
+}
+function mj2048Render(){
+  const area=document.getElementById('mj-dom-area');
+  const colores={0:'transparent',2:'#eee4da',4:'#ede0c8',8:'#f2b179',16:'#f59563',32:'#f67c5f',64:'#f65e3b',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'};
+  area.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:min(88vw,400px);margin:0 auto;background:var(--bg3);padding:6px;border-radius:8px">
+    ${mj2048.grid.flat().map(v=>`<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:5px;font-weight:700;font-size:${v>=1024?'13px':'16px'};background:${colores[v]||'#3c3a32'};color:${v<=4?'#776e65':'#fff'};box-shadow:${v?'0 2px 3px rgba(0,0,0,.15)':'inset 0 1px 3px rgba(0,0,0,.08)'}">${v||''}</div>`).join('')}
+  </div>`;
+}
+function mj2048AgregarFicha(){
+  const vacias=[];
+  mj2048.grid.forEach((fila,r)=>fila.forEach((v,c)=>{ if(v===0) vacias.push([r,c]); }));
+  if(!vacias.length) return;
+  const [r,c]=vacias[Math.floor(Math.random()*vacias.length)];
+  mj2048.grid[r][c]=Math.random()<0.9?2:4;
+}
+function mj2048Start(){
+  mj2048Init();
+  mj2048.corriendo=true;
+  mjMensaje('');
+  mj2048AgregarFicha(); mj2048AgregarFicha();
+  mj2048Render();
+}
+function mj2048Mover(dir){
+  if(!mj2048 || !mj2048.corriendo) return;
+  const g=mj2048.grid;
+  let movio=false;
+  const combinarFila=(fila)=>{
+    let vals=fila.filter(v=>v!==0);
+    for(let i=0;i<vals.length-1;i++){
+      if(vals[i]===vals[i+1]){ vals[i]*=2; mj2048.score+=vals[i]; vals.splice(i+1,1); }
+    }
+    while(vals.length<4) vals.push(0);
+    return vals;
+  };
+  const rotar=(m)=>m[0].map((_,c)=>m.map(fila=>fila[c])); // transponer
+  let trabajo = g.map(f=>f.slice());
+  if(dir==='left'){
+    trabajo=trabajo.map(fila=>{ const nueva=combinarFila(fila); return nueva; });
+  } else if(dir==='right'){
+    trabajo=trabajo.map(fila=>{ const nueva=combinarFila(fila.slice().reverse()).reverse(); return nueva; });
+  } else if(dir==='up'){
+    let t=rotar(trabajo); t=t.map(fila=>combinarFila(fila)); trabajo=rotar(t);
+  } else if(dir==='down'){
+    let t=rotar(trabajo); t=t.map(fila=>combinarFila(fila.slice().reverse()).reverse()); trabajo=rotar(t);
+  }
+  movio = JSON.stringify(trabajo)!==JSON.stringify(g);
+  if(movio){
+    mj2048.grid=trabajo;
+    mj2048AgregarFicha();
+    mjSetScore(mj2048.score);
+    mj2048Render();
+    const hayMovimientos=mj2048HayMovimientos();
+    if(!hayMovimientos){ mj2048.corriendo=false; mjFinDeJuego('🔒 Sin movimientos posibles.', mj2048.score); }
+  }
+}
+function mj2048HayMovimientos(){
+  const g=mj2048.grid;
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++){
+    if(g[r][c]===0) return true;
+    if(c<3 && g[r][c]===g[r][c+1]) return true;
+    if(r<3 && g[r][c]===g[r+1][c]) return true;
+  }
+  return false;
+}
+// Swipe táctil para 2048 (el DOM area no usa canvas, así que se agrega aparte)
+document.addEventListener('DOMContentLoaded',()=>{
+  const area=document.getElementById('mj-dom-area');
+  if(!area) return;
+  let sx=0, sy=0;
+  area.addEventListener('touchstart',(e)=>{ if(mjJuegoActual!=='2048') return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; });
+  area.addEventListener('touchend',(e)=>{
+    if(mjJuegoActual!=='2048') return;
+    const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)<20 && Math.abs(dy)<20) return;
+    if(Math.abs(dx)>Math.abs(dy)) mj2048Mover(dx>0?'right':'left');
+    else mj2048Mover(dy>0?'down':'up');
+  });
+});
+
+// ── BUSCAMINAS ────────────────────────────────────────
+let mjMines;
+function mjMinesInit(){
+  const filas=8, cols=8, minas=10;
+  const grid=Array.from({length:filas},()=>Array(cols).fill(0));
+  let colocadas=0;
+  while(colocadas<minas){
+    const r=Math.floor(Math.random()*filas), c=Math.floor(Math.random()*cols);
+    if(grid[r][c]!==-1){ grid[r][c]=-1; colocadas++; }
+  }
+  for(let r=0;r<filas;r++) for(let c=0;c<cols;c++){
+    if(grid[r][c]===-1) continue;
+    let n=0;
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const rr=r+dr, cc=c+dc;
+      if(rr>=0&&rr<filas&&cc>=0&&cc<cols&&grid[rr][cc]===-1) n++;
+    }
+    grid[r][c]=n;
+  }
+  mjMines={filas,cols,minas,grid,revelado:Array.from({length:filas},()=>Array(cols).fill(false)),
+    bandera:Array.from({length:filas},()=>Array(cols).fill(false)),corriendo:false,inicio:0,celdasReveladas:0};
+  mjMinesRender();
+}
+function mjMinesRender(){
+  const m=mjMines;
+  const area=document.getElementById('mj-dom-area');
+  const coloresNumero=['','#4a90d9','#4caf50','#e05252','#7b52d9','#e8871e','#3aa5a5','#333','#888'];
+  let html=`<div style="display:grid;grid-template-columns:repeat(${m.cols},1fr);gap:3px;width:min(88vw,460px);margin:0 auto;background:var(--bg3);padding:6px;border-radius:8px">`;
+  for(let r=0;r<m.filas;r++) for(let c=0;c<m.cols;c++){
+    const rev=m.revelado[r][c], flag=m.bandera[r][c], val=m.grid[r][c];
+    let contenido='', bg='var(--bg2)', sombra='inset 0 1px 2px rgba(0,0,0,.08)';
+    if(rev){
+      bg=val===-1?'#e0525244':'var(--bg1)'; sombra='inset 0 1px 3px rgba(0,0,0,.12)';
+      contenido = val===-1?'💣':(val>0?`<span style="color:${coloresNumero[val]}">${val}</span>`:'');
+    } else if(flag) contenido='🚩';
+    html+=`<div onclick="mjMinesClick(${r},${c})" oncontextmenu="mjMinesFlag(event,${r},${c})" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:${bg};box-shadow:${sombra};border-radius:4px;font-size:12px;font-weight:800;cursor:pointer;user-select:none;transition:background .1s">${contenido}</div>`;
+  }
+  html+='</div>';
+  area.innerHTML=html;
+}
+function mjMinesStart(){
+  mjMinesInit();
+  mjMines.corriendo=true;
+  mjMines.inicio=Date.now();
+  mjMensaje('');
+}
+function mjMinesClick(r,c){
+  const m=mjMines;
+  if(!m.corriendo || m.bandera[r][c] || m.revelado[r][c]) return;
+  if(m.grid[r][c]===-1){ mjMinesGameOver(false); return; }
+  mjMinesRevelar(r,c);
+  mjMinesRender();
+  const totalSeguras=m.filas*m.cols-m.minas;
+  if(m.celdasReveladas>=totalSeguras) mjMinesGameOver(true);
+}
+function mjMinesRevelar(r,c){
+  const m=mjMines;
+  if(r<0||r>=m.filas||c<0||c>=m.cols||m.revelado[r][c]||m.bandera[r][c]) return;
+  m.revelado[r][c]=true; m.celdasReveladas++;
+  if(m.grid[r][c]===0){
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(dr||dc) mjMinesRevelar(r+dr,c+dc);
+  }
+}
+function mjMinesFlag(e,r,c){
+  e.preventDefault();
+  const m=mjMines;
+  if(!m.corriendo || m.revelado[r][c]) return;
+  m.bandera[r][c]=!m.bandera[r][c];
+  mjMinesRender();
+}
+function mjMinesGameOver(gano){
+  mjMines.corriendo=false;
+  const segundos=Math.round((Date.now()-mjMines.inicio)/1000);
+  if(gano) mjFinDeJuego('🎉 ¡Encontraste todas las minas! ('+segundos+'s)', segundos);
+  else { mjMensaje('💥 ¡Boom! Pisaste una mina.'); mjMines.grid.forEach((fila,r)=>fila.forEach((v,c)=>{ if(v===-1) mjMines.revelado[r][c]=true; })); mjMinesRender(); }
+}
+
+// ── PUZZLE 15 ─────────────────────────────────────────
+let mjPuzzle15;
+function mjPuzzle15Init(){
+  const orden=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0];
+  mjPuzzle15={orden, movimientos:0, corriendo:false};
+  mjPuzzle15Render();
+}
+function mjPuzzle15Mezclar(){
+  // Se mezcla haciendo movimientos válidos al azar desde el estado resuelto
+  // (garantiza que siempre sea resoluble, a diferencia de una permutación random).
+  let vacio=15;
+  for(let i=0;i<300;i++){
+    const vecinos=mjPuzzle15Vecinos(vacio);
+    const elegido=vecinos[Math.floor(Math.random()*vecinos.length)];
+    [mjPuzzle15.orden[vacio], mjPuzzle15.orden[elegido]]=[mjPuzzle15.orden[elegido], mjPuzzle15.orden[vacio]];
+    vacio=elegido;
+  }
+}
+function mjPuzzle15Vecinos(pos){
+  const r=Math.floor(pos/4), c=pos%4, out=[];
+  if(r>0) out.push(pos-4); if(r<3) out.push(pos+4);
+  if(c>0) out.push(pos-1); if(c<3) out.push(pos+1);
+  return out;
+}
+function mjPuzzle15Render(){
+  const area=document.getElementById('mj-dom-area');
+  area.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Movimientos: ${mjPuzzle15.movimientos}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:min(88vw,340px);margin:0 auto">
+    ${mjPuzzle15.orden.map((v,i)=>`<div onclick="mjPuzzle15Click(${i})" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:${v?'linear-gradient(135deg,var(--accent),var(--accent2,var(--accent)))':'var(--bg3)'};color:#fff;border-radius:6px;font-weight:700;font-size:15px;box-shadow:${v?'0 2px 4px rgba(0,0,0,.2)':'inset 0 2px 4px rgba(0,0,0,.1)'};cursor:${v?'pointer':'default'}">${v||''}</div>`).join('')}
+    </div>`;
+}
+function mjPuzzle15Click(i){
+  if(!mjPuzzle15.corriendo) return;
+  const vacio=mjPuzzle15.orden.indexOf(0);
+  if(mjPuzzle15Vecinos(vacio).includes(i)){
+    [mjPuzzle15.orden[vacio], mjPuzzle15.orden[i]]=[mjPuzzle15.orden[i], mjPuzzle15.orden[vacio]];
+    mjPuzzle15.movimientos++;
+    mjSetScore(mjPuzzle15.movimientos);
+    mjPuzzle15Render();
+    const resuelto=mjPuzzle15.orden.slice(0,15).every((v,idx)=>v===idx+1) && mjPuzzle15.orden[15]===0;
+    if(resuelto){ mjPuzzle15.corriendo=false; mjFinDeJuego('🎉 ¡Resuelto en '+mjPuzzle15.movimientos+' movimientos!', mjPuzzle15.movimientos); }
+  }
+}
+function mjPuzzle15Start(){
+  mjPuzzle15Init();
+  mjPuzzle15Mezclar();
+  mjPuzzle15.corriendo=true;
+  mjMensaje('');
+  mjSetScore(0);
+  mjPuzzle15Render();
+}
+
+// ── WORDLE EN ESPAÑOL ────────────────────────────────
+const MJ_WORDLE_PALABRAS=['CASAS','PERRO','GATOS','LIBRO','MESAS','SILLA','PLATO','VERDE','NEGRO','LUCES',
+  'PLAYA','MONTE','FRUTA','LECHE','PASTA','FIDEO','CARNE','SUEÑO','NUBES','NIEVE',
+  'LLAVE','PUEDO','TIGRE','LEONA','OSITO','MAPAS','CIELO','DEDOS','ARBOL','FLORA'];
+let mjWordle;
+function mjWordleInit(){
+  const palabra=MJ_WORDLE_PALABRAS[Math.floor(Math.random()*MJ_WORDLE_PALABRAS.length)];
+  mjWordle={palabra, intentos:[], corriendo:false};
+  mjWordleRender();
+}
+function mjWordleRender(){
+  const area=document.getElementById('mj-dom-area');
+  const filas=[...mjWordle.intentos];
+  while(filas.length<6) filas.push(null);
+  area.innerHTML=`<div style="display:flex;flex-direction:column;gap:4px;align-items:center;margin-bottom:12px">
+    ${filas.map(intento=>`<div style="display:flex;gap:4px">
+      ${[0,1,2,3,4].map(i=>{
+        let bg='var(--bg3)', letra='';
+        if(intento){
+          letra=intento.letras[i];
+          bg = intento.resultado[i]==='correcto'?'#6aaa64':intento.resultado[i]==='presente'?'#c9b458':'var(--bg2)';
+        }
+        return `<div style="width:clamp(34px,9vw,54px);height:clamp(34px,9vw,54px);display:flex;align-items:center;justify-content:center;background:${bg};color:${intento?'#fff':'var(--text2)'};border:1px solid var(--border);border-radius:4px;font-weight:700;font-size:clamp(14px,4vw,22px)">${letra}</div>`;
+      }).join('')}
+    </div>`).join('')}
+  </div>
+  <div style="display:flex;gap:6px;justify-content:center">
+    <input id="mj-wordle-input" maxlength="5" style="width:clamp(120px,30vw,180px);text-transform:uppercase;text-align:center;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1)" onkeydown="if(event.key==='Enter')mjWordleEnviar()">
+    <button class="btn btn-primary" style="font-size:12px;padding:6px 12px" onclick="mjWordleEnviar()">Enviar</button>
+  </div>`;
+}
+function mjWordleEnviar(){
+  if(!mjWordle.corriendo) return;
+  const input=document.getElementById('mj-wordle-input');
+  const palabra=(input.value||'').toUpperCase().trim();
+  if(palabra.length!==5){ mjMensaje('⚠️ Escribe una palabra de exactamente 5 letras.'); return; }
+  const objetivo=mjWordle.palabra.split('');
+  const letras=palabra.split('');
+  const resultado=letras.map(()=>'ausente');
+  const usados=Array(5).fill(false);
+  letras.forEach((l,i)=>{ if(l===objetivo[i]){ resultado[i]='correcto'; usados[i]=true; } });
+  letras.forEach((l,i)=>{
+    if(resultado[i]==='correcto') return;
+    const idx=objetivo.findIndex((o,j)=>o===l && !usados[j]);
+    if(idx>=0){ resultado[i]='presente'; usados[idx]=true; }
+  });
+  mjWordle.intentos.push({letras, resultado});
+  input.value='';
+  mjWordleRender();
+  if(palabra===mjWordle.palabra){
+    mjWordle.corriendo=false;
+    const puntaje=(7-mjWordle.intentos.length)*10;
+    mjFinDeJuego('🎉 ¡Adivinaste "'+mjWordle.palabra+'" en '+mjWordle.intentos.length+' intento'+(mjWordle.intentos.length===1?'':'s')+'!', puntaje);
+  } else if(mjWordle.intentos.length>=6){
+    mjWordle.corriendo=false;
+    mjMensaje('😔 Se acabaron los intentos. La palabra era "'+mjWordle.palabra+'".');
+  }
+}
+function mjWordleStart(){
+  mjWordleInit();
+  mjWordle.corriendo=true;
+  mjMensaje('');
+  mjSetScore(0);
+}
+
+// ── MEMORIA (PAREJAS) ────────────────────────────────
+let mjMemoria;
+function mjMemoriaInit(){
+  const emojis=['🍎','🍌','🍇','🍉','🍓','🍒','🥝','🍑'];
+  const cartas=[...emojis,...emojis].sort(()=>Math.random()-0.5).map((e,i)=>({id:i,emoji:e,volteada:false,encontrada:false}));
+  mjMemoria={cartas, seleccion:[], intentos:0, corriendo:false, bloqueado:false};
+  mjMemoriaRender();
+}
+function mjMemoriaRender(){
+  const area=document.getElementById('mj-dom-area');
+  area.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(88vw,400px);margin:0 auto">
+    ${mjMemoria.cartas.map(c=>{
+      const abierta=c.volteada||c.encontrada;
+      const fondo=abierta?'var(--bg1)':'linear-gradient(135deg,var(--accent),var(--accent2,var(--accent)))';
+      const sombra=c.encontrada?'0 0 0 2px #5a9c5a inset':'0 2px 5px rgba(0,0,0,.15)';
+      return `<div onclick="mjMemoriaClick(${c.id})" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:24px;background:${fondo};border-radius:8px;cursor:pointer;box-shadow:${sombra};transition:transform .15s;transform:${abierta?'scale(1)':'scale(1)'}">${abierta?c.emoji:'❔'}</div>`;
+    }).join('')}
+  </div>`;
+}
+function mjMemoriaClick(id){
+  const m=mjMemoria;
+  if(!m.corriendo || m.bloqueado) return;
+  const carta=m.cartas.find(c=>c.id===id);
+  if(carta.volteada||carta.encontrada) return;
+  carta.volteada=true;
+  m.seleccion.push(carta);
+  mjMemoriaRender();
+  if(m.seleccion.length===2){
+    m.intentos++; mjSetScore(m.intentos);
+    m.bloqueado=true;
+    const [a,b]=m.seleccion;
+    if(a.emoji===b.emoji){
+      a.encontrada=true; b.encontrada=true;
+      m.seleccion=[]; m.bloqueado=false;
+      mjMemoriaRender();
+      if(m.cartas.every(c=>c.encontrada)){ m.corriendo=false; mjFinDeJuego('🎉 ¡Completado en '+m.intentos+' intentos!', m.intentos); }
+    } else {
+      mjTimeoutId=setTimeout(()=>{
+        a.volteada=false; b.volteada=false; m.seleccion=[]; m.bloqueado=false;
+        mjMemoriaRender();
+      }, 800);
+    }
+  }
+}
+function mjMemoriaStart(){
+  mjMemoriaInit();
+  mjMemoria.corriendo=true;
+  mjMensaje('');
+  mjSetScore(0);
+}
+
+// ── SIMÓN DICE ────────────────────────────────────────
+let mjSimon;
+const MJ_SIMON_COLORES=[{id:0,color:'#e05252'},{id:1,color:'#4caf50'},{id:2,color:'#4a90d9'},{id:3,color:'#e8c547'}];
+function mjSimonInit(){
+  mjSimon={secuencia:[],pasoUsuario:0,ronda:0,corriendo:false,mostrando:false};
+  mjSimonRender();
+}
+function mjSimonRender(activo){
+  const area=document.getElementById('mj-dom-area');
+  const radios=['100% 0 0 0','0 100% 0 0','0 0 0 100%','0 0 100% 0']; // círculo completo entre los 4 cuadrantes
+  area.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:min(88vw,320px);aspect-ratio:1;margin:0 auto">
+    ${MJ_SIMON_COLORES.map((c,i)=>`<div onclick="mjSimonClick(${c.id})" style="background:${c.color};opacity:${activo===c.id?1:0.6};border-radius:${radios[i]};cursor:pointer;transition:opacity .12s,box-shadow .12s;box-shadow:${activo===c.id?'0 0 18px '+c.color+', inset 0 0 12px rgba(255,255,255,.4)':'inset 0 -3px 6px rgba(0,0,0,.15)'}"></div>`).join('')}
+  </div>`;
+}
+function mjSimonStart(){
+  mjSimonInit();
+  mjSimon.corriendo=true;
+  mjSetScore(0);
+  mjMensaje('');
+  mjSimonSiguienteRonda();
+}
+function mjSimonSiguienteRonda(){
+  mjSimon.secuencia.push(Math.floor(Math.random()*4));
+  mjSimon.pasoUsuario=0;
+  mjSimon.ronda++;
+  mjMensaje('Memoriza la secuencia... 👀');
+  mjSimonReproducir(0);
+}
+function mjSimonReproducir(i){
+  if(i>=mjSimon.secuencia.length){ mjSimon.mostrando=false; mjMensaje('Tu turno — repite la secuencia'); mjSimonRender(); return; }
+  mjSimon.mostrando=true;
+  mjSimonRender(mjSimon.secuencia[i]);
+  mjTimeoutId=setTimeout(()=>{
+    mjSimonRender();
+    mjTimeoutId=setTimeout(()=>mjSimonReproducir(i+1), 200);
+  }, 500);
+}
+function mjSimonClick(id){
+  if(!mjSimon.corriendo || mjSimon.mostrando) return;
+  if(id===mjSimon.secuencia[mjSimon.pasoUsuario]){
+    mjSimon.pasoUsuario++;
+    if(mjSimon.pasoUsuario===mjSimon.secuencia.length){
+      mjSetScore(mjSimon.ronda-1);
+      mjTimeoutId=setTimeout(mjSimonSiguienteRonda, 700);
+    }
+  } else {
+    mjSimon.corriendo=false;
+    mjFinDeJuego('💥 Fallaste en la ronda '+mjSimon.ronda+'.', mjSimon.ronda-1);
+  }
+}
+
+// ── TRES EN RAYA (vs. máquina) ───────────────────────
+let mjTTT;
+const MJ_TTT_LINEAS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function mjTicTacToeInit(){
+  mjTTT={tablero:Array(9).fill(''), corriendo:false, turno:'X', lineaGanadora:null};
+  mjTicTacToeRender();
+}
+function mjTicTacToeRender(){
+  const area=document.getElementById('mj-dom-area');
+  const linea=mjTTT.lineaGanadora||[];
+  area.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(88vw,320px);margin:0 auto">
+    ${mjTTT.tablero.map((v,i)=>`<div onclick="mjTicTacToeClick(${i})" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;background:${linea.includes(i)?'#5a9c5a44':'var(--bg3)'};border-radius:8px;box-shadow:${v?'inset 0 1px 3px rgba(0,0,0,.15)':'inset 0 2px 4px rgba(0,0,0,.06)'};cursor:pointer;color:${v==='X'?'var(--accent)':'#e05252'};transition:background .2s">${v}</div>`).join('')}
+  </div>`;
+}
+function mjTicTacToeGanador(t){
+  for(const [a,b,c] of MJ_TTT_LINEAS) if(t[a] && t[a]===t[b] && t[a]===t[c]) return t[a];
+  return t.every(v=>v) ? 'empate' : null;
+}
+function mjTicTacToeClick(i){
+  const t=mjTTT;
+  if(!t.corriendo || t.tablero[i] || t.turno!=='X') return;
+  t.tablero[i]='X';
+  let g=mjTicTacToeGanador(t.tablero);
+  if(g){ mjTicTacToeFin(g); return; }
+  t.turno='O';
+  mjTicTacToeRender();
+  mjTimeoutId=setTimeout(()=>{
+    const mov=mjTicTacToeMejorJugadaIA(t.tablero);
+    t.tablero[mov]='O';
+    g=mjTicTacToeGanador(t.tablero);
+    t.turno='X';
+    mjTicTacToeRender();
+    if(g) mjTicTacToeFin(g);
+  }, 400);
+}
+function mjTicTacToeMejorJugadaIA(t){
+  const vacias=t.map((v,i)=>v===''?i:null).filter(v=>v!==null);
+  for(const i of vacias){ const cp=t.slice(); cp[i]='O'; if(mjTicTacToeGanador(cp)==='O') return i; }
+  for(const i of vacias){ const cp=t.slice(); cp[i]='X'; if(mjTicTacToeGanador(cp)==='X') return i; }
+  if(t[4]==='') return 4;
+  const esquinas=[0,2,6,8].filter(i=>t[i]==='');
+  if(esquinas.length) return esquinas[Math.floor(Math.random()*esquinas.length)];
+  return vacias[Math.floor(Math.random()*vacias.length)];
+}
+function mjTicTacToeLineaGanadora(t){
+  for(const linea of MJ_TTT_LINEAS){ const [a,b,c]=linea; if(t[a] && t[a]===t[b] && t[a]===t[c]) return linea; }
+  return null;
+}
+function mjTicTacToeFin(g){
+  mjTTT.corriendo=false;
+  mjTTT.lineaGanadora=mjTicTacToeLineaGanadora(mjTTT.tablero);
+  mjTicTacToeRender();
+  if(g==='empate'){ mjMensaje('🤝 ¡Empate!'); }
+  else if(g==='X'){ const total=(getMjHighScores().tictactoe||0)+1; mjFinDeJuego('🎉 ¡Ganaste!', total); }
+  else { mjMensaje('💻 Ganó la máquina — inténtalo de nuevo.'); }
+}
+function mjTicTacToeStart(){
+  mjTicTacToeInit();
+  mjTTT.corriendo=true;
+  mjMensaje('Tu turno (❌)');
+}
+
+// ── CONECTA 4 (vs. máquina) ───────────────────────────
+let mjC4;
+function mjConecta4Init(){
+  mjC4={cols:7,filas:6,tablero:Array.from({length:6},()=>Array(7).fill('')),corriendo:false,turno:'R'};
+  mjConecta4Render();
+}
+function mjConecta4Render(){
+  const c=mjC4;
+  const area=document.getElementById('mj-dom-area');
+  let html=`<div style="display:grid;grid-template-columns:repeat(${c.cols},1fr);gap:4px;width:min(88vw,460px);margin:0 auto;background:var(--accent);padding:6px;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,.15)">`;
+  for(let r=0;r<c.filas;r++) for(let col=0;col<c.cols;col++){
+    const v=c.tablero[r][col];
+    const relleno = v==='R'?'radial-gradient(circle at 35% 30%,#f08080,#c93838)':v==='Y'?'radial-gradient(circle at 35% 30%,#f5db7d,#d4a91e)':'var(--bg1)';
+    const sombra = v?'inset 0 -3px 4px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.2)':'inset 0 2px 4px rgba(0,0,0,.25)';
+    html+=`<div onclick="mjConecta4Click(${col})" style="aspect-ratio:1;border-radius:50%;background:${relleno};box-shadow:${sombra};cursor:pointer"></div>`;
+  }
+  html+='</div>';
+  area.innerHTML=html;
+}
+function mjConecta4ColumnaLibre(t,col){
+  for(let r=t.length-1;r>=0;r--) if(!t[r][col]) return r;
+  return -1;
+}
+function mjConecta4Ganador(t){
+  const filas=t.length, cols=t[0].length;
+  const dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  for(let r=0;r<filas;r++) for(let c=0;c<cols;c++){
+    if(!t[r][c]) continue;
+    for(const [dr,dc] of dirs){
+      let ok=true;
+      for(let k=1;k<4;k++){
+        const rr=r+dr*k, cc=c+dc*k;
+        if(rr<0||rr>=filas||cc<0||cc>=cols||t[rr][cc]!==t[r][c]){ ok=false; break; }
+      }
+      if(ok) return t[r][c];
+    }
+  }
+  return t.every(fila=>fila.every(v=>v)) ? 'empate' : null;
+}
+function mjConecta4Click(col){
+  const c=mjC4;
+  if(!c.corriendo || c.turno!=='R') return;
+  const r=mjConecta4ColumnaLibre(c.tablero, col);
+  if(r<0) return;
+  c.tablero[r][col]='R';
+  let g=mjConecta4Ganador(c.tablero);
+  if(g){ mjConecta4Fin(g); return; }
+  c.turno='Y';
+  mjConecta4Render();
+  mjTimeoutId=setTimeout(()=>{
+    const colIA=mjConecta4MejorJugadaIA(c.tablero);
+    const rIA=mjConecta4ColumnaLibre(c.tablero, colIA);
+    if(rIA>=0) c.tablero[rIA][colIA]='Y';
+    g=mjConecta4Ganador(c.tablero);
+    c.turno='R';
+    mjConecta4Render();
+    if(g) mjConecta4Fin(g);
+  }, 450);
+}
+function mjConecta4MejorJugadaIA(t){
+  const cols=t[0].length;
+  const libres=[];
+  for(let col=0;col<cols;col++) if(mjConecta4ColumnaLibre(t,col)>=0) libres.push(col);
+  for(const col of libres){ const cp=t.map(f=>f.slice()); const r=mjConecta4ColumnaLibre(cp,col); cp[r][col]='Y'; if(mjConecta4Ganador(cp)==='Y') return col; }
+  for(const col of libres){ const cp=t.map(f=>f.slice()); const r=mjConecta4ColumnaLibre(cp,col); cp[r][col]='R'; if(mjConecta4Ganador(cp)==='R') return col; }
+  if(libres.includes(3)) return 3;
+  return libres[Math.floor(Math.random()*libres.length)];
+}
+function mjConecta4Fin(g){
+  mjC4.corriendo=false;
+  if(g==='empate'){ mjMensaje('🤝 ¡Empate!'); }
+  else if(g==='R'){ const total=(getMjHighScores().conecta4||0)+1; mjFinDeJuego('🎉 ¡Ganaste!', total); }
+  else { mjMensaje('💻 Ganó la máquina — inténtalo de nuevo.'); }
+}
+function mjConecta4Start(){
+  mjConecta4Init();
+  mjC4.corriendo=true;
+  mjMensaje('Tu turno (🔴)');
+}
+
 function changeCalMonth(delta){
   calViewMonth += delta;
   if(calViewMonth<0){calViewMonth=11;calViewYear--;}
@@ -12761,6 +15356,7 @@ function initFirebase(){
         showApp();
         updateBrowserNotifsBtn();
         checkBrowserNotifications();
+        detectarPaisEnSegundoPlano(); // dispara la detección de país al entrar, así ya está lista cuando registres algo
         // Mientras la pestaña siga abierta, se vuelve a revisar cada hora —
         // por si cruza medianoche, o cambia algo (ej. una tarjeta a punto de
         // cerrar durante el día). Se limpia cualquier intervalo anterior
@@ -13622,6 +16218,29 @@ if(state.projGoals){
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
       <button class="btn" onclick="closeTCMovModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveTCMov()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONSUMO FRECUENTE (crear/editar preset) -->
+<div class="modal-overlay" id="cf-overlay" onclick="if(event.target===this)cerrarConsumoFrecuenteModal()">
+  <div class="modal modal-sm" style="width:360px">
+    <div class="modal-title"><span id="cf-modal-title">⚡ Nuevo consumo frecuente</span><button class="modal-close" onclick="cerrarConsumoFrecuenteModal()">✕</button></div>
+    <div class="field"><label>Nombre <span style="font-size:10px;color:var(--text3)">(ej. Bembos, Starbucks...)</span></label><input id="cf-nombre" type="text" placeholder="Bembos" onblur="suggestCategoriaFor('cf-nombre','cf-cat','cf-cat-hint')"></div>
+    <div class="field-row">
+      <div class="field"><label>Monto</label><input id="cf-monto" type="number" step="0.01" placeholder="24.80"></div>
+      <div class="field"><label>Moneda</label>
+        <select id="cf-currency"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Tarjeta</label><select id="cf-tarjeta"></select></div>
+    <div class="field"><label>Categoría <span style="font-size:10px;color:var(--text3)">(opcional)</span> <span id="cf-cat-hint" style="font-size:10px;color:var(--accent)"></span></label>
+      <select id="cf-cat" onchange="document.getElementById('cf-cat-hint').textContent=''"></select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" id="cf-btn-eliminar" style="display:none;margin-right:auto;color:var(--red)" onclick="eliminarConsumoFrecuente(document.getElementById('cf-overlay').dataset.editId);cerrarConsumoFrecuenteModal()">Eliminar</button>
+      <button class="btn" onclick="cerrarConsumoFrecuenteModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarConsumoFrecuenteModal()">Guardar</button>
     </div>
   </div>
 </div>
