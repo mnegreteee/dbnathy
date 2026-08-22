@@ -2718,8 +2718,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '21/08/26 - 22:23'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Nuevo: "Meta Grande" (compra de auto o casa) dentro de Metas de Ahorro. Marca "🏠 Es una meta grande" para desbloquear: calculadora de inicial (precio × % = objetivo), vínculo a una cuenta de tipo Ahorro real (el progreso se lee en vivo del saldo, no se escribe a mano), y 3 formas de planificar (por tiempo, por monto fijo, o por % variable de tu disponible del mes). Si ahorras de más, el tiempo restante se recalcula solo.';
+const APP_VERSION_DATE = '21/08/26 - 22:35'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = '🐛 Corregido: al elegir la "Cuenta de ahorro" de una Meta Grande, aparecía "Ahorro Soles" como opción aunque nunca se hubiera usado — se veía como una cuenta fantasma. Ahora solo aparece si de verdad tiene saldo real.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -6792,7 +6792,15 @@ function toggleMetaGrandeUI(){
   // Si es meta grande, "ya tengo ahorrado" se vuelve automático (se lee de
   // la cuenta vinculada) — no tiene sentido que también se escriba a mano.
   document.getElementById('meta-actual-wrap').style.display=on?'none':'block';
-  if(on) renderMetaGrandeCuentasSelect();
+  document.getElementById('meta-objetivo-hint').style.display=on?'block':'none';
+  if(on){ renderMetaGrandeCuentasSelect(); actualizarSimboloMonedaMeta(); }
+}
+// El "Precio total" de la calculadora usa la MISMA moneda que se eligió
+// arriba (no una aparte) — para que quede clarísimo, se muestra el
+// símbolo correspondiente junto al campo, y se actualiza si cambias la moneda.
+function actualizarSimboloMonedaMeta(){
+  const moneda=document.getElementById('meta-currency').value;
+  document.getElementById('meta-precio-moneda-hint').textContent=moneda==='USD'?'($)':'(S/)';
 }
 function toggleMetaModoPlan(){
   const modo=document.getElementById('meta-modo-plan').value;
@@ -6812,7 +6820,12 @@ function getCuentasAhorroDisponibles(moneda){
   const lista=[];
   const claveDefault=moneda==='USD'?'Ahorro Dólares':'Ahorro Soles';
   const yaCustom=Object.keys(state.customCuentas||{}).includes(claveDefault);
-  if(!yaCustom) lista.push(claveDefault);
+  // "Ahorro Soles"/"Ahorro Dólares" son nombres "por defecto" que la app
+  // ofrece en varios lados aunque nunca se hayan usado — para esta lista
+  // solo tiene sentido ofrecerlos si YA tienen saldo real (si no, parece
+  // una cuenta fantasma que "apareció sola" sin que el usuario la creara).
+  const tieneSaldoDefault=(state.cuentas||{})[claveDefault];
+  if(!yaCustom && tieneSaldoDefault) lista.push(claveDefault);
   Object.entries(state.customCuentas||{}).forEach(([k,v])=>{
     if(v.type==='ahorro' && (v.currency||'PEN')===moneda) lista.push(k);
   });
@@ -16328,9 +16341,11 @@ if(state.projGoals){
       <input id="meta-nombre" type="text" placeholder="Ej. ✈️ Vacaciones">
     </div>
     <div class="field-row">
-      <div class="field"><label>Meta (monto objetivo)</label><input id="meta-objetivo" type="number" step="0.01" placeholder="3000"></div>
+      <div class="field"><label>Meta (monto objetivo)</label><input id="meta-objetivo" type="number" step="0.01" placeholder="3000">
+        <small id="meta-objetivo-hint" style="display:none;color:var(--text3)">💡 Se llena solo si usas la calculadora de abajo — o escríbelo tú directo si ya sabes el monto exacto, sin usar la calculadora.</small>
+      </div>
       <div class="field"><label>Moneda</label>
-        <select id="meta-currency" onchange="renderMetaGrandeCuentasSelect()"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select>
+        <select id="meta-currency" onchange="renderMetaGrandeCuentasSelect();actualizarSimboloMonedaMeta();"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select>
       </div>
     </div>
     <div class="field" id="meta-actual-wrap"><label>Ya tengo ahorrado</label><input id="meta-actual" type="number" step="0.01" placeholder="0.00"></div>
@@ -16345,7 +16360,7 @@ if(state.projGoals){
     <div id="meta-grande-fields" style="display:none;border-top:1px solid var(--border);margin-top:6px;padding-top:12px">
       <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Calculadora de inicial — opcional, solo para que te ayude a calcular el monto objetivo de arriba.</div>
       <div class="field-row">
-        <div class="field"><label>Precio total</label><input id="meta-precio-total" type="number" step="0.01" placeholder="100000" oninput="calcularMontoInicialMeta()"></div>
+        <div class="field"><label>Precio total <span id="meta-precio-moneda-hint" style="color:var(--accent);font-weight:700">(S/)</span></label><input id="meta-precio-total" type="number" step="0.01" placeholder="100000" oninput="calcularMontoInicialMeta()"></div>
         <div class="field"><label>% de inicial</label><input id="meta-pct-inicial" type="number" step="0.1" placeholder="10" oninput="calcularMontoInicialMeta()"></div>
       </div>
 
