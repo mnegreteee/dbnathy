@@ -3111,8 +3111,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '30/08/26 - 19:06'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Favicon de la pestaña del navegador cambiado de 👽 a 👑 — este cambio es EXCLUSIVO de la app de Nathy, no se aplicó a la de Miguel (que se queda en 👽). Verificado con Playwright.';
+const APP_VERSION_DATE = '30/08/26 - 19:14'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Se trajo la corrección de la app de Miguel: en "Movimientos de esta cuenta", el encabezado de cada mes mostraba la SUMA de los movimientos de ese mes en vez del saldo real acumulado. Ahora usa reconstructSaldoAt igual que el resto de la app. Verificado con Playwright: mismo resultado exacto que en la app de Miguel (S/4,199.99 con datos de prueba equivalentes).';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4730,11 +4730,16 @@ function renderAhorrosIntereses(){
   document.getElementById('ahi-movs-tbody').innerHTML=mesesOrdenados.map(mesKey=>{
     const itemsDelMes=movsPorMes[mesKey];
     const [y,mm]=mesKey.split('-');
-    const netoMes=itemsDelMes.reduce((s,m)=>{ const {signo,monto}=signoMontoMov(m); return s+signo*monto; },0);
+    // El encabezado del mes NO suma los movimientos de ese mes — muestra el
+    // SALDO REAL que la cuenta tenía acumulado a esa fecha (mismo motor que
+    // usa el resto de la app: snapshots + historial). Para el mes actual,
+    // esto da el saldo disponible de HOY; para meses pasados, el saldo con
+    // el que cerraron ese mes.
+    const saldoAlCierre=(reconstructSaldoAt(parseInt(y,10), parseInt(mm,10)-1)||{})[cuenta]||0;
     const abierto=ahiMovsMesesOpen.has(mesKey);
     const filaHeader=`<tr style="cursor:pointer;background:var(--bg3)" onclick="toggleAhiMovsMes('${mesKey}')">
       <td colspan="2" style="font-weight:600">${abierto?'▼':'▶'} ${MONTHS[parseInt(mm,10)-1]} ${y} <span style="font-weight:400;color:var(--text3);font-size:11px">(${itemsDelMes.length})</span></td>
-      <td style="text-align:right;font-weight:600;color:${netoMes>=0?'var(--green)':'var(--red)'}">${netoMes>=0?'+':'−'} ${mSymCuenta} ${numFmt(Math.abs(netoMes))}</td>
+      <td style="text-align:right;font-weight:600;color:${saldoAlCierre>=0?'var(--teal)':'var(--red)'}">${mSymCuenta} ${numFmt(saldoAlCierre)}</td>
     </tr>`;
     const filasItems = abierto ? itemsDelMes.map(m=>{
       const {signo,monto}=signoMontoMov(m);
