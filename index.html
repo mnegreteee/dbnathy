@@ -109,6 +109,9 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .login-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;margin-top:6px;}
 .login-btn:hover{background:var(--accent2);}
 .login-err{background:var(--red-bg);border:1px solid var(--red);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:12px;display:none;}
+.login-info{background:var(--green-bg);border:1px solid var(--green);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--green);margin-top:12px;display:none;}
+.login-forgot-link{display:block;text-align:center;font-size:11px;color:var(--text3);margin-top:12px;cursor:pointer;background:none;border:none;font-family:var(--font);width:100%;}
+.login-forgot-link:hover{color:var(--accent);text-decoration:underline;}
 
 /* ── NOTIFY BANNER ── */
 .notify-banner{background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;font-size:13px;}
@@ -865,6 +868,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <div class="login-field"><label>Contraseña</label><input id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" onclick="doLogin()">Ingresar</button>
     <div class="login-err" id="login-err">Correo o contraseña incorrectos.</div>
+    <div class="login-info" id="login-info"></div>
+    <button class="login-forgot-link" onclick="enviarResetPassword()">¿Olvidaste tu contraseña?</button>
     <div id="app-version-label" style="text-align:center;font-size:10px;color:var(--text3);margin-top:18px;letter-spacing:.3px"></div>
   </div>
 </div>
@@ -3119,8 +3124,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '01/09/26 - 08:02'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Se trajeron los 2 cambios de la app de Miguel: (1) campo "¿Cuántos meses dura?" en Pagos Frecuentes mensuales, para ingresos/gastos con fecha de fin conocida; (2) al terminar la duración, se distingue "🔴 Vencido" (si quedaron meses sin registrar — sigue visible, no se puede ocultar) de "⏹ Finalizado" (si se registraron todos — se puede ocultar con "🙈 Ocultar"), más un botón "🙈 Ocultos (N)" para ver solo los escondidos con opción de "👁️ Mostrar" para regresarlos. No borra nada, solo oculta. Verificado con Playwright: mismo resultado exacto que en la app de Miguel.';
+const APP_VERSION_DATE = '01/09/26 - 08:36'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Nuevo: botón "¿Olvidaste tu contraseña?" en la pantalla de login, usando Firebase Authentication real (sendPasswordResetEmail) — no se puede "cambiar" la contraseña directo desde el login sin haber iniciado sesión, así que manda un correo con un enlace de Firebase para poner una nueva. Usa el correo que ya esté escrito en el campo de arriba. Por seguridad, si el correo no está registrado muestra el MISMO mensaje que si el envío fue exitoso (no revela si una cuenta existe o no). Verificado con Playwright simulando Firebase: campo vacío, envío exitoso, correo no registrado (mensaje idéntico al de éxito), formato inválido, y que el botón se reactiva correctamente después de cada intento — este cambio es EXCLUSIVO de la app de Nathy, no se aplicó a la de Miguel.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -9859,6 +9864,51 @@ async function doLogin(){
     document.getElementById('login-pass').value = '';
   } finally {
     if(btn){ btn.disabled=false; btn.textContent='Ingresar'; }
+  }
+}
+
+// Restablecer contraseña vía Firebase Authentication — como todavía no hay
+// sesión iniciada en este punto, no se puede "cambiar" la contraseña
+// directo; se manda un correo con un enlace de Firebase para poner una
+// nueva. Usa el correo que ya esté escrito en el campo de arriba.
+async function enviarResetPassword(){
+  const email=(document.getElementById('login-email').value||'').trim();
+  const errEl=document.getElementById('login-err');
+  const infoEl=document.getElementById('login-info');
+  errEl.style.display='none';
+  infoEl.style.display='none';
+
+  if(!email){
+    errEl.textContent='Escribe tu correo arriba primero, y después toca "¿Olvidaste tu contraseña?".';
+    errEl.style.display='block';
+    return;
+  }
+
+  const link=document.querySelector('.login-forgot-link');
+  if(link){ link.disabled=true; link.textContent='Enviando...'; }
+  try{
+    await firebase.auth().sendPasswordResetEmail(email);
+    infoEl.textContent='Si ese correo tiene una cuenta, te llegará un enlace para poner una contraseña nueva. Revisa también spam.';
+    infoEl.style.display='block';
+  }catch(e){
+    console.warn('Reset password error:', e.code);
+    if(e.code==='auth/invalid-email'){
+      errEl.textContent='Ese correo no tiene un formato válido.';
+      errEl.style.display='block';
+    } else if(e.code==='auth/user-not-found'){
+      // Por seguridad, no se confirma si el correo existe o no — mismo
+      // mensaje que si el envío fue exitoso, para no revelar cuentas.
+      infoEl.textContent='Si ese correo tiene una cuenta, te llegará un enlace para poner una contraseña nueva. Revisa también spam.';
+      infoEl.style.display='block';
+    } else if(e.code==='auth/too-many-requests'){
+      errEl.textContent='Demasiados intentos. Espera un momento e intenta de nuevo.';
+      errEl.style.display='block';
+    } else {
+      errEl.textContent='No se pudo enviar el correo. Intenta de nuevo en un momento.';
+      errEl.style.display='block';
+    }
+  } finally {
+    if(link){ link.disabled=false; link.textContent='¿Olvidaste tu contraseña?'; }
   }
 }
 
