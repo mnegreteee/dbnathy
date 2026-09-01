@@ -2511,7 +2511,10 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
   <div class="card" style="padding:18px;margin-bottom:22px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="dash-section-title" style="margin:0">💡 Pagos y Ingresos Frecuentes<small style="display:block;font-weight:400;color:var(--text3);margin-top:2px">Gastos fijos (luz, teléfono) e ingresos fijos (sueldo, renta) de cada mes</small></div>
-      <button class="btn btn-primary" style="font-size:11px" onclick="openPagoFrecuenteModal()">+ Nuevo</button>
+      <div style="display:flex;gap:8px">
+        <button id="pf-ocultos-btn" class="config-action-btn neutral" style="font-size:11px;display:none" onclick="togglePFOcultos()"></button>
+        <button class="btn btn-primary" style="font-size:11px" onclick="openPagoFrecuenteModal()">+ Nuevo</button>
+      </div>
     </div>
     <div id="pagos-frecuentes-list"></div>
   </div>
@@ -3116,8 +3119,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '30/08/26 - 21:27'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Se trajeron los 3 cambios de la app de Miguel: (1) fix de datos huérfanos — al eliminar una cuenta ahora se limpian también ahorroTREA, ahorroMetodoInteres y cuentaColors, no solo customCuentas/cuentas; (2) aviso "🕐" cuando la TREA vigente lleva 3+ meses sin confirmarse; (3) botón "📋 Copiar detalle" en el desplegable día por día de Ahorros e Intereses. Verificado con Playwright: los 3 dan el mismo resultado que en la app de Miguel.';
+const APP_VERSION_DATE = '01/09/26 - 08:02'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Se trajeron los 2 cambios de la app de Miguel: (1) campo "¿Cuántos meses dura?" en Pagos Frecuentes mensuales, para ingresos/gastos con fecha de fin conocida; (2) al terminar la duración, se distingue "🔴 Vencido" (si quedaron meses sin registrar — sigue visible, no se puede ocultar) de "⏹ Finalizado" (si se registraron todos — se puede ocultar con "🙈 Ocultar"), más un botón "🙈 Ocultos (N)" para ver solo los escondidos con opción de "👁️ Mostrar" para regresarlos. No borra nada, solo oculta. Verificado con Playwright: mismo resultado exacto que en la app de Miguel.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4624,10 +4627,15 @@ function calcularSaldoPorDiaCuenta(cuenta, y, m){
 }
 // MÉTODO DIARIO: tasa diaria equivalente de la TREA × saldo de CADA día,
 // sumado — refleja exactamente cuánto tiempo estuvo cada monto en la cuenta.
+// Usa base 360 (año comercial de 360 días, no 365) — es la convención que
+// usan varios bancos peruanos y la que Miguel confirmó calibrando contra un
+// interés real de su banco (Pichincha, agosto 2026: real S/17.80, esta
+// fórmula dio S/17.77, contra S/17.53 de la versión con base 365 — un
+// error de 0.15% vs. 1.52%).
 function calcularInteresDiarioMes(cuenta, y, m){
   const trea=getTREAEnMes(cuenta,y,m);
   if(!trea) return {interes:null, dias:[]};
-  const tasaDiaria=Math.pow(1+trea/100,1/365)-1;
+  const tasaDiaria=Math.pow(1+trea/100,1/360)-1;
   const dias=calcularSaldoPorDiaCuenta(cuenta,y,m);
   let total=0;
   const detalle=dias.map(d=>{
@@ -4677,7 +4685,7 @@ function renderAhiDetalleDias(){
   });
   document.getElementById('ahi-detalle-dias-tbody').innerHTML=filas.map(f=>{
     const interesPorDia = metodo==='diario'
-      ? f.saldo*(Math.pow(1+(trea||0)/100,1/365)-1)
+      ? f.saldo*(Math.pow(1+(trea||0)/100,1/360)-1)
       : f.saldo*tasaMensual/((dias||[]).length||30); // reparte la tasa mensual entre los días del mes, solo a modo ilustrativo por fila
     const rango = f.fechaIni===f.fechaFin ? fmtFechaDDMMYYYY(f.fechaIni) : fmtFechaDDMMYYYY(f.fechaIni)+' – '+fmtFechaDDMMYYYY(f.fechaFin);
     const etiquetaInteres = f.cantidad>1 ? M(sym+' '+numFmt(interesPorDia))+' c/día' : M(sym+' '+numFmt(interesPorDia));
@@ -4820,6 +4828,60 @@ function renderAhorrosIntereses(){
     return filaHeader + filasItems;
   }).join('');
 }
+// ¿Este pago/ingreso frecuente sigue vigente en el mes (y,m)? Solo aplica
+// el límite de duración a la frecuencia MENSUAL — anual y semestral ya
+// tienen su propio concepto de "próximo período" y no necesitan esto. Sin
+// duracionMeses configurada, el pago sigue activo indefinidamente (mismo
+// comportamiento de siempre). Con duracionMeses, deja de aplicar una vez
+// pasados esos meses desde mesInicio — para ingresos/gastos con fecha de
+// fin conocida (ej. un contrato de 33 meses, una cuota de préstamo con N pagos).
+function pfActivoEnMes(pf, y, m){
+  if((pf.frecuencia||'mensual')!=='mensual') return true;
+  if(!pf.duracionMeses || !pf.mesInicio) return true;
+  const [iy,im]=pf.mesInicio.split('-').map(Number);
+  const mesesTranscurridos=(y-iy)*12+((m+1)-im); // 0 = el propio mes de inicio
+  return mesesTranscurridos>=0 && mesesTranscurridos<pf.duracionMeses;
+}
+// Para un pago frecuente MENSUAL con duración ya terminada, devuelve la
+// lista de meses (dentro de su ventana mesInicio..mesInicio+duración-1) que
+// NUNCA se registraron — sirve para distinguir "terminó y ya está completo"
+// (se puede ocultar) de "terminó pero quedaron meses sin registrar"
+// (debe seguir visible como "Vencido" para que no se pase por alto).
+function pfMesesSinRegistrar(pf){
+  if((pf.frecuencia||'mensual')!=='mensual' || !pf.duracionMeses || !pf.mesInicio) return [];
+  const [iy,im]=pf.mesInicio.split('-').map(Number);
+  const faltan=[];
+  for(let i=0;i<pf.duracionMeses;i++){
+    const totalM=(im-1)+i;
+    const y=iy+Math.floor(totalM/12), mo=(totalM%12)+1;
+    const key=y+'-'+String(mo).padStart(2,'0');
+    if(!(pf.pagosRegistrados && pf.pagosRegistrados[key])) faltan.push(key);
+  }
+  return faltan;
+}
+// Ocultar/mostrar — para pagos frecuentes ya terminados Y con todos sus
+// meses registrados (nunca se oculta uno "Vencido" con meses pendientes,
+// para que no se pierda de vista sin querer). No borra nada, solo lo saca
+// de la lista principal; sigue existiendo con su historial intacto.
+function ocultarPagoFrecuente(id){
+  const pf=(state.pagosFrecuentes||[]).find(p=>p.id===id);
+  if(!pf) return;
+  pf.oculto=true;
+  saveState();
+  renderPagosFrecuentes();
+}
+function mostrarPagoFrecuente(id){
+  const pf=(state.pagosFrecuentes||[]).find(p=>p.id===id);
+  if(!pf) return;
+  pf.oculto=false;
+  saveState();
+  renderPagosFrecuentes();
+}
+let pfMostrandoOcultos=false;
+function togglePFOcultos(){
+  pfMostrandoOcultos=!pfMostrandoOcultos;
+  renderPagosFrecuentes();
+}
 function calcularProyeccionCierre(){
   const hoy=new Date();
   const y=hoy.getFullYear(), m=hoy.getMonth();
@@ -4836,7 +4898,7 @@ function calcularProyeccionCierre(){
   const mesActualNum=m+1;
   const pendientes=(state.pagosFrecuentes||[]).filter(p=>{
     const freq=p.frecuencia||'mensual';
-    if(freq==='mensual') return !(p.pagosRegistrados&&p.pagosRegistrados[mk]);
+    if(freq==='mensual') return pfActivoEnMes(p,y,m) && !(p.pagosRegistrados&&p.pagosRegistrados[mk]);
     if(freq==='semestral') return (p.meses||[]).includes(mesActualNum) && !(p.pagosRegistrados&&p.pagosRegistrados[mk]);
     return false;
   });
@@ -5079,7 +5141,7 @@ function checkBrowserNotifications(forzar){
     const mesNum=hoy.getMonth()+1;
     const pend=(state.pagosFrecuentes||[]).filter(p=>{
       const freq=p.frecuencia||'mensual';
-      if(freq==='mensual') return !(p.pagosRegistrados&&p.pagosRegistrados[mk]);
+      if(freq==='mensual') return pfActivoEnMes(p,hoy.getFullYear(),hoy.getMonth()) && !(p.pagosRegistrados&&p.pagosRegistrados[mk]);
       if(freq==='semestral') return (p.meses||[]).includes(mesNum) && !(p.pagosRegistrados&&p.pagosRegistrados[mk]);
       return false;
     });
@@ -5091,7 +5153,7 @@ function checkBrowserNotifications(forzar){
   // CUÁNDO exactamente debe pagar, no solo que "está pendiente". Se avisa
   // desde 3 días antes.
   const mkDp=mesActualKey();
-  (state.pagosFrecuentes||[]).filter(p=>p.diaPago && p.frecuencia!=='anual' && p.frecuencia!=='semestral' && !(p.pagosRegistrados&&p.pagosRegistrados[mkDp])).forEach(p=>{
+  (state.pagosFrecuentes||[]).filter(p=>p.diaPago && p.frecuencia!=='anual' && p.frecuencia!=='semestral' && pfActivoEnMes(p,hoy.getFullYear(),hoy.getMonth()) && !(p.pagosRegistrados&&p.pagosRegistrados[mkDp])).forEach(p=>{
     const diasEnMes=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
     const diaLimite=pfDiaLimite(p.diaPago,diasEnMes);
     const diffDp=diaLimite-diaHoy;
@@ -13127,6 +13189,7 @@ function openPagoFrecuenteModal(id){
     document.getElementById('pf-tipo').value=pf.tipo||'gasto';
     document.getElementById('pf-frecuencia').value=pf.frecuencia||'mensual';
     document.getElementById('pf-mes-inicio').value=pf.mesInicio||'';
+    document.getElementById('pf-duracion-meses').value=pf.duracionMeses||'';
     document.getElementById('pf-fecha-anual').value=pf.fechaAnual||'';
     const mesesSel=new Set(pf.meses||[]);
     document.querySelectorAll('.pf-mes-check').forEach(chk=>{ chk.checked=mesesSel.has(parseInt(chk.value,10)); });
@@ -13150,6 +13213,7 @@ function openPagoFrecuenteModal(id){
     // Por defecto, el mes de inicio es el mes actual — el usuario lo puede cambiar
     const hoy=new Date();
     document.getElementById('pf-mes-inicio').value=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+    document.getElementById('pf-duracion-meses').value='';
     document.getElementById('pf-fecha-anual').value=todayLocalISO();
     document.querySelectorAll('.pf-mes-check').forEach(chk=>{ chk.checked=false; });
     document.getElementById('pf-tipo-monto').value='fijo';
@@ -13192,6 +13256,7 @@ function onPFFrecuenciaChange(){
   const esAnual=val==='anual';
   const esSemestral=val==='semestral';
   document.getElementById('pf-mes-inicio-wrap').style.display=(esAnual||esSemestral)?'none':'block';
+  document.getElementById('pf-duracion-wrap').style.display=(esAnual||esSemestral)?'none':'block';
   document.getElementById('pf-fecha-anual-wrap').style.display=esAnual?'block':'none';
   document.getElementById('pf-meses-wrap').style.display=esSemestral?'block':'none';
 }
@@ -13259,6 +13324,8 @@ function savePagoFrecuente(){
   const tipo=document.getElementById('pf-tipo').value;
   const frecuencia=document.getElementById('pf-frecuencia').value;
   const mesInicio=document.getElementById('pf-mes-inicio').value||'';
+  const duracionMesesRaw=document.getElementById('pf-duracion-meses').value;
+  const duracionMeses=duracionMesesRaw?Math.max(1,parseInt(duracionMesesRaw,10)):null;
   const fechaAnual=document.getElementById('pf-fecha-anual').value||'';
   const meses=Array.from(document.querySelectorAll('.pf-mes-check:checked')).map(chk=>parseInt(chk.value,10)).sort((a,b)=>a-b);
   const tipoMonto=document.getElementById('pf-tipo-monto').value;
@@ -13272,15 +13339,16 @@ function savePagoFrecuente(){
   if(!nombre){alert('Ingresa un nombre.');return;}
   if(frecuencia==='anual' && !fechaAnual){alert('Ingresa la fecha exacta de vencimiento.');return;}
   if(frecuencia==='semestral' && !meses.length){alert('Selecciona al menos un mes en el que aplica.');return;}
+  if(duracionMeses && !mesInicio){alert('Si le pones una duración en meses, primero define el mes de inicio (para saber desde cuándo contar).');return;}
   if((tipoMonto==='fijo'||tipoMonto==='base_descuentos') && montoFijo<=0){alert('Ingresa el monto '+(tipoMonto==='base_descuentos'?'base':'fijo')+'.');return;}
   if(!destino){alert('Selecciona una cuenta'+(tipo==='gasto'?' o tarjeta':'')+'.');return;}
 
   if(!state.pagosFrecuentes) state.pagosFrecuentes=[];
   if(editingPFId){
     const pf=state.pagosFrecuentes.find(p=>p.id===editingPFId);
-    if(pf){ Object.assign(pf,{nombre,tipo,frecuencia,mesInicio,fechaAnual,meses,tipoMonto,montoFijo,currency,metodoPago,destino,categoria,diaPago}); }
+    if(pf){ Object.assign(pf,{nombre,tipo,frecuencia,mesInicio,duracionMeses,fechaAnual,meses,tipoMonto,montoFijo,currency,metodoPago,destino,categoria,diaPago}); }
   } else {
-    state.pagosFrecuentes.push({id:'pf-'+Date.now(), nombre, tipo, frecuencia, mesInicio, fechaAnual, meses, tipoMonto, montoFijo, currency, metodoPago, destino, categoria, diaPago, pagosRegistrados:{}, descuentosPendientes:[]});
+    state.pagosFrecuentes.push({id:'pf-'+Date.now(), nombre, tipo, frecuencia, mesInicio, duracionMeses, fechaAnual, meses, tipoMonto, montoFijo, currency, metodoPago, destino, categoria, diaPago, pagosRegistrados:{}, descuentosPendientes:[]});
   }
   saveState();
   closePagoFrecuenteModal();
@@ -13317,9 +13385,18 @@ function pfDiaLabel(diaPago, diasEnMes){
 function renderPagosFrecuentes(){
   const el=document.getElementById('pagos-frecuentes-list');
   if(!el) return;
-  const pagos=state.pagosFrecuentes||[];
+  const todos=state.pagosFrecuentes||[];
+  const ocultosCount=todos.filter(p=>p.oculto).length;
+  const btnOcultos=document.getElementById('pf-ocultos-btn');
+  if(btnOcultos){
+    btnOcultos.style.display=ocultosCount>0?'inline-flex':'none';
+    btnOcultos.textContent=pfMostrandoOcultos?'‹ Volver a la lista':`🙈 Ocultos (${ocultosCount})`;
+  }
+  const pagos=pfMostrandoOcultos ? todos.filter(p=>p.oculto) : todos.filter(p=>!p.oculto);
   if(!pagos.length){
-    el.innerHTML='<div class="dash-empty">Sin pagos ni ingresos frecuentes configurados. Agrega uno con el botón de arriba (ej. luz, teléfono, sueldo, SOAT).</div>';
+    el.innerHTML = pfMostrandoOcultos
+      ? '<div class="dash-empty">No tienes pagos ocultos.</div>'
+      : '<div class="dash-empty">Sin pagos ni ingresos frecuentes configurados. Agrega uno con el botón de arriba (ej. luz, teléfono, sueldo, SOAT).</div>';
     return;
   }
   const mk=mesActualKey();
@@ -13343,6 +13420,10 @@ function renderPagosFrecuentes(){
       periodoKey=mk;
     }
     const yaPagado=periodoKey && pf.pagosRegistrados && pf.pagosRegistrados[periodoKey];
+    const hoyPF=new Date();
+    const finalizado=!pfActivoEnMes(pf, hoyPF.getFullYear(), hoyPF.getMonth());
+    const mesesFaltantes=finalizado?pfMesesSinRegistrar(pf):[];
+    const vencido=finalizado && mesesFaltantes.length>0;
     const sym=pf.currency==='USD'?'$':'S/';
     const pendientes=pf.descuentosPendientes||[];
     const totalPendiente=pendientes.reduce((s,d)=>s+d.monto,0);
@@ -13380,6 +13461,17 @@ function renderPagosFrecuentes(){
     } else if(pf.mesInicio){
       const [iy,im]=pf.mesInicio.split('-').map(Number);
       inicioLabel=' · desde '+MONTHS[im-1]+' '+iy;
+      if(pf.duracionMeses){
+        // Mes de fin = mes de inicio + (duración − 1), para mostrar el
+        // último mes en que SÍ aplicó (no el primero en que ya no aplica).
+        const totalM=(im-1)+(pf.duracionMeses-1);
+        const finY=iy+Math.floor(totalM/12), finM=(totalM%12);
+        inicioLabel += finalizado
+          ? (vencido
+              ? ' · terminó en '+MONTHS[finM]+' '+finY+' — faltan '+mesesFaltantes.length+' mes'+(mesesFaltantes.length===1?'':'es')+' por registrar'
+              : ' · finalizó en '+MONTHS[finM]+' '+finY+' ('+pf.duracionMeses+' meses, completo)')
+          : ' · hasta '+MONTHS[finM]+' '+finY+' ('+pf.duracionMeses+' meses)';
+      }
     }
     // Día límite de pago (opcional, no-anual ni semestral — este último ya
     // muestra su propia etiqueta de "corresponde este mes/próximo") — mismo
@@ -13432,10 +13524,20 @@ function renderPagosFrecuentes(){
           ? `<button onclick="openPFQuickDescuento('${pf.id}')" title="Se guarda para cuando registres el próximo pago (aunque este mes ya esté pagado)" style="font-size:10px;padding:5px 8px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">+ Descuento</button>`
           : ''
         }
-        ${yaPagado
-          ? `<span style="font-size:10px;color:var(--green);white-space:nowrap">✅ ${esIngreso?'Recibido':'Pagado'}${esAnual?' este ciclo':' este mes'}</span>
-             ${!esAnual?`<button onclick="adelantarPagoFrecuente('${pf.id}')" title="Registrar un pago de un mes futuro por adelantado" style="font-size:9px;padding:4px 7px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">+ Adelantar</button>`:''}`
-          : `<button class="btn btn-primary" style="font-size:10px;padding:5px 10px;white-space:nowrap" onclick="registrarPagoFrecuente('${pf.id}')">Registrar ${esIngreso?'ingreso':'pago'}</button>`
+        ${vencido
+          ? `<span style="font-size:10px;color:var(--red);white-space:nowrap;background:var(--red-bg);padding:5px 8px;border-radius:6px" title="Faltan ${mesesFaltantes.length} mes(es) por registrar: ${mesesFaltantes.join(', ')}">🔴 Vencido</span>`
+          : (finalizado
+              ? (pf.oculto
+                  ? `<button onclick="mostrarPagoFrecuente('${pf.id}')" style="font-size:10px;padding:5px 10px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">👁️ Mostrar</button>`
+                  : `<span style="font-size:10px;color:var(--text3);white-space:nowrap;background:var(--bg3);padding:5px 8px;border-radius:6px">⏹ Finalizado</span>
+                     <button onclick="ocultarPagoFrecuente('${pf.id}')" title="Ya no aparecerá en la lista principal (se puede volver a mostrar desde 'Ocultos')" style="font-size:9px;padding:4px 7px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">🙈 Ocultar</button>`
+                )
+              : (yaPagado
+                  ? `<span style="font-size:10px;color:var(--green);white-space:nowrap">✅ ${esIngreso?'Recibido':'Pagado'}${esAnual?' este ciclo':' este mes'}</span>
+                     ${!esAnual?`<button onclick="adelantarPagoFrecuente('${pf.id}')" title="Registrar un pago de un mes futuro por adelantado" style="font-size:9px;padding:4px 7px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">+ Adelantar</button>`:''}`
+                  : `<button class="btn btn-primary" style="font-size:10px;padding:5px 10px;white-space:nowrap" onclick="registrarPagoFrecuente('${pf.id}')">Registrar ${esIngreso?'ingreso':'pago'}</button>`
+                )
+            )
         }
         <button onclick="openPFHistorial('${pf.id}')" title="Ver historial" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px">📅</button>
         <button onclick="openPagoFrecuenteModal('${pf.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px">✏</button>
@@ -19114,6 +19216,9 @@ if(state.projGoals){
     </div>
     <div class="field" id="pf-mes-inicio-wrap"><label>Mes de inicio <span style="font-size:10px;color:var(--text3)">(desde cuándo contar — para saber qué meses faltan)</span></label>
       <input id="pf-mes-inicio" type="month">
+    </div>
+    <div class="field" id="pf-duracion-wrap"><label>¿Cuántos meses dura? <span style="font-size:10px;color:var(--text3)">(opcional — déjalo vacío si es indefinido. Ej. un ingreso de contrato por 33 meses, o una cuota de préstamo por 12 meses)</span></label>
+      <input id="pf-duracion-meses" type="number" min="1" step="1" placeholder="Ej. 33 (vacío = sin límite)">
     </div>
     <div class="field" id="pf-fecha-anual-wrap" style="display:none">
       <label>Fecha exacta <span style="font-size:10px;color:var(--text3)">(el día que vence/se renueva cada año — el recordatorio se basa en esta fecha)</span></label>
