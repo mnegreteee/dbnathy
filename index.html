@@ -1605,6 +1605,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     </div>
   </div>
 
+  <div id="tct-resumen" style="display:none"></div>
+
   <div class="tct-table-wrap">
     <table class="tct-table">
       <thead id="tct-thead"></thead>
@@ -3124,8 +3126,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '02/09/26 - 06:08'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Se trajeron los 3 cambios pendientes de la app de Miguel: (1) Metas de ahorro grandes corregidas — el progreso (tarjeta, widget del dashboard, y "aportar este mes") ahora usa el saldo real reconstruido en vez del campo que podía desincronizarse. (2) Exportación a Excel — la hoja "Saldos" también corregida para usar el saldo real. (3) Botón "🙈" en TODAS las cuentas (Cuentas y Ahorros) para ocultar cualquiera a mano sin importar su saldo, más el signo "-" ahora visible en saldos negativos (antes solo se distinguían por el color rojo). Nota: seedDemo() en esta app ya estaba desactivado desde antes, no hizo falta portar eso. Verificado con Playwright: mismo resultado exacto que en la app de Miguel en los 3 casos.';
+const APP_VERSION_DATE = '03/09/26 - 19:34'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Se trajo el aviso del Comparador de TC de la app de Miguel: mejor empresa según último registro + mejor tipo de cambio histórico. Verificado con Playwright sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -10361,7 +10363,14 @@ function editCuenta(key){
 }
 
 function startDeleteCuenta(key){
-  const bal=state.cuentas[key]||0;
+  // Usa el saldo REAL reconstruido, no state.cuentas[key] directo — ese
+  // campo puede desincronizarse (ver el caso real de Pichincha/BBVA). Si
+  // se usara el campo viejo acá y por error dijera "S/0" mientras la
+  // cuenta en realidad tenía plata, se podría borrar la cuenta SIN avisar
+  // que hay que transferir el saldo primero — el peor lugar posible para
+  // que el número esté mal.
+  const hoyDel=new Date();
+  const bal=(reconstructSaldoAt(hoyDel.getFullYear(), hoyDel.getMonth())||{})[key]||0;
   pendingDeleteKey=key;
   if(Math.abs(bal)>0.01){
     // Has balance — show transfer UI
@@ -15641,7 +15650,49 @@ function renderTcOperaciones(){
     </tr>`;
   }).join('');
 }
+// Aviso entre las casas de cambio y la tabla: (1) según el ÚLTIMO registro,
+// qué empresa conviene más para comprar/vender dólares ahora mismo, y (2)
+// el mejor tipo de cambio de compra/venta en TODO el histórico ingresado
+// (pueden ser de fechas y empresas distintas entre sí).
+function renderTCResumen(rows, empresas){
+  const el=document.getElementById('tct-resumen');
+  if(!el) return;
+  if(!rows.length || !empresas.length){ el.style.display='none'; return; }
 
+  const ahorroActual=getTotalAhorroSoles();
+  const ultimaFila=rows[rows.length-1]; // rows ya viene ordenado por fecha ascendente
+  const rUltima=computeTCRow(ultimaFila, empresas, ahorroActual);
+
+  // Histórico completo: la mejor compra (venta más baja) y mejor venta
+  // (compra más alta) de CUALQUIER empresa en CUALQUIER fecha registrada.
+  let histCompra=null, histVenta=null; // {valor, empresa, fecha}
+  rows.forEach(row=>{
+    empresas.forEach(e=>{
+      const rate=(row.rates && row.rates[e.id])||{};
+      const compra=parseFloat(rate.compra), venta=parseFloat(rate.venta);
+      if(!isNaN(venta) && venta>0 && (!histCompra || venta<histCompra.valor)){
+        histCompra={valor:venta, empresa:e, fecha:row.fecha};
+      }
+      if(!isNaN(compra) && compra>0 && (!histVenta || compra>histVenta.valor)){
+        histVenta={valor:compra, empresa:e, fecha:row.fecha};
+      }
+    });
+  });
+
+  const fmtFecha=f=>{ const [y,m,d]=f.split('-'); return `${d}/${m}/${y}`; };
+
+  const lineaUltima = (rUltima.mejorCompra || rUltima.mejorVenta)
+    ? `📌 En base al último registro (<b>${fmtFecha(ultimaFila.fecha)}</b>), la mejor opción de <b>compra</b> es ${rUltima.mejorCompra?`<b style="color:${rUltima.mejorCompra.empresa.color}">${escapeHtml(rUltima.mejorCompra.empresa.nombre)}</b>`:'—'} y la mejor opción de <b>venta</b> es ${rUltima.mejorVenta?`<b style="color:${rUltima.mejorVenta.empresa.color}">${escapeHtml(rUltima.mejorVenta.empresa.nombre)}</b>`:'—'}.`
+    : '📌 Aún no hay tasas registradas en el último renglón para comparar.';
+
+  const lineaHistorica = (histCompra || histVenta)
+    ? `🏆 Mejor tipo de cambio histórico: ${histCompra?`<b>compra ${histCompra.valor}</b> (${escapeHtml(histCompra.empresa.nombre)}, ${fmtFecha(histCompra.fecha)})`:'—'}${histCompra&&histVenta?' · ':''}${histVenta?`<b>venta ${histVenta.valor}</b> (${escapeHtml(histVenta.empresa.nombre)}, ${fmtFecha(histVenta.fecha)})`:''}`
+    : '';
+
+  el.style.display='block';
+  el.style.cssText='display:block;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;line-height:1.6';
+  el.innerHTML=`<div>${lineaUltima}</div>${lineaHistorica?`<div style="margin-top:4px;color:var(--text2)">${lineaHistorica}</div>`:''}`;
+}
 function renderTCTracker(){
   const empresas = state.tcEmpresas || [];
   const ahorroActual = getTotalAhorroSoles();
@@ -15653,6 +15704,7 @@ function renderTCTracker(){
   if(!tbody) return;
 
   const rows = (state.tcTracker||[]).slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  renderTCResumen(rows, empresas);
 
   if(!rows.length){
     const totalCols = 2 + empresas.length*3 + 2 + 3 + 1;
