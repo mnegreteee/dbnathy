@@ -3132,8 +3132,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '05/09/26 - 08:55'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Completada la sincronización total con Miguel — se agregaron las 30 mejoras genéricas restantes que no tenían relación con Actividad Reciente pero tampoco eran personalización propia de esta cuenta (confirmado revisando cada diff a mano): animación de contador al cambiar el Patrimonio Neto en el Resumen (animarConteo, función nueva), íconos en los estados vacíos del dashboard, recoloreo automático del patrón de fondo al cambiar el color de acento, y ajustes menores en varias funciones de configuración/UI. Todos los nombres de localStorage se ajustaron correctamente a nathy_mf_* (no quedó ningún miguel_mf_ colado, verificado). Con esto, la app de Nathy queda funcionalmente idéntica a la de Miguel en todo lo no específico de cada cuenta. Verificado con Playwright: animarConteo existe y funciona, toggleTheme usa la clave correcta, íconos de estado vacío presentes, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '05/09/26 - 09:26'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'FIX CRÍTICO: el login se quedaba trabado sin ningún mensaje de error. Causa: al portar la función renderDashboard de Miguel (para la animación de contador en Patrimonio Neto), se copió la función pero no la variable global que usa (_patrimonioUltimoValorAnimado) — esto lanzaba un ReferenceError dentro de la cadena de carga tras iniciar sesión (loadState().then(...)), que al no tener .catch() rompía todo el flujo en silencio sin mostrar la app. Se agregó la declaración faltante. Se hizo además una auditoría completa de las 161 variables globales del archivo comparando Miguel vs Nathy para descartar cualquier otro caso igual — no se encontró ninguno más. Verificado con Playwright: render() completo sin el ReferenceError, y regresión de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4836,6 +4836,7 @@ function renderNumerosCompactosBtn(){
   const btn=document.getElementById('cfg-numeros-compactos-btn');
   if(btn) btn.textContent = state.numerosCompactosPorDefecto===false ? '🔢 Mostrando completos' : '🔢 Mostrando compactos (15.4K)';
 }
+let _patrimonioUltimoValorAnimado=null;
 function animarConteo(el, valorFinal, prefijo, duracionMs){
   duracionMs=duracionMs||700;
   const inicio=performance.now();
