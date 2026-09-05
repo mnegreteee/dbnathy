@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3132,8 +3132,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '05/09/26 - 09:26'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'FIX CRÍTICO: el login se quedaba trabado sin ningún mensaje de error. Causa: al portar la función renderDashboard de Miguel (para la animación de contador en Patrimonio Neto), se copió la función pero no la variable global que usa (_patrimonioUltimoValorAnimado) — esto lanzaba un ReferenceError dentro de la cadena de carga tras iniciar sesión (loadState().then(...)), que al no tener .catch() rompía todo el flujo en silencio sin mostrar la app. Se agregó la declaración faltante. Se hizo además una auditoría completa de las 161 variables globales del archivo comparando Miguel vs Nathy para descartar cualquier otro caso igual — no se encontró ninguno más. Verificado con Playwright: render() completo sin el ReferenceError, y regresión de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '05/09/26 - 09:29'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Corregido otro efecto secundario de la sincronización masiva: la app de Nathy debe tener SIEMPRE tema claro por defecto (regla ya guardada en memoria para no repetir esto), pero al portar loadTheme() desde Miguel se coló su valor por defecto ("dark"). Corregidos 2 lugares: el atributo data-theme inicial en la etiqueta <html>, y el valor de respaldo dentro de loadTheme(). Si en algún momento cambiaste el tema a oscuro manualmente, esa elección se sigue respetando — el default en claro solo aplica cuando nunca se ha elegido nada. Verificado con Playwright: tema inicial en claro, loadTheme() sin preferencia guardada usa claro, y loadTheme() con "dark" ya elegido antes lo respeta correctamente; regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4514,7 +4514,7 @@ function toggleTheme(){
   if(projChart)renderProyeccion();
 }
 function loadTheme(){
-  const t=localStorage.getItem('nathy_mf_theme')||'dark';
+  const t=localStorage.getItem('nathy_mf_theme')||'light';
   document.documentElement.setAttribute('data-theme',t);
 }
 
