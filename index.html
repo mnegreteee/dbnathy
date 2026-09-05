@@ -3137,8 +3137,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '05/09/26 - 13:34'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Sincronizadas las 4 categorizaciones nuevas de la app de Miguel: Servicios, Pagos/Ingresos Frecuentes (incluyendo el desbloqueo para ingresos como "Sueldo"), Deudas, y Compra/Venta de USD — todas con sugerencia inteligente. A diferencia de la vez pasada, esta vez porté también el HTML de los selectores nuevos en los 4 modales (no solo las funciones de JavaScript), y verifiqué explícitamente que no faltara ninguna variable global ni elemento HTML antes de entregar, para no repetir el bug del login de la sincronización anterior. Verificado con Playwright: las 4 secciones con el mismo resultado exacto que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '05/09/26 - 13:56'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Sincronizada la aplicación retroactiva de categoría de la app de Miguel: al elegir categoría en Servicios, Pagos/Ingresos Frecuentes o Deudas, pregunta si aplicarla también a los movimientos anteriores que coincidan. Verificado con Playwright: mismos 3 casos con el mismo resultado exacto que en la app de Miguel (incluida la distinción cuidadosa entre "Spotify - Zektor" y "Spotify Duo - OtraPersona"), y regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -10313,6 +10313,7 @@ function saveSrvEdit(){
   saveServicesForMonth(allSvcs);
   logActividad(esNuevo?'servicio_nuevo':'servicio_editado', `Servicio ${esNuevo?'nuevo':'editado'}: ${name}`, {serviceId:sid, monthKey:monthKey(state.currentYear,state.currentMonth), snapshotAntes:svcAntes});
   closeSrvEdit();renderServicios();render();
+  if(cat) aplicarCategoriaRetroactiva(name+' - ', cat, 'prefijo');
 }
 function deleteService(sid){
   if(!confirm('¿Eliminar este servicio?'))return;
@@ -11430,6 +11431,28 @@ function suggestCategoriaFor(descId, catId, hintId){
     catEl.value=suggested;
     if(hintEl) hintEl.textContent='🧠 Sugerido';
   }
+}
+
+// Aplica una categoría hacia atrás — a todos los movimientos YA existentes
+// que coincidan con un nombre/descripción (ej. todos los "Sueldo" de meses
+// anteriores). Solo se ofrece cuando el usuario elige una categoría al
+// EDITAR algo que ya tenía movimientos previos — nunca se aplica solo,
+// siempre se pregunta primero cuántos encontró y se pide confirmación.
+// matchTipo: 'exacto' (desc===texto) o 'prefijo' (desc empieza con texto,
+// usado en Servicios porque el desc real incluye " - NombrePersona" al final).
+function aplicarCategoriaRetroactiva(texto, categoria, matchTipo){
+  if(!categoria || !texto) return;
+  const coincidencias=(state.movimientos||[]).filter(m=>{
+    const yaEsIgual = m.cat===categoria;
+    if(yaEsIgual) return false;
+    return matchTipo==='prefijo' ? m.desc.startsWith(texto) : m.desc===texto;
+  });
+  if(!coincidencias.length) return;
+  const ok=confirm(`Encontré ${coincidencias.length} movimiento(s) anterior(es) de "${texto}". ¿Aplicarles también la categoría "${categoria}"?`);
+  if(!ok) return;
+  coincidencias.forEach(m=>{ m.cat=categoria; });
+  saveState();
+  toast(`${coincidencias.length} movimiento(s) actualizado(s) con la nueva categoría`);
 }
 
 
@@ -14423,6 +14446,10 @@ function savePagoFrecuente(){
   closePagoFrecuenteModal();
   renderPagosFrecuentes();
   toast(editingPFId?'Pago frecuente actualizado':'Pago frecuente guardado');
+  // Se ofrece DESPUÉS de cerrar el modal — si el usuario dice que no, no se
+  // pierde nada de lo ya guardado, la categoría del pago frecuente en sí ya
+  // quedó bien igual.
+  if(categoria) aplicarCategoriaRetroactiva(nombre, categoria, 'exacto');
 }
 
 function deletePagoFrecuente(){
@@ -15275,6 +15302,7 @@ function saveDeuda(){
     }
   }
   saveState(); closeDeudaModal(); renderDeudas(); toast('Préstamo guardado');
+  if(cat) aplicarCategoriaRetroactiva('Cobro préstamo — '+nombre, cat, 'exacto');
 }
 
 function deleteDeuda(){
