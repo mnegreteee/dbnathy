@@ -3132,8 +3132,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '04/09/26 - 22:23'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Se trajeron los 5 cambios pendientes de la app de Miguel: (1) Contraste de --text2/--text3 corregido en ambos temas (aplica a toda la app automáticamente). (2) Flechas ◀▶ para reordenar las casas de cambio (también reordena sus columnas en la tabla). (3) Selector de color para cada casa de cambio (cambia el fondo del encabezado en la tabla, el nombre sigue en blanco fijo). (4) Signo "-" corregido en el badge "vs mes anterior" de Patrimonio Neto. (5) Signo "-" corregido en la diferencia de retención de 5ta real vs estimada. Verificado con Playwright: mismos resultados exactos que en la app de Miguel en los 5 casos, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '04/09/26 - 23:50'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Se trajo de la app de Miguel: listener en tiempo real para movimientos nuevos agregados desde el bot de Telegram u otro dispositivo — antes solo aparecían al recargar la página. Mismas protecciones que el listener de secciones (ignora eco de la propia escritura, no duplica contenido idéntico). Verificado con Playwright: mismo resultado exacto que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -19324,6 +19324,7 @@ function initFirebase(){
 //  esté editando activamente acá.
 // ══════════════════════════════════════════════════════
 let _tcUnsubscribeListener = null;
+let _movsUnsubscribeListener = null;
 function iniciarListenerTiempoReal(){
   detenerListenerTiempoReal(); // por si quedó uno de una sesión anterior
   if(!DOC_REF) return;
@@ -19358,9 +19359,41 @@ function iniciarListenerTiempoReal(){
       toast('🔄 Actualizado con cambios de otro dispositivo');
     }
   }, err=>console.warn('Listener en tiempo real desconectado:', err));
+
+  // Movimientos agregados desde OTRO lado (el bot de Telegram, un atajo, u
+  // otro dispositivo) — sin esto, aparecían recién al recargar la página,
+  // porque el listener de arriba solo cubre "secciones", no movimientos.
+  _movsUnsubscribeListener = DOC_REF.collection('movimientos').onSnapshot(snap=>{
+    if(demoMode) return;
+    if(!_lastSyncedMeta) return; // todavía no terminamos la carga inicial
+    let huboCambiosAjenos = false;
+    snap.docChanges().forEach(change=>{
+      if(change.doc.metadata.hasPendingWrites) return; // propia escritura optimista
+      const id = change.doc.id;
+      if(change.type==='removed'){
+        const idx=state.movimientos.findIndex(m=>m.id===id);
+        if(idx!==-1){ state.movimientos.splice(idx,1); delete _lastSyncedMovs[id]; huboCambiosAjenos=true; }
+        return;
+      }
+      const data = change.doc.data();
+      const serialized = JSON.stringify(data);
+      if(_lastSyncedMovs[id] === serialized) return; // ya lo teníamos exactamente así (ej. eco de nuestra propia escritura)
+      const idx = state.movimientos.findIndex(m=>m.id===id);
+      if(idx===-1) state.movimientos.push(data);
+      else state.movimientos[idx] = data;
+      _lastSyncedMovs[id] = serialized;
+      huboCambiosAjenos = true;
+    });
+    if(huboCambiosAjenos){
+      clearSaldoCache();
+      render();
+      toast('🔄 Nuevo movimiento de otro dispositivo');
+    }
+  }, err=>console.warn('Listener de movimientos desconectado:', err));
 }
 function detenerListenerTiempoReal(){
   if(_tcUnsubscribeListener){ _tcUnsubscribeListener(); _tcUnsubscribeListener=null; }
+  if(_movsUnsubscribeListener){ _movsUnsubscribeListener(); _movsUnsubscribeListener=null; }
 }
 
 function startApp(){
