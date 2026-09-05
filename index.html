@@ -3132,8 +3132,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '04/09/26 - 23:50'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Se trajo de la app de Miguel: listener en tiempo real para movimientos nuevos agregados desde el bot de Telegram u otro dispositivo — antes solo aparecían al recargar la página. Mismas protecciones que el listener de secciones (ignora eco de la propia escritura, no duplica contenido idéntico). Verificado con Playwright: mismo resultado exacto que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '05/09/26 - 03:55'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Se trajeron de la app de Miguel los cambios de Actividad Reciente: (1) cada entrada ahora muestra usuario, dispositivo, IP y fecha/hora exacta. (2) "Eliminar" ahora revierte de verdad los 9 tipos nuevos (categoría, pago frecuente nuevo, descuento pendiente, evento, inversión, servicio, marcar pago de servicio, combustible, kilometraje), con el mismo manejo especial para valorizaciones fusionadas. El bot (index.js) ya es compartido entre ambas cuentas, así que sus cambios aplican en cuanto Miguel despliegue. Verificado con Playwright: mismos resultados exactos que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3433,9 +3433,21 @@ function toast(msg, tipo){
 //  encontrarlo y borrarlo sin ir a revisar tarjeta por tarjeta.
 // ══════════════════════════════════════════════════════
 const ACTIVIDAD_MAX=80; // se recorta lo más viejo para no crecer sin límite
+// Caché simple de la IP de esta sesión (se llena en registrarNuevaSesion,
+// vía el mismo fetch que ya se hacía para el historial de sesiones de
+// Seguridad — no se pide de nuevo). logActividad es síncrona y se llama
+// desde decenas de lugares, así que no puede esperar un fetch cada vez.
+let _ipSesionActual=null;
 function logActividad(tipo, resumen, ref){
   if(!Array.isArray(state.actividadLog)) state.actividadLog=[];
-  state.actividadLog.push({id:'act-'+Date.now()+Math.random().toString(36).slice(2,6), ts:Date.now(), tipo, resumen, ref});
+  const {dispositivo,navegador}=detectarDispositivoNavegador();
+  state.actividadLog.push({
+    id:'act-'+Date.now()+Math.random().toString(36).slice(2,6),
+    ts:Date.now(), tipo, resumen, ref,
+    quien: currentUser||'Desconocido',
+    dispositivo: dispositivo+' · '+navegador,
+    ip: _ipSesionActual,
+  });
   if(state.actividadLog.length>ACTIVIDAD_MAX) state.actividadLog=state.actividadLog.slice(-ACTIVIDAD_MAX);
 }
 function tiempoRelativo(ts){
@@ -3450,7 +3462,7 @@ function tiempoRelativo(ts){
   const d=new Date(ts);
   return d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
-const ACTIVIDAD_ICONOS={movimiento:'💵',tc_consumo:'💳',transferencia:'🔄',deuda:'🤝',deuda_item:'🧾',tc_operacion:'💱',pago_frecuente:'💡',combustible_gasto:'⛽'};
+const ACTIVIDAD_ICONOS={movimiento:'💵',tc_consumo:'💳',transferencia:'🔄',deuda:'🤝',deuda_item:'🧾',tc_operacion:'💱',pago_frecuente:'💡',combustible_gasto:'⛽',categoria:'🏷️',pago_frecuente_nuevo:'💡',descuento_pendiente:'💸',evento:'📅',inversion:'📈',servicio:'🧾',servicio_pago:'✅',servicio_pago_info:'↩️',combustible_registro:'⛽',km_manual:'🚗'};
 function abrirActividadReciente(){
   renderActividadReciente();
   document.getElementById('actividad-overlay').classList.add('open');
@@ -3467,15 +3479,25 @@ function renderActividadReciente(){
     cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:12px">Aún no hay actividad registrada.</div>';
     return;
   }
-  cont.innerHTML=log.map(entry=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:16px;flex-shrink:0">${ACTIVIDAD_ICONOS[entry.tipo]||'📌'}</div>
+  cont.innerHTML=log.map(entry=>{
+    const esBot=entry.quien==='Bot de Telegram';
+    const fechaAbs=new Date(entry.ts).toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const detalle=[
+      escapeHtml(entry.quien||'Desconocido'),
+      escapeHtml(entry.dispositivo||'—'),
+      entry.ip?('IP '+escapeHtml(entry.ip)):null,
+    ].filter(Boolean).join(' · ');
+    return `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;flex-shrink:0;margin-top:1px">${esBot?'🤖':(ACTIVIDAD_ICONOS[entry.tipo]||'📌')}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(entry.resumen)}</div>
-        <div style="font-size:10px;color:var(--text3)">${tiempoRelativo(entry.ts)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">${detalle}</div>
+        <div style="font-size:10px;color:var(--text3)">${fechaAbs} · ${tiempoRelativo(entry.ts)}</div>
       </div>
       <button onclick="eliminarActividad('${entry.id}')" style="font-size:10px;padding:5px 10px;background:none;border:1px solid var(--red);color:var(--red);border-radius:6px;cursor:pointer;flex-shrink:0">Eliminar</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 // Revierte un movimiento de cuenta O un consumo de tarjeta, según qué datos
 // traiga el ref — reutilizado por varios tipos de actividad (pago frecuente
@@ -3546,6 +3568,38 @@ function eliminarActividad(logId){
       const arr=state[ref.fuelTipo==='glp'?'combustibleGlp':'combustibleGas']||[];
       const fila=arr.find(f=>f.id===ref.fuelRowId);
       if(fila) delete fila.gastoRegistrado;
+    } else if(entry.tipo==='categoria'){
+      if(state.customCategorias) delete state.customCategorias[ref.categoriaNombre];
+    } else if(entry.tipo==='pago_frecuente_nuevo'){
+      state.pagosFrecuentes=(state.pagosFrecuentes||[]).filter(p=>p.id!==ref.pfId);
+    } else if(entry.tipo==='descuento_pendiente'){
+      const pf=(state.pagosFrecuentes||[]).find(p=>p.id===ref.pfId);
+      if(pf && Array.isArray(pf.descuentosPendientes)) pf.descuentosPendientes=pf.descuentosPendientes.filter(d=>d.id!==ref.descuentoId);
+    } else if(entry.tipo==='evento'){
+      state.calendarEvents=(state.calendarEvents||[]).filter(e=>e.id!==ref.eventoId);
+    } else if(entry.tipo==='inversion'){
+      if(state.inversiones && Array.isArray(state.inversiones[ref.invKind])){
+        if(ref.invKind==='valorizaciones' && ref.valorizacionPreciosAntes!==null && ref.valorizacionPreciosAntes!==undefined){
+          // Se fusionó con una valorización que YA existía — restaurar los
+          // precios de antes en vez de borrar la fila completa (que tendría
+          // datos de otras acciones que no vinieron de esta acción).
+          const v=state.inversiones.valorizaciones.find(x=>x.id===ref.invId);
+          if(v) v.precios=ref.valorizacionPreciosAntes;
+        } else {
+          state.inversiones[ref.invKind]=state.inversiones[ref.invKind].filter(i=>i.id!==ref.invId);
+        }
+      }
+    } else if(entry.tipo==='servicio'){
+      const mesServ=(state.serviciosByMonth||{})[ref.monthKey];
+      if(mesServ) delete mesServ[ref.serviceId];
+    } else if(entry.tipo==='servicio_pago'){
+      _revertirMovOConsumo(ref);
+      if(ref.paymentsKey && state.payments) delete state.payments[ref.paymentsKey];
+    } else if(entry.tipo==='combustible_registro'){
+      const arr=state[ref.fuelTipo==='glp'?'combustibleGlp':'combustibleGas'];
+      if(Array.isArray(arr)) state[ref.fuelTipo==='glp'?'combustibleGlp':'combustibleGas']=arr.filter(f=>f.id!==ref.fuelRowId);
+    } else if(entry.tipo==='km_manual'){
+      state.kmManual=(state.kmManual||[]).filter(k=>k.id!==ref.kmManualId);
     }
   }catch(err){
     console.error('Error revirtiendo actividad:', err);
@@ -7944,6 +7998,7 @@ async function registrarNuevaSesion(){
   const ipInfo=await detectarUbicacionPorIP();
   if(ipInfo){
     nueva.ipPais=ipInfo.pais; nueva.ipCiudad=ipInfo.ciudad; nueva.ip=ipInfo.ip;
+    _ipSesionActual=ipInfo.ip; // caché simple para Actividad Reciente (logActividad es síncrona, no puede esperar este fetch cada vez)
     await guardarSesionesEnLaNubeSinRiesgo();
     if(document.getElementById('seguridad-overlay').classList.contains('open')) renderHistorialSesiones();
   }
@@ -14088,7 +14143,7 @@ function confirmarPFQuickDescuento(){
   if(!concepto){alert('Escribe un concepto (ej. "Zapatos").');return;}
   if(monto<=0){alert('Ingresa un monto válido.');return;}
   if(!pf.descuentosPendientes) pf.descuentosPendientes=[];
-  pf.descuentosPendientes.push({concepto, monto, fecha:todayISO()});
+  pf.descuentosPendientes.push({id:'desc-'+Date.now(), concepto, monto, fecha:todayISO()});
   saveState();
   closePFQuickDescuento();
   renderPagosFrecuentes();
