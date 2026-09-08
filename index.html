@@ -1367,7 +1367,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
   <div class="mid-grid-3col">
     <div class="card" style="padding:18px">
       <div class="section-header"><div class="section-title">Cuentas</div><div style="display:flex;align-items:center;gap:6px"><button id="cuentas-op-ocultas-btn" class="config-action-btn neutral" style="font-size:9px;display:none;padding:3px 7px" onclick="toggleCuentasOpOcultasView()"></button><button id="btn-transferir" class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="openTransferModal()">🔄 Transferir</button></div></div>
-      <div style="font-size:10px;color:var(--text3);margin-top:-8px;margin-bottom:8px">BCP · BBVA · Efectivo</div>
+      <div id="cuentas-op-subtitulo" style="font-size:10px;color:var(--text3);margin-top:-8px;margin-bottom:8px">BCP · BBVA · Efectivo</div>
       <table class="account-table"><thead><tr><th>Cuenta</th><th>Previo</th><th style="text-align:right">Actual</th></tr></thead><tbody id="accounts-tbody"></tbody></table>
       <div id="account-filter-badge" style="display:none;margin-top:8px"><div class="filter-badge"><span id="filter-badge-text"></span><span style="cursor:pointer" onclick="clearAccountFilter()"> ✕</span></div></div>
     </div>
@@ -3169,8 +3169,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '07/09/26 - 22:04'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Sincronizados los 5 fixes de diseño responsivo de la app de Miguel: columnas de tarjetas fijas corregidas en AFP, Ahorros e Intereses, y Lista de Compras (ahora se acomodan a 1 columna en celular), más la fila de pestañas de filtro en Lista de Compras y Deudas ahora desplazable horizontalmente (antes se desbordaba y se cortaba en celular). Verificado con Playwright: mismos resultados exactos que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '07/09/26 - 22:15'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Sincronizado el fix del subtítulo bajo "Cuentas" en Finanzas — antes decía siempre "BCP · BBVA · Efectivo" (texto fijo), ahora se genera dinámicamente con tus cuentas operativas reales. Verificado con Playwright: mismo resultado exacto que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -6375,6 +6375,14 @@ function renderAccountsTables(){
   }
   const allOpRowsDeduped=dedupePorNombre(allOpRows);
   const ahRowsDeduped=dedupePorNombre(ahRows);
+
+  // El subtítulo bajo "Cuentas" antes decía siempre "BCP · BBVA · Efectivo"
+  // sin importar cuáles tuvieras de verdad — ahora refleja las cuentas
+  // operativas reales (incluye las personalizadas).
+  const subtituloEl=document.getElementById('cuentas-op-subtitulo');
+  if(subtituloEl){
+    subtituloEl.textContent = allOpRowsDeduped.length ? allOpRowsDeduped.map(r=>r.l).join(' · ') : 'Sin cuentas registradas';
+  }
 
   // Botón "🙈 Ocultas" de Cuentas operativas — mismo patrón que en Ahorros:
   // solo aparece si hay alguna en S/0 sin forzar a mostrar.
