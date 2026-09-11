@@ -1155,6 +1155,18 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
   <button onclick="abrirReparacionDatos()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer">Reparar ahora</button>
 </div>
 
+<!-- Banner de carga fallida: si no se pudo confirmar qué hay realmente en la
+     nube (problema de red al abrir la app), se BLOQUEA cualquier guardado
+     hasta reconectar (ver el circuito de seguridad en _doFirestoreWrite),
+     para nunca arriesgarse a sobreescribir datos reales de otro dispositivo
+     con un estado local incompleto. Este banner hace ese bloqueo visible e
+     imposible de pasar por alto, en vez de depender solo del puntito rojo
+     chiquito de arriba. -->
+<div id="carga-fallida-banner" style="display:none;position:sticky;top:0;z-index:149;background:linear-gradient(90deg,#dc2626,#991b1b);color:#fff;padding:8px 20px;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3)">
+  <span>🚫 No se pudo cargar tu información desde la nube. Lo que veas ahora puede estar incompleto — tus cambios NO se van a guardar hasta reconectar.</span>
+  <button onclick="retrySync()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Reintentar ahora</button>
+</div>
+
 <!-- MODAL: REPARAR CONSUMOS CON FECHA DAÑADA -->
 <!-- MODAL: ACTIVIDAD RECIENTE -->
 <div class="modal-overlay" id="actividad-overlay" onclick="if(event.target===this)cerrarActividadReciente()">
@@ -3169,8 +3181,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '07/09/26 - 22:15'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Sincronizado el fix del subtítulo bajo "Cuentas" en Finanzas — antes decía siempre "BCP · BBVA · Efectivo" (texto fijo), ahora se genera dinámicamente con tus cuentas operativas reales. Verificado con Playwright: mismo resultado exacto que en la app de Miguel, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '11/09/26 - 17:25'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'FIX CRÍTICO — pérdida de datos entre dispositivos. Causa encontrada: al abrir la app en un dispositivo nuevo, si la lectura inicial desde Firestore fallaba (problema de red, timing), la app igual quedaba lista para USAR y GUARDAR — pero "_lastSyncedMeta" (la foto de qué había realmente en la nube) nunca se llegaba a establecer. Cualquier guardado posterior en ESE dispositivo entonces comparaba su estado local (recién inicializado, casi vacío) contra "nada conocido", y como resultado escribía TODAS las secciones a la nube como si hubieran "cambiado" — borrando tarjetas y movimientos reales creados desde otro dispositivo. Esto explica exactamente lo reportado: crear datos en el teléfono, abrir en la computadora y no ver nada, actualizar el teléfono y perderlo todo. Arreglado con un circuito de seguridad: _doFirestoreWrite() ahora se NIEGA a escribir nada mientras no se haya confirmado con éxito qué hay realmente en la nube (excepto en una cuenta genuinamente nueva, donde no hay nada que perder). Se mejoró también "Reintentar" para que primero reintente la LECTURA (no solo la escritura, que quedaría bloqueada igual), y se agregó un banner rojo bien visible cuando esto pase, para que nunca vuelva a pasar desapercibido como antes (solo un puntito chiquito en el header). Verificado con Node.js y Playwright con mock completo de Firestore: el escenario exacto del bug ahora produce CERO escrituras a la nube, el funcionamiento normal (carga exitosa) sigue intacto, cuentas genuinamente nuevas siguen pudiendo sincronizar por primera vez, y regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3315,12 +3327,24 @@ async function _migrarASeccionesSiNecesario(metaVieja){
   await batch.commit();
 }
 
+// Muestra el banner de arriba si nunca se completó una carga real desde la
+// nube en esta sesión (mismo criterio que el circuito de seguridad de
+// _doFirestoreWrite) — así el bloqueo de guardado nunca pasa desapercibido
+// como un simple puntito rojo en el header.
+function actualizarBannerCargaFallida(){
+  const banner=document.getElementById('carga-fallida-banner');
+  if(!banner) return;
+  const bloqueado = _lastSyncedMeta===null && _remoteDocExisted!==false;
+  banner.style.display = bloqueado ? 'flex' : 'none';
+}
+
 function setSyncStatus(status){
   // status: 'saving' | 'ok' | 'error' | 'loading'
   const dot=document.getElementById('sync-dot');
   const lbl=document.getElementById('sync-label');
   const retryBtn=document.getElementById('sync-retry-btn');
   if(!dot||!lbl)return;
+  actualizarBannerCargaFallida();
   // Si el navegador reporta que no hay internet, eso manda sobre cualquier
   // otro estado — no tiene sentido decir "guardando..." si no hay red.
   if(navigator.onLine===false){
@@ -3342,7 +3366,15 @@ function setSyncStatus(status){
 // falló (ej. por un corte de internet momentáneo).
 function retrySync(){
   setSyncStatus('saving');
-  _doFirestoreWrite();
+  // Si nunca se completó una carga real desde la nube (ver el circuito de
+  // seguridad en _doFirestoreWrite), reintentar solo la ESCRITURA no sirve
+  // de nada — seguiría bloqueada. Hay que reintentar primero la LECTURA,
+  // para conocer de verdad qué hay en Firestore antes de animarse a escribir.
+  if(_lastSyncedMeta===null && _remoteDocExisted!==false){
+    loadState().then(()=>{ render(); _doFirestoreWrite(); });
+  } else {
+    _doFirestoreWrite();
+  }
 }
 
 let saveTimer=null;
@@ -3420,6 +3452,22 @@ async function _doFirestoreWrite(){
   // Segunda capa de protección — jamás escribir a Firestore en modo demo.
   if(demoMode){ console.warn('_doFirestoreWrite() bloqueado: modo demo activo.'); return; }
   if(!DOC_REF){setSyncStatus('error');return;}
+  // 🚨 CIRCUITO DE SEGURIDAD (agregado tras un incidente real de pérdida de
+  // datos entre dispositivos): si nunca se completó con éxito una LECTURA
+  // desde la nube en esta sesión (_lastSyncedMeta sigue en null) — típicamente
+  // porque loadState() falló por red/timing al abrir la app en un dispositivo
+  // nuevo — escribir ahora sería comparar el estado local (posiblemente casi
+  // vacío, recién inicializado) contra "nada conocido", lo que hace que
+  // _writeSeccionesCambiadas trate TODAS las secciones como "cambiadas" y
+  // sobreescriba en la nube datos reales de otro dispositivo con este estado
+  // incompleto. La ÚNICA excepción segura es una cuenta genuinamente nueva
+  // (_remoteDocExisted===false: no hay nada que perder porque no hay
+  // documento en la nube todavía).
+  if(_lastSyncedMeta===null && _remoteDocExisted!==false){
+    console.warn('_doFirestoreWrite() bloqueado: todavía no se completó una carga real desde la nube en esta sesión (posible problema de red al abrir la app) — no se escribe nada hasta confirmar qué hay realmente en Firestore, para no arriesgarse a borrar datos de otro dispositivo.');
+    setSyncStatus('error');
+    return;
+  }
   const localMeta = _snapshotMeta();
   try{
     // Con cada sección en su propio documento, escribir ya no necesita
