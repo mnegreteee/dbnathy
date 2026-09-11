@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +15,9 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231a1b23'/%3E%3Ccircle cx='50' cy='50' r='16' fill='%23555766'/%3E%3C/svg%3E">
 <!-- Favicon de la pestaña del navegador: antes no había ninguno definido,
      así que el navegador mostraba su ícono genérico por defecto (el
-     "planeta"/globo). Se usa el emoji 👽 renderizado como SVG. -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%91%91</text></svg>">
+     "planeta"/globo). Se usa el emoji 💾 renderizado como SVG, mismo truco
+     que un favicon normal pero sin necesitar un archivo .ico aparte. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%91%BD</text></svg>">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Notas%22%2C%22short_name%22%3A%22Notas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f1115%22%2C%22theme_color%22%3A%22%230f1115%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520100%2520100%2527%253E%253Crect%2520width%253D%2527100%2527%2520height%253D%2527100%2527%2520rx%253D%252722%2527%2520fill%253D%2527%25231a1b23%2527%252F%253E%253Ccircle%2520cx%253D%252750%2527%2520cy%253D%252750%2527%2520r%253D%252716%2527%2520fill%253D%2527%2523555766%2527%252F%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -115,9 +116,6 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .login-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;margin-top:6px;}
 .login-btn:hover{background:var(--accent2);}
 .login-err{background:var(--red-bg);border:1px solid var(--red);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:12px;display:none;}
-.login-info{background:var(--green-bg);border:1px solid var(--green);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--green);margin-top:12px;display:none;}
-.login-forgot-link{display:block;text-align:center;font-size:11px;color:var(--text3);margin-top:12px;cursor:pointer;background:none;border:none;font-family:var(--font);width:100%;}
-.login-forgot-link:hover{color:var(--accent);text-decoration:underline;}
 
 /* ── NOTIFY BANNER ── */
 .notify-banner{background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;font-size:13px;}
@@ -148,6 +146,19 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 /* ── CARDS ── */
 .main-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px;}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;box-shadow:var(--card-shadow);}
+/* Efecto de elevación en CUALQUIER elemento clickeable (ya tiene onclick) —
+   mismo criterio que ya usaban las tarjetas KPI del Resumen, extendido a
+   toda la app: tarjetas de crédito, filas de movimientos, deudas, metas,
+   etc. No se aplica a tarjetas sin onclick (ej. formularios), para no
+   sugerir que algo es clickeable cuando no lo es. */
+.card[onclick]:hover, .dash-mov-row[onclick]:hover, .dash-tc-row[onclick]:hover, .tc-card-item[onclick]:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  transition:transform .15s,box-shadow .15s;
+}
+.card[onclick], .dash-mov-row[onclick], .dash-tc-row[onclick], .tc-card-item[onclick]{
+  transition:transform .15s,box-shadow .15s;
+}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .card.c-green::before{background:var(--green);}
 .card.c-red::before{background:var(--red);}
@@ -490,6 +501,7 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .tc-group-item.selected-row{background:rgba(91,141,239,.08);}
 .tc-group-paid-dot{width:16px;height:16px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
 
+
 /* Resumen global */
 .tc-global-table{width:100%;border-collapse:collapse;min-width:600px;}
 .tc-global-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:0 8px 8px;text-align:left;border-bottom:1px solid var(--border);}
@@ -518,6 +530,8 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .dash-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px;}
 .dash-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:transform .12s,border-color .12s;}
 .dash-kpi:hover{transform:translateY(-2px);border-color:var(--border2);}
+.kpi-toggle-num{cursor:pointer;border-bottom:1px dotted transparent;transition:border-color .15s;}
+.kpi-toggle-num:hover{border-bottom-color:currentColor;}
 .dash-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .dash-kpi.kpi-green::before{background:var(--green);}
 .dash-kpi.kpi-red::before{background:var(--red);}
@@ -529,7 +543,6 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .dash-kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:4px;}
 .dash-kpi-val{font-family:var(--mono);font-size:20px;font-weight:500;letter-spacing:-0.5px;}
 .dash-kpi-sub{font-size:11px;color:var(--text3);margin-top:3px;}
-.kpi-toggle-num{cursor:pointer;border-bottom:1px dotted transparent;transition:border-color .15s;}
 
 .dash-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
 .dash-widgets-container{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
@@ -554,7 +567,8 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .dash-shortcut-icon{font-size:20px;}
 .dash-shortcut-label{font-size:13px;font-weight:600;}
 .dash-shortcut-sub{font-size:11px;color:var(--text2);}
-.dash-empty{text-align:center;color:var(--text3);font-size:12px;padding:16px 0;}
+.dash-empty{text-align:center;color:var(--text3);font-size:12px;padding:26px 12px;}
+.dash-empty-icon{font-size:30px;margin-bottom:8px;opacity:.45;line-height:1;}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:5px;}
@@ -891,8 +905,6 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <div class="login-field"><label>Contraseña</label><input id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" onclick="doLogin()">Ingresar</button>
     <div class="login-err" id="login-err">Correo o contraseña incorrectos.</div>
-    <div class="login-info" id="login-info"></div>
-    <button class="login-forgot-link" onclick="enviarResetPassword()">¿Olvidaste tu contraseña?</button>
     <div id="app-version-label" style="text-align:center;font-size:10px;color:var(--text3);margin-top:18px;letter-spacing:.3px"></div>
   </div>
 </div>
@@ -1153,18 +1165,6 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 <div id="datos-danados-banner" style="display:none;position:sticky;top:0;z-index:149;background:linear-gradient(90deg,#dc2626,#f0a53c);color:#fff;padding:8px 20px;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3)">
   <span>⚠️ Se encontraron <span id="datos-danados-count">0</span> consumo(s) con fecha dañada en tus tarjetas</span>
   <button onclick="abrirReparacionDatos()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer">Reparar ahora</button>
-</div>
-
-<!-- Banner de carga fallida: si no se pudo confirmar qué hay realmente en la
-     nube (problema de red al abrir la app), se BLOQUEA cualquier guardado
-     hasta reconectar (ver el circuito de seguridad en _doFirestoreWrite),
-     para nunca arriesgarse a sobreescribir datos reales de otro dispositivo
-     con un estado local incompleto. Este banner hace ese bloqueo visible e
-     imposible de pasar por alto, en vez de depender solo del puntito rojo
-     chiquito de arriba. -->
-<div id="carga-fallida-banner" style="display:none;position:sticky;top:0;z-index:149;background:linear-gradient(90deg,#dc2626,#991b1b);color:#fff;padding:8px 20px;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3)">
-  <span>🚫 No se pudo cargar tu información desde la nube. Lo que veas ahora puede estar incompleto — tus cambios NO se van a guardar hasta reconectar.</span>
-  <button onclick="retrySync()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Reintentar ahora</button>
 </div>
 
 <!-- MODAL: REPARAR CONSUMOS CON FECHA DAÑADA -->
@@ -2099,6 +2099,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 <!-- ══════════ PÁGINA: LISTA DE COMPRAS ══════════ -->
 <div class="page" id="page-compras">
 <div class="container">
+
 
   <div class="section-header" style="margin-bottom:16px">
     <div class="section-title">🛒 Lista de Compras</div>
@@ -3181,8 +3182,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '11/09/26 - 17:25'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'FIX CRÍTICO — pérdida de datos entre dispositivos. Causa encontrada: al abrir la app en un dispositivo nuevo, si la lectura inicial desde Firestore fallaba (problema de red, timing), la app igual quedaba lista para USAR y GUARDAR — pero "_lastSyncedMeta" (la foto de qué había realmente en la nube) nunca se llegaba a establecer. Cualquier guardado posterior en ESE dispositivo entonces comparaba su estado local (recién inicializado, casi vacío) contra "nada conocido", y como resultado escribía TODAS las secciones a la nube como si hubieran "cambiado" — borrando tarjetas y movimientos reales creados desde otro dispositivo. Esto explica exactamente lo reportado: crear datos en el teléfono, abrir en la computadora y no ver nada, actualizar el teléfono y perderlo todo. Arreglado con un circuito de seguridad: _doFirestoreWrite() ahora se NIEGA a escribir nada mientras no se haya confirmado con éxito qué hay realmente en la nube (excepto en una cuenta genuinamente nueva, donde no hay nada que perder). Se mejoró también "Reintentar" para que primero reintente la LECTURA (no solo la escritura, que quedaría bloqueada igual), y se agregó un banner rojo bien visible cuando esto pase, para que nunca vuelva a pasar desapercibido como antes (solo un puntito chiquito en el header). Verificado con Node.js y Playwright con mock completo de Firestore: el escenario exacto del bug ahora produce CERO escrituras a la nube, el funcionamiento normal (carga exitosa) sigue intacto, cuentas genuinamente nuevas siguen pudiendo sincronizar por primera vez, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '07/09/26 - 22:11'; // hora de Lima, Perú (UTC-5)
+const APP_VERSION_NOTE = 'Corregido el subtítulo bajo "Cuentas" en Finanzas — decía siempre "BCP · BBVA · Efectivo", un texto fijo que nunca se actualizaba, sin importar qué cuentas tuvieras de verdad (por eso mencionaba BCP aunque no lo uses, y no mencionaba "Agora (YT)" ni "Corredor" que sí tienes). Ahora se genera dinámicamente con las cuentas operativas reales, reutilizando la misma lista que ya arma la tabla de al lado — nunca se puede desincronizar entre los dos. Verificado con Playwright: el subtítulo muestra exactamente "BBVA · Efectivo · Agora (YT) · Corredor" cuando esas son las cuentas reales, sin ningún rastro de BCP, y regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3248,17 +3249,14 @@ let DOC_REF = null;
 //  dispositivo tenía en memoria, sin importar si otro dispositivo había
 //  cambiado algo más mientras tanto. Con la app abierta en varios
 //  dispositivos a la vez, esto podía borrar en silencio cambios reales
-//  hechos desde otro lado.
+//  hechos desde otro lado (motivó un incidente real de pérdida de datos).
 //
-//  EVOLUCIÓN: primero se resolvió con una fusión "a mano" antes de cada
-//  guardado (comparar sección por sección contra la última foto conocida).
-//  Ahora se va un paso más allá: cada sección (cuentas, customCuentas,
-//  pagosFrecuentes, metasAhorro, tcTracker, etc.) vive en su PROPIO
-//  documento de Firestore — igual que ya hacían los movimientos —, así que
-//  escribir "cuentas" es físicamente imposible que pise "pagosFrecuentes"
-//  de otro dispositivo, ni siquiera si ambos guardan en el mismo instante.
-//  Ya no hace falta "fusionar" nada: solo se escriben las secciones que
-//  ESTE dispositivo cambió, y punto.
+//  Solución: cada sección (cuentas, customCuentas, pagosFrecuentes,
+//  metasAhorro, tcTracker, etc.) vive en su PROPIO documento de Firestore
+//  — igual que ya hacían los movimientos —, así que escribir "cuentas" es
+//  físicamente imposible que pise "pagosFrecuentes" de otro dispositivo,
+//  ni siquiera si ambos guardan en el mismo instante. Solo se escriben las
+//  secciones que ESTE dispositivo cambió desde su última sincronización.
 let _lastSyncedMeta = null;
 // Claves que son "vista" de este dispositivo puntual, no datos compartidos
 // — nunca se sincronizan ni se fusionan entre dispositivos (si Device B
@@ -3279,6 +3277,8 @@ function _seccionesColl(){
 // sincronización (comparando contra _lastSyncedMeta) — las que no se
 // tocaron acá ni se leen ni se escriben, así jamás se pisan entre
 // dispositivos. Devuelve la lista de claves que sí se escribieron.
+// que registrar el cambio no cuente a su vez como otro cambio pendiente.
+
 async function _writeSeccionesCambiadas(localMeta, lastSynced){
   const claves = Object.keys(localMeta);
   const batch = db.batch();
@@ -3327,24 +3327,12 @@ async function _migrarASeccionesSiNecesario(metaVieja){
   await batch.commit();
 }
 
-// Muestra el banner de arriba si nunca se completó una carga real desde la
-// nube en esta sesión (mismo criterio que el circuito de seguridad de
-// _doFirestoreWrite) — así el bloqueo de guardado nunca pasa desapercibido
-// como un simple puntito rojo en el header.
-function actualizarBannerCargaFallida(){
-  const banner=document.getElementById('carga-fallida-banner');
-  if(!banner) return;
-  const bloqueado = _lastSyncedMeta===null && _remoteDocExisted!==false;
-  banner.style.display = bloqueado ? 'flex' : 'none';
-}
-
 function setSyncStatus(status){
   // status: 'saving' | 'ok' | 'error' | 'loading'
   const dot=document.getElementById('sync-dot');
   const lbl=document.getElementById('sync-label');
   const retryBtn=document.getElementById('sync-retry-btn');
   if(!dot||!lbl)return;
-  actualizarBannerCargaFallida();
   // Si el navegador reporta que no hay internet, eso manda sobre cualquier
   // otro estado — no tiene sentido decir "guardando..." si no hay red.
   if(navigator.onLine===false){
@@ -3366,15 +3354,7 @@ function setSyncStatus(status){
 // falló (ej. por un corte de internet momentáneo).
 function retrySync(){
   setSyncStatus('saving');
-  // Si nunca se completó una carga real desde la nube (ver el circuito de
-  // seguridad en _doFirestoreWrite), reintentar solo la ESCRITURA no sirve
-  // de nada — seguiría bloqueada. Hay que reintentar primero la LECTURA,
-  // para conocer de verdad qué hay en Firestore antes de animarse a escribir.
-  if(_lastSyncedMeta===null && _remoteDocExisted!==false){
-    loadState().then(()=>{ render(); _doFirestoreWrite(); });
-  } else {
-    _doFirestoreWrite();
-  }
+  _doFirestoreWrite();
 }
 
 let saveTimer=null;
@@ -3452,22 +3432,6 @@ async function _doFirestoreWrite(){
   // Segunda capa de protección — jamás escribir a Firestore en modo demo.
   if(demoMode){ console.warn('_doFirestoreWrite() bloqueado: modo demo activo.'); return; }
   if(!DOC_REF){setSyncStatus('error');return;}
-  // 🚨 CIRCUITO DE SEGURIDAD (agregado tras un incidente real de pérdida de
-  // datos entre dispositivos): si nunca se completó con éxito una LECTURA
-  // desde la nube en esta sesión (_lastSyncedMeta sigue en null) — típicamente
-  // porque loadState() falló por red/timing al abrir la app en un dispositivo
-  // nuevo — escribir ahora sería comparar el estado local (posiblemente casi
-  // vacío, recién inicializado) contra "nada conocido", lo que hace que
-  // _writeSeccionesCambiadas trate TODAS las secciones como "cambiadas" y
-  // sobreescriba en la nube datos reales de otro dispositivo con este estado
-  // incompleto. La ÚNICA excepción segura es una cuenta genuinamente nueva
-  // (_remoteDocExisted===false: no hay nada que perder porque no hay
-  // documento en la nube todavía).
-  if(_lastSyncedMeta===null && _remoteDocExisted!==false){
-    console.warn('_doFirestoreWrite() bloqueado: todavía no se completó una carga real desde la nube en esta sesión (posible problema de red al abrir la app) — no se escribe nada hasta confirmar qué hay realmente en Firestore, para no arriesgarse a borrar datos de otro dispositivo.');
-    setSyncStatus('error');
-    return;
-  }
   const localMeta = _snapshotMeta();
   try{
     // Con cada sección en su propio documento, escribir ya no necesita
@@ -4246,7 +4210,7 @@ function saveState(immediate){
   state.lastUpdated=new Date().toISOString();
   clearSaldoCache(); // invalidate saldo cache on any state change
   // Save to localStorage immediately as backup
-  localStorage.setItem('nathy_mf_v5',JSON.stringify(state));
+  localStorage.setItem('miguel_mf_v5',JSON.stringify(state));
   updateLastUpdated();
   setSyncStatus('saving');
   clearTimeout(saveTimer);
@@ -4457,9 +4421,9 @@ function migrateState(){
 let _remoteDocExisted = null; // null=desconocido/offline, true=había doc, false=no había doc (cuenta nueva)
 
 function loadState(){
-  ['nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
+  ['miguel_mf_state_v2','miguel_mf_state_v3','miguel_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
   // Load from localStorage first for instant render
-  const s=localStorage.getItem('nathy_mf_v5');
+  const s=localStorage.getItem('miguel_mf_v5');
   if(s){try{const p=JSON.parse(s);state={...state,...p};}catch(e){}}
   migrateState();
   clearSaldoCache();
@@ -4469,7 +4433,7 @@ function loadState(){
 
   // If the user just cleared all data, skip fetching from Firestore entirely
   // (even if the delete hasn't fully propagated yet, we want a blank slate).
-  if(localStorage.getItem('nathy_mf_cleared')==='1'){
+  if(localStorage.getItem('miguel_mf_cleared')==='1'){
     setSyncStatus('ok');
     // Push the fresh blank state to Firestore to guarantee it's clean there too
     if(DOC_REF){
@@ -4546,7 +4510,7 @@ function loadState(){
               state.currentYear=now.getFullYear();
               state.currentMonth=now.getMonth();
             }
-            localStorage.setItem('nathy_mf_v5',JSON.stringify(state));
+            localStorage.setItem('miguel_mf_v5',JSON.stringify(state));
             const snap={};
             subMovs.forEach(mv=>{ if(mv.id) snap[mv.id]=JSON.stringify(mv); });
             _lastSyncedMovs = snap;
@@ -4564,7 +4528,7 @@ function loadState(){
               const now=new Date();
               state.currentYear=now.getFullYear();
               state.currentMonth=now.getMonth();
-              localStorage.setItem('nathy_mf_v5',JSON.stringify(state));
+              localStorage.setItem('miguel_mf_v5',JSON.stringify(state));
             }
             // Forzar que la próxima sincronización suba TODOS los movimientos actuales
             // como documentos individuales (migración transparente, no destructiva).
@@ -4594,22 +4558,20 @@ function toggleTheme(){
   const cur=document.documentElement.getAttribute('data-theme');
   const next=cur==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('nathy_mf_theme',next);
+  localStorage.setItem('miguel_mf_theme',next);
   if(mainChart)renderChart();
   if(projChart)renderProyeccion();
 }
 function loadTheme(){
-  const t=localStorage.getItem('nathy_mf_theme')||'light';
+  const t=localStorage.getItem('miguel_mf_theme')||'dark';
   document.documentElement.setAttribute('data-theme',t);
 }
 
-// ── COLOR DE ACENTO PERSONALIZADO ──────────────────────
-// --accent/--accent2 son las únicas 2 variables de color que NO cambian
-// entre tema oscuro/claro (ver :root{...} arriba) — se usan en botones,
-// links y resaltados en TODA la app. Sobreescribirlas con style.setProperty
-// en <html> tiene más prioridad que la regla :root del CSS, así que basta
-// con esto para "pintar" la app del color que la persona elija, sin tocar
-// nada de la lógica de light/dark (que sigue controlando fondos y textos).
+// ── COLOR DE ACENTO PERSONALIZABLE ──────────────────────
+// Se pinta como variables CSS (--accent, --accent2) por encima de lo que
+// ya defina el tema oscuro/claro — el resto de la app sigue funcionando
+// con esto, "pintando" del color que la persona elija, sin tocar nada de
+// la lógica de light/dark (que sigue controlando fondos y textos).
 function hexToRgb(hex){
   const h=hex.replace('#','');
   return {r:parseInt(h.substring(0,2),16), g:parseInt(h.substring(2,4),16), b:parseInt(h.substring(4,6),16)};
@@ -4624,26 +4586,26 @@ function setAccentColor(hex){
   if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
   document.documentElement.style.setProperty('--accent', hex);
   document.documentElement.style.setProperty('--accent2', shadeColor(hex,-18)); // versión más oscura, para hover/gradientes
-  localStorage.setItem('nathy_mf_accent', hex);
+  localStorage.setItem('miguel_mf_accent', hex);
   if(mainChart) renderChart();
   if(projChart) renderProyeccion();
   // El patrón de fondo usa el color de acento — se recolorea solo al cambiarlo.
-  const patronActivo=localStorage.getItem('nathy_mf_fondo_patron');
-  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('nathy_mf_fondo_opacidad')||'8',10));
+  const patronActivo=localStorage.getItem('miguel_mf_fondo_patron');
+  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('miguel_mf_fondo_opacidad')||'8',10));
 }
 function resetAccentColor(){
   document.documentElement.style.removeProperty('--accent');
   document.documentElement.style.removeProperty('--accent2');
-  localStorage.removeItem('nathy_mf_accent');
+  localStorage.removeItem('miguel_mf_accent');
   const picker=document.getElementById('cfg-accent-picker');
   if(picker) picker.value='#5b8def';
   if(mainChart) renderChart();
   if(projChart) renderProyeccion();
-  const patronActivo=localStorage.getItem('nathy_mf_fondo_patron');
-  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('nathy_mf_fondo_opacidad')||'8',10));
+  const patronActivo=localStorage.getItem('miguel_mf_fondo_patron');
+  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('miguel_mf_fondo_opacidad')||'8',10));
 }
 function loadAccentColor(){
-  const saved=localStorage.getItem('nathy_mf_accent');
+  const saved=localStorage.getItem('miguel_mf_accent');
   const picker=document.getElementById('cfg-accent-picker');
   if(saved){
     document.documentElement.style.setProperty('--accent', saved);
@@ -4652,7 +4614,10 @@ function loadAccentColor(){
   }
 }
 
-// ── HIDE CIFRAS ───────────────────────────────────────
+// ── FONDO PERSONALIZABLE ─────────────────────────────────
+// 4 patrones armados con CSS puro (gradientes) salvo "ondas", que usa un
+// SVG chiquito embebido — todos toman el color de acento actual, así el
+// fondo combina automáticamente con lo que elijas en "Color de acento".
 const BG_PATTERNS={
   ninguno:()=>'none',
   puntos:(c)=>`radial-gradient(circle, ${c} 1.5px, transparent 1.5px)`,
@@ -4675,19 +4640,19 @@ function aplicarFondoPersonalizado(patron, opacidad){
 }
 function setFondoPatron(patron){
   const opacidad=parseInt(document.getElementById('cfg-fondo-opacidad')?.value||'8',10);
-  localStorage.setItem('nathy_mf_fondo_patron', patron);
+  localStorage.setItem('miguel_mf_fondo_patron', patron);
   aplicarFondoPersonalizado(patron, opacidad);
 }
 function setFondoOpacidad(valor){
-  const patron=localStorage.getItem('nathy_mf_fondo_patron')||'ninguno';
-  localStorage.setItem('nathy_mf_fondo_opacidad', valor);
+  const patron=localStorage.getItem('miguel_mf_fondo_patron')||'ninguno';
+  localStorage.setItem('miguel_mf_fondo_opacidad', valor);
   aplicarFondoPersonalizado(patron, valor);
   const label=document.getElementById('cfg-fondo-opacidad-label');
   if(label) label.textContent=valor+'%';
 }
 function loadFondoPersonalizado(){
-  const patron=localStorage.getItem('nathy_mf_fondo_patron')||'ninguno';
-  const opacidad=parseInt(localStorage.getItem('nathy_mf_fondo_opacidad')||'8',10);
+  const patron=localStorage.getItem('miguel_mf_fondo_patron')||'ninguno';
+  const opacidad=parseInt(localStorage.getItem('miguel_mf_fondo_opacidad')||'8',10);
   aplicarFondoPersonalizado(patron, opacidad);
   const sel=document.getElementById('cfg-fondo-patron');
   if(sel) sel.value=patron;
@@ -4697,6 +4662,7 @@ function loadFondoPersonalizado(){
   if(label) label.textContent=opacidad+'%';
 }
 
+// ── HIDE CIFRAS ───────────────────────────────────────
 function toggleHide(){
   hiddenMode=!hiddenMode;
   const btn=document.getElementById('eye-btn');
@@ -4921,6 +4887,10 @@ function renderNumerosCompactosBtn(){
   const btn=document.getElementById('cfg-numeros-compactos-btn');
   if(btn) btn.textContent = state.numerosCompactosPorDefecto===false ? '🔢 Mostrando completos' : '🔢 Mostrando compactos (15.4K)';
 }
+// Animación de conteo (0 -> valor final) para el número "hero" del
+// Resumen — se usa solo ahí (no en las 20 tarjetas KPI, para no pelear con
+// el toggle compacto/completo). Solo anima cuando el valor REALMENTE
+// cambió desde la última vez mostrado, no en cada re-render sin cambios.
 let _patrimonioUltimoValorAnimado=null;
 function animarConteo(el, valorFinal, prefijo, duracionMs){
   duracionMs=duracionMs||700;
@@ -5041,6 +5011,15 @@ function esCuentaDeAhorro(nombreCuenta){
   const c=(state.customCuentas||{})[nombreCuenta];
   return !!(c && c.type==='ahorro');
 }
+// ── TREA (Tasa de Rendimiento Efectivo Anual) por cuenta de ahorro ──────
+// Se guarda un % anual POR MES (state.ahorroTREA[cuenta][mesKey]) — la
+// tasa vigente en un mes cualquiera es la del cambio MÁS RECIENTE que sea
+// igual o anterior a ese mes ("efecto hacia adelante", igual que el tipo
+// de cambio: no hace falta repetirla cada mes si no cambió).
+// El interés mensual proyectado se calcula con la tasa mensual EQUIVALENTE
+// de esa TREA (no simplemente TREA/12) — la TREA ya es una tasa efectiva
+// anual que incluye capitalización, así que "desanualizarla" correctamente es:
+//   tasaMensual = (1 + TREA/100)^(1/12) − 1
 function migrarTREASiNecesario(){
   // Versión anterior de esta función guardaba UN solo valor por cuenta
   // (state.treaCuentas), sin historial mensual — se migra sembrando ese
@@ -5771,11 +5750,11 @@ function setTCAuto(){
 //  navegador esté cerrado — esa sigue siendo la opción para eso).
 // ══════════════════════════════════════════════════════
 function browserNotifsEnabled(){
-  return localStorage.getItem('nathy_mf_browser_notifs')==='1';
+  return localStorage.getItem('miguel_mf_browser_notifs')==='1';
 }
 async function toggleBrowserNotifs(){
   if(browserNotifsEnabled()){
-    localStorage.removeItem('nathy_mf_browser_notifs');
+    localStorage.removeItem('miguel_mf_browser_notifs');
     updateBrowserNotifsBtn();
     return;
   }
@@ -5785,7 +5764,7 @@ async function toggleBrowserNotifs(){
   }
   const perm=await Notification.requestPermission();
   if(perm==='granted'){
-    localStorage.setItem('nathy_mf_browser_notifs','1');
+    localStorage.setItem('miguel_mf_browser_notifs','1');
     updateBrowserNotifsBtn();
     new Notification('Notificaciones activadas', {body:'Te avisaremos aquí mientras tengas esta pestaña abierta.'});
     checkBrowserNotifications(true);
@@ -5809,7 +5788,7 @@ function checkBrowserNotifications(forzar){
   if(!('Notification' in window) || Notification.permission!=='granted') return;
   if(demoMode) return; // nunca notificar con datos falsos del Modo Demo
   const hoyISO=todayISO();
-  if(!forzar && localStorage.getItem('nathy_mf_last_notif_date')===hoyISO) return;
+  if(!forzar && localStorage.getItem('miguel_mf_last_notif_date')===hoyISO) return;
 
   const mensajes=[];
   const hoy=new Date(); hoy.setHours(0,0,0,0);
@@ -5910,7 +5889,7 @@ function checkBrowserNotifications(forzar){
     new Notification('🔔 Recordatorios de hoy', {
       body: mensajes.slice(0,5).join('\n')+(mensajes.length>5?`\n...y ${mensajes.length-5} más`:''),
     });
-    localStorage.setItem('nathy_mf_last_notif_date', hoyISO);
+    localStorage.setItem('miguel_mf_last_notif_date', hoyISO);
   }
 }
 
@@ -6426,7 +6405,7 @@ function renderAccountsTables(){
 
   // El subtítulo bajo "Cuentas" antes decía siempre "BCP · BBVA · Efectivo"
   // sin importar cuáles tuvieras de verdad — ahora refleja las cuentas
-  // operativas reales (incluye las personalizadas).
+  // operativas reales (incluye las personalizadas, ej. "Agora (YT)").
   const subtituloEl=document.getElementById('cuentas-op-subtitulo');
   if(subtituloEl){
     subtituloEl.textContent = allOpRowsDeduped.length ? allOpRowsDeduped.map(r=>r.l).join(' · ') : 'Sin cuentas registradas';
@@ -8358,7 +8337,7 @@ function renderRachaRegistro(){
 // para cuando el usuario le da "Guardar" ya suele estar listo. NUNCA
 // bloquea el guardado: si no hay permiso, falla, o aún no terminó de
 // detectar, el movimiento se guarda igual, simplemente sin país.
-const PAIS_CACHE_KEY='nathy_mf_pais_cache';
+const PAIS_CACHE_KEY='miguel_mf_pais_cache';
 const PAIS_CACHE_HORAS=6; // se vuelve a chequear cada 6h (por si viajas)
 let paisDetectando=false;
 function getPaisCache(){
@@ -8463,7 +8442,8 @@ async function detectarUbicacionPorIP(){
 // en ese momento) — si el resto de tus datos reales todavía no había
 // terminado de cargar en el navegador cuando esto se dispara, un
 // saveState() normal sobreescribiría (borraría) todo lo demás sin querer.
-// Esto es justo lo que causó una pérdida de datos real — no debe repetirse.
+// Esto es justo lo que causó una pérdida de datos real (en la copia de
+// Nathy) — no debe repetirse.
 async function guardarSesionesEnLaNubeSinRiesgo(){
   if(!DOC_REF) return;
   try{
@@ -8519,6 +8499,11 @@ function tiempoRelativoSesion(iso){
   const dias=Math.round(horas/24);
   return `hace ${dias}d`;
 }
+// La app NO sincroniza en tiempo real (carga los datos 1 sola vez al
+// entrar) — así que si solo mirara lo que ya está en memoria, nunca vería
+// que abriste la app en otro dispositivo después. Por eso, justo al abrir
+// este modal, se trae un vistazo fresco directo de Firestore (sin tocar el
+// resto del state local, para no arriesgar pisar algo sin guardar).
 async function obtenerSesionesFrescas(){
   if(!DOC_REF) return state.historialSesiones||[];
   try{
@@ -10475,9 +10460,9 @@ async function deleteAllData(){
   if(!confirm('⚠️ ¿Estás seguro? Se eliminarán TODOS los movimientos, snapshots, servicios y presupuestos. Esta acción no se puede deshacer.')) return;
   // Set the cleared flag FIRST so loadState() skips any Firestore fetch on reload,
   // regardless of whether the delete below has fully propagated yet.
-  localStorage.setItem('nathy_mf_cleared','1');
+  localStorage.setItem('miguel_mf_cleared','1');
   // Clear localStorage completely (all versions)
-  ['nathy_mf_v5','nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4','nathy_mf_theme','nathy_mf_inactivity'].forEach(k=>localStorage.removeItem(k));
+  ['miguel_mf_v5','miguel_mf_state_v2','miguel_mf_state_v3','miguel_mf_state_v4','miguel_mf_theme','miguel_mf_inactivity'].forEach(k=>localStorage.removeItem(k));
   // AWAIT Firestore deletion before reloading — prevents the old race condition
   // where reload happened before the delete finished, pulling old data back.
   if(DOC_REF){
@@ -10691,7 +10676,7 @@ function executeDeleteMonths(){
 // exigen request.auth != null, así que sin sesión iniciada no se puede leer
 // ni escribir nada (ver README de reglas).
 let currentUser = null;
-let inactivityMinutes = parseInt(localStorage.getItem('nathy_mf_inactivity')||'5');
+let inactivityMinutes = parseInt(localStorage.getItem('miguel_mf_inactivity')||'5');
 let inactivityTimer = null;
 
 async function doLogin(){
@@ -10725,51 +10710,6 @@ async function doLogin(){
   }
 }
 
-// Restablecer contraseña vía Firebase Authentication — como todavía no hay
-// sesión iniciada en este punto, no se puede "cambiar" la contraseña
-// directo; se manda un correo con un enlace de Firebase para poner una
-// nueva. Usa el correo que ya esté escrito en el campo de arriba.
-async function enviarResetPassword(){
-  const email=(document.getElementById('login-email').value||'').trim();
-  const errEl=document.getElementById('login-err');
-  const infoEl=document.getElementById('login-info');
-  errEl.style.display='none';
-  infoEl.style.display='none';
-
-  if(!email){
-    errEl.textContent='Escribe tu correo arriba primero, y después toca "¿Olvidaste tu contraseña?".';
-    errEl.style.display='block';
-    return;
-  }
-
-  const link=document.querySelector('.login-forgot-link');
-  if(link){ link.disabled=true; link.textContent='Enviando...'; }
-  try{
-    await firebase.auth().sendPasswordResetEmail(email);
-    infoEl.textContent='Si ese correo tiene una cuenta, te llegará un enlace para poner una contraseña nueva. Revisa también spam.';
-    infoEl.style.display='block';
-  }catch(e){
-    console.warn('Reset password error:', e.code);
-    if(e.code==='auth/invalid-email'){
-      errEl.textContent='Ese correo no tiene un formato válido.';
-      errEl.style.display='block';
-    } else if(e.code==='auth/user-not-found'){
-      // Por seguridad, no se confirma si el correo existe o no — mismo
-      // mensaje que si el envío fue exitoso, para no revelar cuentas.
-      infoEl.textContent='Si ese correo tiene una cuenta, te llegará un enlace para poner una contraseña nueva. Revisa también spam.';
-      infoEl.style.display='block';
-    } else if(e.code==='auth/too-many-requests'){
-      errEl.textContent='Demasiados intentos. Espera un momento e intenta de nuevo.';
-      errEl.style.display='block';
-    } else {
-      errEl.textContent='No se pudo enviar el correo. Intenta de nuevo en un momento.';
-      errEl.style.display='block';
-    }
-  } finally {
-    if(link){ link.disabled=false; link.textContent='¿Olvidaste tu contraseña?'; }
-  }
-}
-
 function showApp(){
   document.getElementById('login-screen').classList.add('hidden');
   setTimeout(()=>{ document.getElementById('login-screen').style.display='none'; }, 300);
@@ -10786,7 +10726,7 @@ function lockApp(){
   // Se borra también el caché local — si no, los datos financieros completos
   // quedarían legibles en localStorage (DevTools → Application) para
   // cualquiera con acceso físico al dispositivo, incluso ya sin sesión activa.
-  ['nathy_mf_v5','nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
+  ['miguel_mf_v5','miguel_mf_state_v2','miguel_mf_state_v3','miguel_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
   document.getElementById('login-err').style.display='none';
@@ -10812,7 +10752,7 @@ function openInactivityModal(){
 function closeInactivityModal(){ document.getElementById('inactivity-modal-overlay').classList.remove('open'); }
 function saveInactivity(){
   inactivityMinutes=parseInt(document.getElementById('inactivity-select').value);
-  localStorage.setItem('nathy_mf_inactivity',String(inactivityMinutes));
+  localStorage.setItem('miguel_mf_inactivity',String(inactivityMinutes));
   const lbl = inactivityMinutes===0?'Nunca':inactivityMinutes+' minutos';
   document.getElementById('cfg-inactivity-label').textContent=lbl;
   closeInactivityModal();
@@ -10865,11 +10805,11 @@ function getCuentaColor(key){
 }
 
 // ══════════════════════════════════════════════════════
-//  VISIBILIDAD DE CUENTAS EN S/0 — cuando una cuenta (ahorro u operativa)
+//  VISIBILIDAD DE CUENTAS DE AHORRO EN S/0 — cuando una cuenta de ahorro
 //  queda en S/0 (ej. moviste toda la plata a otro banco), se OCULTA sola
-//  de la tabla correspondiente (Cuentas y/o Ahorros, en Finanzas) y de las
-//  pestañas de "Ahorros e Intereses" — sin borrar nada, el historial sigue
-//  intacto. Se puede volver a mostrar en cualquier momento desde "🙈 Ocultas".
+//  de la tabla de Ahorros (Finanzas) y de las pestañas de "Ahorros e
+//  Intereses" — sin borrar nada, el historial sigue intacto. Se puede
+//  volver a mostrar en cualquier momento desde "🙈 Cuentas ocultas".
 // ══════════════════════════════════════════════════════
 function cuentaAhorroVisible(nombre, saldo){
   // Ocultamiento MANUAL (botón 🙈 en cualquier cuenta) tiene la máxima
@@ -13570,6 +13510,9 @@ const DASHBOARD_WIDGET_DEFS = {
 // Orden y visibilidad por defecto — igual a como se veía la app antes de
 // que existiera esta opción, para que a nadie se le mueva nada hasta que
 // entre a personalizar. Los widgets nuevos empiezan OCULTOS por defecto.
+// Orden y visibilidad por defecto — igual a como se veía la app antes de
+// que existiera esta opción, para que a nadie se le mueva nada hasta que
+// entre a personalizar. Los widgets nuevos empiezan OCULTOS por defecto.
 function defaultSpanForSize(size){
   if(size==='large') return 99;
   if(size==='medium') return 2;
@@ -13787,6 +13730,7 @@ function guardarEditorWidgets(){
   cerrarEditorWidgets();
   renderDashboard();
 }
+
 
 function renderDashboard(){
   setupDashboardResponsive();
@@ -14269,41 +14213,15 @@ function renderNuevosWidgetsDashboard(){
 }
 
 
-function renderFechasImportantes(){
-  const grid = document.getElementById('fecha-imp-grid');
-  if(!grid) return; // el widget está oculto — ni existe en el DOM
-  // Solo mostrar próximos/hoy — los que ya pasaron se ocultan, salvo que estén
-  // marcados como "fijado" (el usuario quiere conservarlos siempre visibles).
-  const items = getEventCountdowns().filter(it=>!it.isPast || it.event.fijado);
-  if(!items.length){ grid.innerHTML='<div class="dash-empty"><div class="dash-empty-icon">📅</div>Sin fechas próximas.</div>'; return; }
-  grid.innerHTML = items.map(it=>{
-    const t = CAL_TIPOS[it.event.tipo] || CAL_TIPOS.otro;
-    const dateLabel = it.fecha.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'short'});
-    const countColor = it.isPast ? 'var(--text2)' : (it.diffDays<=7 ? 'var(--red)' : t.color);
-    return `<div class="fecha-imp-card" onclick="showPage('calendario')">
-      <div class="fecha-imp-top">
-        <div class="fecha-imp-icon" style="background:${t.color}22">${it.event.icono||t.icon}</div>
-        ${it.isPast && it.event.fijado ? '<span title="Fijado" style="font-size:12px;opacity:.7">📌</span>' : ''}
-      </div>
-      <div>
-        <div class="fecha-imp-title">${escapeHtml(it.event.titulo)}</div>
-        <div class="fecha-imp-date">${dateLabel}</div>
-      </div>
-      <div class="fecha-imp-count" style="color:${countColor}">${it.countLabel}</div>
-    </div>`;
-  }).join('');
-}
-
-
 // ── COMPACT / RESPONSIVE MODE ─────────────────────
 function toggleCompact(){
   const isCompact = document.body.classList.toggle('compact-mode');
   document.getElementById('compact-btn').textContent = isCompact ? '🖥️' : '📱';
   document.getElementById('compact-btn').title = isCompact ? 'Volver a vista normal' : 'Adaptar vista al dispositivo';
-  localStorage.setItem('nathy_mf_compact', isCompact?'1':'0');
+  localStorage.setItem('miguel_mf_compact', isCompact?'1':'0');
 }
 function loadCompact(){
-  if(localStorage.getItem('nathy_mf_compact')==='1'){
+  if(localStorage.getItem('miguel_mf_compact')==='1'){
     document.body.classList.add('compact-mode');
     document.getElementById('compact-btn').textContent='🖥️';
   }
@@ -14477,7 +14395,10 @@ function getPFProximaFechaAnual(pf){
 // Un ingreso (ej. sueldo) solo puede depositarse en una cuenta — no tiene
 // sentido "consumirlo" en una tarjeta de crédito, así que para ese tipo se
 // oculta el selector de método de pago entero y se fuerza a "cuenta". La
-// categoría tampoco aplica (las categorías son para presupuesto de gastos).
+// categoría SÍ se muestra también para ingresos (ej. "Sueldo" → categoría
+// "Trabajo") — útil para verlo etiquetado en tu historial de movimientos,
+// aunque no sume a los reportes de gasto por categoría (esos son solo de
+// gastos, no de ingresos, así que no hay riesgo de inflar nada ahí).
 function onPFTipoChange(){
   const esIngreso=document.getElementById('pf-tipo').value==='ingreso';
   document.getElementById('pf-metodo-wrap').style.display=esIngreso?'none':'block';
@@ -14952,8 +14873,9 @@ function confirmarPFRegistrar(){
 // (que es cuando realmente sale o entra el dinero), pero lo marca como
 // "registrado" bajo el mes OBJETIVO elegido — así se puede adelantar el
 // pago del próximo mes sin que quede mal registrado en el mes equivocado.
-// Un ingreso (tipo:'ingreso') SIEMPRE va a una cuenta (nunca a tarjeta,
-// eso no tendría sentido) y no lleva categoría (las categorías son de gasto).
+// Un ingreso (ej. sueldo) también puede llevar categoría (ej. "Trabajo")
+// para que se vea etiquetado en tu historial de movimientos — no afecta
+// los reportes de gasto por categoría, esos son solo de gastos.
 // Si el tipo es "base con descuentos", `detalle` trae el desglose (monto
 // base + cada concepto descontado) para poder mostrarlo luego en el
 // historial — el movimiento en sí solo guarda el monto FINAL ya calculado.
@@ -16497,6 +16419,7 @@ function renderTcOperaciones(){
     </tr>`;
   }).join('');
 }
+
 // Aviso entre las casas de cambio y la tabla: (1) según el ÚLTIMO registro,
 // qué empresa conviene más para comprar/vender dólares ahora mismo, y (2)
 // el mejor tipo de cambio de compra/venta en TODO el histórico ingresado
@@ -17153,6 +17076,31 @@ function getEventCountdowns(){
   });
 }
 
+function renderFechasImportantes(){
+  const grid = document.getElementById('fecha-imp-grid');
+  if(!grid) return; // el widget está oculto — ni existe en el DOM
+  // Solo mostrar próximos/hoy — los que ya pasaron se ocultan, salvo que estén
+  // marcados como "fijado" (el usuario quiere conservarlos siempre visibles).
+  const items = getEventCountdowns().filter(it=>!it.isPast || it.event.fijado);
+  if(!items.length){ grid.innerHTML='<div class="dash-empty"><div class="dash-empty-icon">📅</div>Sin fechas próximas.</div>'; return; }
+  grid.innerHTML = items.map(it=>{
+    const t = CAL_TIPOS[it.event.tipo] || CAL_TIPOS.otro;
+    const dateLabel = it.fecha.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'short'});
+    const countColor = it.isPast ? 'var(--text2)' : (it.diffDays<=7 ? 'var(--red)' : t.color);
+    return `<div class="fecha-imp-card" onclick="showPage('calendario')">
+      <div class="fecha-imp-top">
+        <div class="fecha-imp-icon" style="background:${t.color}22">${it.event.icono||t.icon}</div>
+        ${it.isPast && it.event.fijado ? '<span title="Fijado" style="font-size:12px;opacity:.7">📌</span>' : ''}
+      </div>
+      <div>
+        <div class="fecha-imp-title">${escapeHtml(it.event.titulo)}</div>
+        <div class="fecha-imp-date">${dateLabel}</div>
+      </div>
+      <div class="fecha-imp-count" style="color:${countColor}">${it.countLabel}</div>
+    </div>`;
+  }).join('');
+}
+
 // Devuelve todas las ocurrencias (evento + fecha concreta) que caen en un año/mes dado,
 // resolviendo eventos recurrentes al día-del-mes correspondiente (con clamp si el mes es más corto).
 function getEventOccurrencesForMonth(year, month){
@@ -17803,6 +17751,7 @@ function calcularSimuladorNeto(){
     <div style="font-size:10px;color:var(--text3);margin-top:8px">⚠️ Simplificado: asume el mismo sueldo todo el año, sin bono variable ni CTS. Para tu sueldo real usa el registro de boletas de arriba, que sí calcula con precisión mes a mes.</div>
   `;
 }
+
 // ══════════════════════════════════════════════════════
 //  AFP — seguimiento del fondo de pensiones, en DOS listas independientes:
 //  (1) "Aportes" — el monto mensual que se descuenta/deposita, mes a mes.
@@ -18535,7 +18484,6 @@ function renderListaCompras(){
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════
 //  MINIJUEGOS — 14 clásicos hechos con Canvas 2D / HTML nativo, sin
 //  librerías externas. Los mejores puntajes se guardan en Firestore
@@ -19960,59 +19908,12 @@ function seedDemo(){
   // para no tener que tocar esa parte del código.
   return;
 }
-function seedDemo_DISABLED_ORIGINAL(){
-  // Don't seed if user explicitly cleared all data
-  if(localStorage.getItem('nathy_mf_cleared')==='1'){
-    localStorage.removeItem('nathy_mf_cleared');
-    return;
-  }
-  if(state.movimientos.length>0)return;
-  state.movimientos=[
-    {id:'m01',type:'expense',desc:'Café',amount:2.20,account:'BBVA',date:'2026-05-10',currency:'PEN',cat:'🍔 Comida'},
-    {id:'m02',type:'expense',desc:'Recarga',amount:5.00,account:'BBVA',date:'2026-05-10',currency:'PEN',cat:'📱 Servicios'},
-    {id:'m03',type:'expense',desc:'Terno',amount:120.00,account:'BBVA',date:'2026-05-12',currency:'PEN',cat:'👗 Ropa'},
-    {id:'m04',type:'expense',desc:'GLP',amount:50.00,account:'BBVA',date:'2026-05-13',currency:'PEN',cat:'🏠 Vivienda'},
-    {id:'m05',type:'expense',desc:'Terno',amount:110.00,account:'BBVA',date:'2026-05-19',currency:'PEN',cat:'👗 Ropa'},
-    {id:'m06',type:'expense',desc:'Pacifico 14',amount:212.40,account:'BBVA',date:'2026-05-20',currency:'PEN',cat:'🏦 Finanzas'},
-    {id:'m07',type:'expense',desc:'Crédito',amount:2773.27,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'🏦 Finanzas'},
-    {id:'m08',type:'expense',desc:'Cuota 15 Ripley',amount:1053.48,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'🏦 Finanzas'},
-    {id:'m09',type:'expense',desc:'Vanessa',amount:74.00,account:'BBVA',date:'2026-05-29',currency:'PEN'},
-    {id:'m10',type:'income',desc:'Jose',amount:6.48,account:'BBVA',date:'2026-05-06',currency:'PEN'},
-    {id:'m11',type:'income',desc:'Spotify',amount:27.50,account:'BBVA',date:'2026-05-09',currency:'PEN',cat:'📱 Servicios'},
-    {id:'m12',type:'income',desc:'CTS',amount:2454.00,account:'BBVA',date:'2026-05-15',currency:'PEN',cat:'💼 Trabajo'},
-    {id:'m13',type:'income',desc:'Vanessa',amount:1170.00,account:'BBVA',date:'2026-05-20',currency:'PEN'},
-    {id:'m14',type:'income',desc:'Sueldo',amount:4694.85,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'💼 Trabajo'},
-    {id:'m15',type:'income',desc:'Bono',amount:634.21,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'💼 Trabajo'},
-    {id:'m16',type:'ahorro',desc:'Ahorro',amount:4660.69,account:'Ahorro Soles',date:'2026-05-29',currency:'PEN'},
-    {id:'m17',type:'ahorro',desc:'Intereses',amount:12.81,account:'Ahorro Soles',date:'2026-05-31',currency:'PEN'},
-    {id:'m18',type:'income',desc:'Fabian',amount:17.50,account:'Ahorro Soles',date:'2026-05-24',currency:'PEN'},
-    {id:'m19',type:'ahorro',desc:'Intereses',amount:3.46,account:'Ahorro Dólares',date:'2026-05-31',currency:'USD'},
-    {id:'j01',type:'expense',desc:'Otro',amount:40.05,account:'BBVA',date:'2026-06-02',currency:'PEN',cat:'📦 Otros'},
-    {id:'j02',type:'expense',desc:'Katherine',amount:300.00,account:'BBVA',date:'2026-06-05',currency:'PEN'},
-    {id:'j03',type:'ahorro',desc:'Katherine',amount:310.30,account:'Ahorro Soles',date:'2026-06-05',currency:'PEN'},
-    {id:'j04',type:'income',desc:'Spotify',amount:15.13,account:'BBVA',date:'2026-06-09',currency:'PEN',cat:'📱 Servicios'},
-  ];
-  state.cuentas={BCP:0,BBVA:101.08,Efectivo:5.50,'Ahorro Soles':13109.74,'Ahorro Dólares':1808.98};
-  state.customCuentas={};
-  state.tarjetas=[];
-  state.deudas=[];
-  state.serviciosByMonth={};
-  state.combustibleGlp=[];
-  state.combustibleGas=[];
-  state.tcTracker=[];
-  state.deudasMayores=[];
-  state.calendarEvents=[];
-  state.snapshots={'2026-05':{BCP:0,BBVA:426.00,Efectivo:0,'Ahorro Soles':12799.44,'Ahorro Dólares':1805.52}};
-  state.budgets={'🍔 Comida':{limit:300},'👗 Ropa':{limit:200},'🏦 Finanzas':{limit:4500},'📱 Servicios':{limit:50}};
-  state.projGoals={soles:20000,dolar:3000};
-  saveState();
-}
 
 
 // Show login branding instantly from localStorage cache (before Firebase loads)
 (function(){
   try{
-    const cached = localStorage.getItem('nathy_mf_v5');
+    const cached = localStorage.getItem('miguel_mf_v5');
     if(cached){
       const parsed = JSON.parse(cached);
       const name = (parsed.ownerName||'').trim();
@@ -20046,17 +19947,17 @@ window.addEventListener('beforeunload', actualizarUltimaActividadSesion);
 // Init Firebase then load state
 function initFirebase(){
   const firebaseConfig = {
-    apiKey: "AIzaSyAKQgyKwtT4Gd_Ndnd6AQ7rJl9ZZyVnhQ4",
-    authDomain: "finanzasnathy-ee3fb.firebaseapp.com",
-    projectId: "finanzasnathy-ee3fb",
-    storageBucket: "finanzasnathy-ee3fb.firebasestorage.app",
-    messagingSenderId: "178183558794",
-    appId: "1:178183558794:web:257788b3ff57e27e837f73"
+    apiKey: "AIzaSyDxszRWIYlIPckVf3QM6E9u9seFw1evp3s",
+    authDomain: "financedb-3bcff.firebaseapp.com",
+    projectId: "financedb-3bcff",
+    storageBucket: "financedb-3bcff.firebasestorage.app",
+    messagingSenderId: "237237834861",
+    appId: "1:237237834861:web:a6bb3e59c4691127029b64"
   };
   try{
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
-    DOC_REF = db.collection('users').doc('nathy');
+    DOC_REF = db.collection('users').doc('mnegreteee');
   } catch(e){ console.warn('Firebase init error:',e); }
 
   // onAuthStateChanged es la ÚNICA puerta de entrada a los datos: mientras no
@@ -20235,12 +20136,12 @@ if(state.projGoals){
       información, ya que comparten el mismo documento de datos):
     </p>
     <div style="background:var(--bg3);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:12px;line-height:1.8">
-      1. Ve a <a href="https://console.firebase.google.com/project/finanzasnathy-ee3fb/authentication/users" target="_blank" style="color:var(--accent)">Firebase Console → Authentication → Users</a><br>
+      1. Ve a <a href="https://console.firebase.google.com/project/financedb-3bcff/authentication/users" target="_blank" style="color:var(--accent)">Firebase Console → Authentication → Users</a><br>
       2. Clic en <strong>"Add user"</strong><br>
       3. Ingresa el correo y una contraseña (mínimo 6 caracteres)<br>
       4. Comparte esas credenciales con la persona — ya puede ingresar al dashboard
     </div>
-    <button class="btn btn-primary" style="width:100%" onclick="window.open('https://console.firebase.google.com/project/finanzasnathy-ee3fb/authentication/users','_blank')">Abrir Firebase Console →</button>
+    <button class="btn btn-primary" style="width:100%" onclick="window.open('https://console.firebase.google.com/project/financedb-3bcff/authentication/users','_blank')">Abrir Firebase Console →</button>
   </div>
 </div>
 
