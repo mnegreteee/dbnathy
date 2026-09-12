@@ -3183,8 +3183,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '11/09/26 - 23:14'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'FIX DEFINITIVO del caso de Miguel: la razón por la que el mensaje de error nunca aparecía es que Firestore NO tiene un límite de tiempo propio para sus lecturas — si la conexión se queda colgada (un firewall/proxy/VPN que corta silenciosamente sin devolver éxito ni error), la promesa de .get() se queda pendiente para siempre, y ni el .then() ni el .catch() de loadState() llegan a dispararse NUNCA. Por eso ningún error se mostraba: nunca hubo un error, la app simplemente se quedaba esperando indefinidamente. Se agregó un límite propio de 15 segundos (conTimeout) a las 3 lecturas de Firestore en loadState() — si no responden a tiempo, ahora se tratan como una falla real, con mensaje claro, y disparan el reintento automático y el banner. Verificado con Playwright simulando exactamente esa conexión colgada: ahora sí se detecta con un mensaje claro ("Tiempo de espera agotado..."). El caso normal (respuesta rápida) sigue funcionando exactamente igual, sin ningún retraso. Regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '11/09/26 - 23:25'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'CAUSA RAÍZ REAL ENCONTRADA Y CORREGIDA (no era de red). El caso de Miguel no tenía nada que ver con la conexión a Firestore — las 3 lecturas de Firestore funcionaban perfecto por separado (confirmado con pruebas directas en consola, todas respondiendo en menos de 0.5s). El problema real: la bandera localStorage "nathy_mf_cleared" (que se pone en 1 al usar "Borrar todos los datos", para saltarse la carga de la nube UNA sola vez) nunca se estaba limpiando — dependía de que seedDemo() la quitara más adelante en el flujo de login, pero esa función quedó vacía en una sesión anterior (para no sembrar datos de ejemplo) y sin querer se llevó también esa limpieza. Resultado: la bandera quedó pegada en 1 para siempre, y CADA carga de la app, desde entonces, se saltaba Firestore por completo — no porque hubiera un error, sino porque literalmente nunca lo intentaba. Corregido moviendo la limpieza de la bandera al mismo lugar donde se lee, en loadState(), sin depender de ninguna otra función. Verificado con Playwright: la bandera ahora se limpia sola tras una sola carga, y la carga siguiente vuelve a funcionar con Firestore con toda normalidad. Regresión completa de las 12 páginas sin errores. Sigue pendiente que Miguel limpie la bandera YA PEGADA en su navegador (con localStorage.removeItem("nathy_mf_cleared") o recargando ya con esta versión) para que la próxima carga sí jale sus datos reales.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4545,7 +4545,17 @@ function loadState(){
 
   // If the user just cleared all data, skip fetching from Firestore entirely
   // (even if the delete hasn't fully propagated yet, we want a blank slate).
+  // La bandera se quita AQUÍ MISMO, apenas se lee — está pensada para
+  // aplicarse una sola vez (la primera carga después de "Borrar todos los
+  // datos"), no para quedarse pegada para siempre. Antes dependía de que
+  // seedDemo() la limpiara más adelante en el flujo de login, pero esa
+  // función quedó vacía en una sesión anterior (para no sembrar datos de
+  // ejemplo) y sin querer se llevó también esta limpieza — dejando la
+  // bandera trabada en '1' para siempre, y con eso, TODA carga futura desde
+  // la nube bloqueada silenciosamente (este fue el bug real detrás de la
+  // sesión de soporte que motivó este comentario).
   if(localStorage.getItem('nathy_mf_cleared')==='1'){
+    localStorage.removeItem('nathy_mf_cleared');
     setSyncStatus('ok');
     // Push the fresh blank state to Firestore to guarantee it's clean there too
     if(DOC_REF){
