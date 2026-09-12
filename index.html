@@ -3183,8 +3183,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '11/09/26 - 23:07'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'El banner rojo de carga fallida ahora muestra el detalle técnico REAL del error (código + mensaje de Firebase, ej. "permission-denied: Missing or insufficient permissions.") directo en la pantalla — ya no hace falta abrir la consola del navegador ni buscar entre mensajes ocultos para saber qué está fallando de verdad. Esto se agregó porque el caso de Miguel seguía sin resolverse tras el fix anterior, y no fue posible confirmar la causa exacta por las capturas de consola (el mensaje real quedaba escondido entre decenas de mensajes ocultos de Firebase). Verificado con Playwright simulando un error real con código (ej. permission-denied): el detalle aparece correctamente en el banner. Regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '11/09/26 - 23:14'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'FIX DEFINITIVO del caso de Miguel: la razón por la que el mensaje de error nunca aparecía es que Firestore NO tiene un límite de tiempo propio para sus lecturas — si la conexión se queda colgada (un firewall/proxy/VPN que corta silenciosamente sin devolver éxito ni error), la promesa de .get() se queda pendiente para siempre, y ni el .then() ni el .catch() de loadState() llegan a dispararse NUNCA. Por eso ningún error se mostraba: nunca hubo un error, la app simplemente se quedaba esperando indefinidamente. Se agregó un límite propio de 15 segundos (conTimeout) a las 3 lecturas de Firestore en loadState() — si no responden a tiempo, ahora se tratan como una falla real, con mensaje claro, y disparan el reintento automático y el banner. Verificado con Playwright simulando exactamente esa conexión colgada: ahora sí se detecta con un mensaje claro ("Tiempo de espera agotado..."). El caso normal (respuesta rápida) sigue funcionando exactamente igual, sin ningún retraso. Regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4515,6 +4515,23 @@ function migrateState(){
 
 let _remoteDocExisted = null; // null=desconocido/offline, true=había doc, false=no había doc (cuenta nueva)
 
+// Firestore NO tiene un límite de tiempo propio para sus lecturas — si algo
+// en la red (un firewall, proxy o VPN que corta conexiones largas en
+// silencio, sin devolver ni éxito ni error) deja la conexión colgada, la
+// promesa de .get() se queda pendiente PARA SIEMPRE, sin nunca resolver ni
+// rechazar. Eso significa que ni el .then() ni el .catch() de loadState()
+// llegan a dispararse jamás — la app se queda esperando indefinidamente,
+// sin ningún error visible que mostrar ni forma de darse cuenta. Este
+// helper le pone un límite propio: si la lectura no responde en "ms"
+// milisegundos, se da por fallida (con un mensaje claro) para que el resto
+// del circuito de seguridad (reintento automático, banner) sí se active.
+function conTimeout(promesa, ms, mensaje){
+  return Promise.race([
+    promesa,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error(mensaje||`Tiempo de espera agotado (${ms/1000}s) — la conexión a Firestore no respondió a tiempo.`)), ms)),
+  ]);
+}
+
 function loadState(){
   ['nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
   // Load from localStorage first for instant render
@@ -4540,14 +4557,14 @@ function loadState(){
   // Then load from Firestore (overrides localStorage if newer)
   if(!DOC_REF){setSyncStatus('error');return Promise.resolve();}
   setSyncStatus('loading');
-  return DOC_REF.get().then(async doc=>{
+  return conTimeout(DOC_REF.get(), 15000, 'Tiempo de espera agotado (15s) leyendo el documento principal de Firestore.').then(async doc=>{
     if(doc.exists){
       _remoteDocExisted = true;
       const data=doc.data();
       try{
         // Formato nuevo: cada sección es su propio documento en la
         // subcolección "secciones" — se lee primero así.
-        let meta = await _readTodasLasSecciones();
+        let meta = await conTimeout(_readTodasLasSecciones(), 15000, 'Tiempo de espera agotado (15s) leyendo las secciones (tarjetas, servicios, deudas...) de Firestore.');
         // Migración única desde el formato viejo (un solo bloque "meta" en
         // el documento principal): si todavía no hay ninguna sección pero
         // SÍ existe ese bloque viejo, se reparte en documentos individuales
@@ -4568,7 +4585,7 @@ function loadState(){
 
         // Los movimientos ahora viven en users/{uid}/movimientos/{id} (un doc por movimiento),
         // así una escritura externa (bot, atajo) puede agregar uno solo sin reescribir todo.
-        return DOC_REF.collection('movimientos').get().then(movSnap=>{
+        return conTimeout(DOC_REF.collection('movimientos').get(), 15000, 'Tiempo de espera agotado (15s) leyendo tus movimientos de Firestore.').then(movSnap=>{
           const subMovs = movSnap.docs.map(d=>d.data());
 
           if(subMovs.length>0){
