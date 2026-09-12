@@ -3183,8 +3183,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '11/09/26 - 22:50'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Reimplementado y reforzado el circuito de seguridad que se había revertido — esta vez cubre TODA la app (tarjetas, servicios, deudas, presupuestos, etc.), no solo movimientos. _doFirestoreWrite() se niega a subir nada a la nube mientras no se haya confirmado con éxito una lectura real de Firestore en esta sesión (excepto en una cuenta genuinamente nueva). La diferencia clave respecto a la versión anterior: ahora, si la carga inicial falla, la app reintenta SOLA en segundo plano (3s, luego 8s, luego 20s) sin que la persona tenga que notar nada ni hacer clic — si se recupera, retoma el guardado pendiente automáticamente. El banner rojo (con botones "Reintentar ahora" y "Recargar página") solo se ve si de verdad hace falta. No se pudo confirmar con certeza qué se rompió la vez anterior (se investigó a fondo: registrarNuevaSesion() usa un camino de guardado completamente aparte que ni pasa por esta protección, y showApp() solo se habilita después de que la carga termina, así que no debería haber una carrera legítima) — se decidió reforzar con reintentos automáticos en vez de dejarlo sin ninguna protección. Verificado con Playwright: el bloqueo real funciona, el reintento automático se recupera solo y retoma el guardado sin intervención, el caso normal (carga exitosa) sigue guardando sin ningún bloqueo ni banner, y regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '11/09/26 - 23:00'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'FIX: encontrado el hueco real que dejaba la protección trabada para siempre en el caso de Miguel. loadState() puede fallar en 2 lugares distintos: (a) la conexión general a Firestore (ya tenía el reintento automático), y (b) un error DENTRO de la lectura ya conectada — ej. al leer las secciones o los movimientos, algo tarda demasiado o falla — a este segundo caso le faltaba la llamada al reintento automático, así que si la falla ocurría ahí, la app se quedaba bloqueada sin ninguna recuperación, para siempre, hasta recargar la página a mano (y si el problema seguía, se repetía el mismo trabado). Detectado revisando las capturas de la pestaña Network que compartió Miguel (varias conexiones a Firestore tardando 15-30 segundos, señal de que el problema estaba en la lectura, no en la conexión). Verificado con Playwright simulando ese escenario exacto: ahora sí se activa el reintento automático en segundo plano. Regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4628,7 +4628,7 @@ function loadState(){
           _lastSyncedMeta = JSON.parse(JSON.stringify(_snapshotMeta()));
           setSyncStatus('ok');
         });
-      }catch(e){console.error('Parse error:',e);setSyncStatus('error');}
+      }catch(e){console.error('Parse error:',e);setSyncStatus('error');intentarRecuperarCargaFallida();}
     } else {
       // No cloud data yet — cuenta nueva, nunca sincronizada
       _remoteDocExisted = false;
