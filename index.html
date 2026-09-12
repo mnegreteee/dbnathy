@@ -3183,8 +3183,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '12/09/26 - 06:13'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Sincronizada la función completa de compras a cuotas en Tarjetas de Crédito, desarrollada y probada en la cuenta de Miguel: en "Agregar consumo" se puede marcar "¿Es una compra a cuotas?" (número de cuotas, con/sin intereses, TEA si aplica, sistema francés estándar); cada cuota se crea en el mes de facturación correcto, con vista previa en vivo del monto antes de guardar; todas las cuotas de una compra quedan vinculadas y se pueden eliminar o renombrar TODAS juntas de una sola vez (no una por una); el monto de una cuota individual se puede editar manualmente sin afectar a las demás. También se agregaron las columnas ES_CUOTA/NUM_CUOTAS/CON_INTERESES/TEA a la plantilla de "Cargar histórico TC", para poder cargar compras a cuotas completas desde Excel (una fila se expande sola en todas sus cuotas). Verificado con Playwright: los mismos 5 escenarios probados en la cuenta de Miguel dan el mismo resultado exacto — sin intereses, con intereses, editar monto manual de una cuota, borrar el grupo completo, y la expansión desde Excel. Regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '12/09/26 - 06:50'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Sincronizado el fix de Actividad Reciente para compras a cuotas, encontrado y corregido en la cuenta de Miguel: "Eliminar" en el registro de creación de un grupo de cuotas ahora sí borra todas las cuotas del grupo (antes no hacía nada, porque el sistema de deshacer buscaba un id que no correspondía a ningún consumo real); y deshacer el borrado de una compra a cuotas completa ahora restaura todas las cuotas correctamente (antes tampoco funcionaba, por no haberse guardado la información necesaria para restaurarlas). Verificado con Playwright: mismos 2 casos exactos probados en la cuenta de Miguel, mismo resultado correcto. Regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3684,6 +3684,19 @@ function _revertirMovOConsumo(ref){
     const m=state.movimientos.find(x=>x.id===ref.movId);
     if(m){ revertAccount(m); _movimientosBorradosExplicitamente.push(ref.movId); state.movimientos=state.movimientos.filter(x=>x.id!==ref.movId); }
   }
+  if(ref.grupoCuotaId){
+    // Deshacer la creación de una compra a cuotas COMPLETA: borra todas las
+    // cuotas del grupo, en cualquier mes en el que hayan quedado — no solo
+    // en el mes de la primera, porque cada cuota vive en un mes distinto.
+    const t=getTarjeta(ref.tarjetaId);
+    if(t && t.movs){
+      Object.keys(t.movs).forEach(mk=>{
+        t.movs[mk]=t.movs[mk].filter(c=>c.grupoCuotaId!==ref.grupoCuotaId);
+        if(t.movs[mk].length===0) delete t.movs[mk];
+      });
+    }
+    return;
+  }
   if(ref.tarjetaId && ref.monthKey && ref.consumoId){
     const t=getTarjeta(ref.tarjetaId);
     if(t && t.movs && t.movs[ref.monthKey]){
@@ -3904,7 +3917,20 @@ function eliminarActividad(logId){
         else if(m.type==='ahorro') state.cuentas[m.account]=(state.cuentas[m.account]||0)+(m.currency==='PEN'?a:usd);
       }
     } else if(entry.tipo==='tc_consumo_eliminado'){
-      if(ref.consumoSnapshot){
+      if(ref.snapshotsGrupo && Array.isArray(ref.snapshotsGrupo)){
+        // Deshacer el borrado de una compra a cuotas COMPLETA: restaura
+        // cada cuota en el mes exacto donde estaba (guardado como "mk" en
+        // cada snapshot al momento de borrarlas).
+        const t=getTarjeta(ref.tarjetaId);
+        if(t){
+          if(!t.movs) t.movs={};
+          ref.snapshotsGrupo.forEach(snap=>{
+            const {mk, ...consumo}=snap;
+            if(!t.movs[mk]) t.movs[mk]=[];
+            if(!t.movs[mk].some(m=>m.id===consumo.id)) t.movs[mk].push(consumo);
+          });
+        }
+      } else if(ref.consumoSnapshot){
         const t=getTarjeta(ref.tarjetaId);
         if(t){
           if(!t.movs) t.movs={};
@@ -12614,7 +12640,7 @@ function saveTCMov(){
       t.movs[mk].push(nuevoMov);
     }
     const symTCc=currency==='USD'?'$':'S/';
-    logActividad('tc_consumo', `${desc} a ${numCuotas} cuotas de ${symTCc} ${cuotaRedondeada.toFixed(2)} (${t.banco}${t.cat?' '+t.cat:''})`, {tarjetaId, monthKey:getBillingMonthKey(fecha,t), consumoId:grupoCuotaId});
+    logActividad('tc_consumo', `${desc} a ${numCuotas} cuotas de ${symTCc} ${cuotaRedondeada.toFixed(2)} (${t.banco}${t.cat?' '+t.cat:''})`, {tarjetaId, grupoCuotaId});
     if(tarjetaId===currentTCId && ultimoMk!==currentTCMonth){
       // se queda viendo el mes de la PRIMERA cuota (más relevante que la última)
       currentTCMonth=getBillingMonthKey(fecha,t);
@@ -12737,7 +12763,7 @@ function eliminarGrupoCuotas(t, grupoCuotaId, nombreBase){
   mensaje+=`?\n\nQuedan ${pendientes.length} cuota(s) pendiente(s) por ${sym} ${sumaPendiente.toFixed(2)} que se borrarían.\n\nEsta acción no se puede deshacer.`;
   if(!confirm(mensaje)) return;
   todasLasCuotas.forEach(m=>{ eliminarUnConsumoDeTarjeta(t, m.mk, m.id); });
-  logActividad('tc_consumo_eliminado', `Compra a cuotas eliminada completa: ${nombreBase} — ${todasLasCuotas.length} cuotas (${t.banco}${t.cat?' '+t.cat:''})`, {tarjetaId:currentTCId});
+  logActividad('tc_consumo_eliminado', `Compra a cuotas eliminada completa: ${nombreBase} — ${todasLasCuotas.length} cuotas (${t.banco}${t.cat?' '+t.cat:''})`, {tarjetaId:currentTCId, snapshotsGrupo:todasLasCuotas});
   saveState(); renderTCDetail();
   toast(`${todasLasCuotas.length} cuotas eliminadas`);
 }
