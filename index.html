@@ -1164,7 +1164,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
      mientras tanto, el bloqueo nunca pase desapercibido como un simple
      puntito rojo chiquito en el header. -->
 <div id="carga-fallida-banner" style="display:none;position:sticky;top:0;z-index:149;background:linear-gradient(90deg,#dc2626,#991b1b);color:#fff;padding:8px 20px;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-wrap:wrap">
-  <span>🚫 No se pudo cargar tu información desde la nube. Lo que veas ahora puede estar incompleto — tus cambios NO se van a guardar hasta reconectar (se está reintentando solo).</span>
+  <span>🚫 No se pudo cargar tu información desde la nube. Lo que veas ahora puede estar incompleto — tus cambios NO se van a guardar hasta reconectar (se está reintentando solo).<span id="carga-fallida-detalle" style="display:block;font-size:11px;font-weight:400;opacity:.85;margin-top:2px"></span></span>
   <button onclick="retrySync()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Reintentar ahora</button>
   <button onclick="location.reload()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Recargar página</button>
 </div>
@@ -3183,8 +3183,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '11/09/26 - 23:00'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'FIX: encontrado el hueco real que dejaba la protección trabada para siempre en el caso de Miguel. loadState() puede fallar en 2 lugares distintos: (a) la conexión general a Firestore (ya tenía el reintento automático), y (b) un error DENTRO de la lectura ya conectada — ej. al leer las secciones o los movimientos, algo tarda demasiado o falla — a este segundo caso le faltaba la llamada al reintento automático, así que si la falla ocurría ahí, la app se quedaba bloqueada sin ninguna recuperación, para siempre, hasta recargar la página a mano (y si el problema seguía, se repetía el mismo trabado). Detectado revisando las capturas de la pestaña Network que compartió Miguel (varias conexiones a Firestore tardando 15-30 segundos, señal de que el problema estaba en la lectura, no en la conexión). Verificado con Playwright simulando ese escenario exacto: ahora sí se activa el reintento automático en segundo plano. Regresión completa de las 12 páginas sin errores.';
+const APP_VERSION_DATE = '11/09/26 - 23:07'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'El banner rojo de carga fallida ahora muestra el detalle técnico REAL del error (código + mensaje de Firebase, ej. "permission-denied: Missing or insufficient permissions.") directo en la pantalla — ya no hace falta abrir la consola del navegador ni buscar entre mensajes ocultos para saber qué está fallando de verdad. Esto se agregó porque el caso de Miguel seguía sin resolverse tras el fix anterior, y no fue posible confirmar la causa exacta por las capturas de consola (el mensaje real quedaba escondido entre decenas de mensajes ocultos de Firebase). Verificado con Playwright simulando un error real con código (ej. permission-denied): el detalle aparece correctamente en el banner. Regresión completa de las 12 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3262,6 +3262,11 @@ let DOC_REF = null;
 //  Ya no hace falta "fusionar" nada: solo se escriben las secciones que
 //  ESTE dispositivo cambió, y punto.
 let _lastSyncedMeta = null;
+// Guarda el detalle real (código + mensaje) del último error al intentar
+// cargar desde Firestore, para poder mostrarlo directo en el banner rojo
+// de la app — así no hace falta abrir la consola del navegador para saber
+// qué está fallando de verdad.
+let _ultimoErrorCarga = null;
 // Claves que son "vista" de este dispositivo puntual, no datos compartidos
 // — nunca se sincronizan ni se fusionan entre dispositivos (si Device B
 // adoptara el mes que Device A estaba viendo, saltaría de mes solo, sin
@@ -3338,6 +3343,8 @@ function actualizarBannerCargaFallida(){
   if(!banner) return;
   const bloqueado = _lastSyncedMeta===null && _remoteDocExisted!==false;
   banner.style.display = bloqueado ? 'flex' : 'none';
+  const detalleEl=document.getElementById('carga-fallida-detalle');
+  if(detalleEl) detalleEl.textContent = (bloqueado && _ultimoErrorCarga) ? ('Detalle técnico: '+_ultimoErrorCarga) : '';
 }
 
 function setSyncStatus(status){
@@ -4628,14 +4635,20 @@ function loadState(){
           _lastSyncedMeta = JSON.parse(JSON.stringify(_snapshotMeta()));
           setSyncStatus('ok');
         });
-      }catch(e){console.error('Parse error:',e);setSyncStatus('error');intentarRecuperarCargaFallida();}
+      }catch(e){
+        console.error('🔴 ERROR REAL DE CARGA (dentro de la lectura):',e);
+        _ultimoErrorCarga = (e&&e.code?e.code+': ':'')+(e&&e.message?e.message:String(e));
+        setSyncStatus('error');
+        intentarRecuperarCargaFallida();
+      }
     } else {
       // No cloud data yet — cuenta nueva, nunca sincronizada
       _remoteDocExisted = false;
       setSyncStatus('ok');
     }
   }).catch(err=>{
-    console.warn('Firestore offline, using local data:',err);
+    console.error('🔴 ERROR REAL DE CARGA (conexión a Firestore):',err);
+    _ultimoErrorCarga = (err&&err.code?err.code+': ':'')+(err&&err.message?err.message:String(err));
     _remoteDocExisted = null; // desconocido — no forzar push mientras esté offline
     setSyncStatus('error');
     intentarRecuperarCargaFallida(); // reintenta solo en segundo plano (ver definición junto a retrySync)
