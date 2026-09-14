@@ -2131,6 +2131,10 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <div class="modal-title"><span id="compra-modal-title">Nuevo artículo</span><button class="modal-close" onclick="cerrarCompraModal()">✕</button></div>
     <div class="field"><label>Nombre</label><input id="cp-nombre" type="text" placeholder="Ej. Meinl HC812VSB"></div>
     <div class="field"><label>Link <small>(opcional)</small></label><input id="cp-link" type="text" placeholder="https://..."></div>
+    <div class="field" id="cp-tracking-wrap" style="display:none">
+      <label>Link / código de seguimiento <small>(opcional)</small></label>
+      <input id="cp-tracking" type="text" placeholder="https://... o el código de rastreo">
+    </div>
     <div class="field-row">
       <div class="field"><label>Precio actual</label><input id="cp-precio" type="number" step="0.01" placeholder="0.00"></div>
       <div class="field"><label>Moneda</label>
@@ -3189,8 +3193,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '13/09/26 - 21:41'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Sincronizadas 6 mejoras seguidas a la Búsqueda Global, desarrolladas y probadas en la cuenta de Miguel: (1) Al tocar un consumo de tarjeta, ahora abre el MES EXACTO donde vive (no el mes de pago actual). (2) Movimientos navega al año/mes correcto; Deudas fuerza el filtro a "Todos" y resalta la tarjeta exacta; Servicios hace lo mismo. (3) Resultados ordenados de más reciente a más antiguo en las 3 categorías con fecha. (4) Búsqueda sin distinguir tildes/acentos ("cafe" encuentra "Café"). (5) Límite subido de 15 a 30 por categoría, con aviso "+N más" cuando se excede. (6) Filtro nuevo de mes/año en el modal, para acotar resultados cuando hay muchas coincidencias del mismo nombre. Verificado con Playwright: mismo escenario exacto probado en la cuenta de Miguel (9 "Bembos" en meses distintos, filtro Feb 2026 → 3 resultados; "cafe" sin tilde encuentra "Café"; navegación de mes correcta; deuda resaltada con filtro forzado), mismo resultado correcto en los 5 casos. Regresión completa de las 14 páginas sin errores.';
+const APP_VERSION_DATE = '14/09/26 - 00:26'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Sincronizado el fix de Lista de Compras, encontrado y corregido en la cuenta de Miguel: el link/código de seguimiento solo se podía escribir al marcar "Comprado" o "Llegado" — no había forma de agregarlo mientras el artículo estaba "En camino". Ahora "Editar artículo" muestra ese campo (solo visible una vez comprado), editable en cualquier momento. Verificado con Playwright con el mismo caso exacto (agregar el link después de haber comprado sin él), mismo resultado correcto. Regresión completa de las 14 páginas sin errores.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -19483,6 +19487,7 @@ function abrirCompraModal(id){
   editingCompraId=id||null;
   document.getElementById('compra-modal-title').textContent = id ? 'Editar artículo' : 'Nuevo artículo';
   document.getElementById('cp-delete-btn').style.display = id ? 'inline-block' : 'none';
+  const trackingWrap=document.getElementById('cp-tracking-wrap');
   if(id){
     const item=(state.listaCompras||[]).find(x=>x.id===id);
     if(!item) return;
@@ -19491,12 +19496,24 @@ function abrirCompraModal(id){
     document.getElementById('cp-precio').value=getUltimoPrecio(item);
     document.getElementById('cp-currency').value=item.moneda||'PEN';
     document.getElementById('cp-notas').value=item.notas||'';
+    // El link/código de seguimiento solo tiene sentido una vez que ya se
+    // compró (antes de eso no hay nada que rastrear) — se muestra aquí para
+    // poder agregarlo o corregirlo en cualquier momento mientras está "En
+    // camino", que es justo cuando normalmente todavía no se tiene el dato
+    // al momento de marcar "Comprado".
+    if(item.estado!=='deseado'){
+      trackingWrap.style.display='block';
+      document.getElementById('cp-tracking').value=item.linkSeguimiento||'';
+    } else {
+      trackingWrap.style.display='none';
+    }
   } else {
     document.getElementById('cp-nombre').value='';
     document.getElementById('cp-link').value='';
     document.getElementById('cp-precio').value='';
     document.getElementById('cp-currency').value='PEN';
     document.getElementById('cp-notas').value='';
+    trackingWrap.style.display='none';
   }
   document.getElementById('compra-modal-overlay').classList.add('open');
 }
@@ -19518,6 +19535,10 @@ function guardarCompra(){
     if(item){
       const antes={...item, historialPrecio:[...(item.historialPrecio||[])]};
       item.nombre=nombre; item.link=link; item.moneda=moneda; item.notas=notas;
+      if(item.estado!=='deseado'){
+        const trackingVal=document.getElementById('cp-tracking').value.trim();
+        item.linkSeguimiento=trackingVal?normalizarLinkSeguimiento(trackingVal):'';
+      }
       const ultimo=getUltimoPrecio(item);
       // Solo se agrega una entrada nueva al historial si el precio
       // realmente cambió — si no, editar el nombre no ensucia el historial
