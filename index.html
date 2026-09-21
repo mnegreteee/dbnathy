@@ -879,6 +879,46 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 .fab-add:hover{transform:scale(1.06);}
 @media(max-width:600px){ .fab-add{right:14px;bottom:14px;width:48px;height:48px;font-size:24px;} }
 
+/* ── CHAT IA (botón flotante estilo WhatsApp para preguntar sobre tus finanzas) ── */
+#chatia-btn{display:flex;position:fixed;left:20px;bottom:20px;width:52px;height:52px;border-radius:50%;
+  background:#25d366;color:#fff;border:none;font-size:24px;line-height:1;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);align-items:center;justify-content:center;
+  z-index:300;transition:transform .15s;}
+#chatia-btn:active{transform:scale(.92);}
+#chatia-btn:hover{transform:scale(1.06);}
+@media(max-width:600px){ #chatia-btn{left:14px;bottom:14px;width:48px;height:48px;font-size:21px;} }
+#chatia-panel{display:none;position:fixed;left:20px;bottom:84px;width:360px;max-width:calc(100vw - 40px);
+  height:min(520px, calc(100vh - 120px));background:var(--bg2);border:1px solid var(--border2);
+  border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.45);z-index:301;flex-direction:column;overflow:hidden;}
+#chatia-panel.open{display:flex;}
+#chatia-header{background:#1f7a52;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#chatia-header b{font-size:14px;}
+#chatia-header small{display:block;opacity:.85;font-size:11px;margin-top:1px;}
+#chatia-header-actions{display:flex;align-items:center;gap:2px;}
+#chatia-export,#chatia-close{background:none;border:none;color:#fff;cursor:pointer;line-height:1;padding:2px 6px;}
+#chatia-export{font-size:15px;opacity:.9;}
+#chatia-export:hover{opacity:1;}
+#chatia-close{font-size:20px;}
+#chatia-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg);}
+.chatia-msg{max-width:85%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.4;white-space:pre-wrap;word-break:break-word;}
+.chatia-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:3px;}
+.chatia-msg.bot{align-self:flex-start;background:var(--bg3);color:var(--text);border-bottom-left-radius:3px;}
+.chatia-msg.bot.loading{opacity:.6;font-style:italic;}
+.chatia-copy{margin-top:5px;font-size:10px;opacity:.55;cursor:pointer;display:inline-block;user-select:none;}
+.chatia-copy:hover{opacity:1;text-decoration:underline;}
+.chatia-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 2px;}
+#chatia-input-wrap{display:flex;gap:6px;padding:10px 10px 4px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg2);align-items:flex-end;}
+#chatia-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:9px 14px;color:var(--text);font-size:13px;resize:none;max-height:80px;font-family:inherit;}
+#chatia-mic{background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:50%;width:36px;height:36px;flex-shrink:0;cursor:pointer;font-size:15px;display:none;align-items:center;justify-content:center;}
+#chatia-mic.recording{background:#e5484d;color:#fff;border-color:#e5484d;animation:chatia-pulse 1s infinite;}
+@keyframes chatia-pulse{0%{opacity:1}50%{opacity:.55}100%{opacity:1}}
+#chatia-send{background:#25d366;color:#fff;border:none;border-radius:50%;width:36px;height:36px;flex-shrink:0;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+#chatia-send:disabled{opacity:.5;cursor:default;}
+#chatia-counter{font-size:10px;color:var(--text3);text-align:right;padding:0 14px 8px;background:var(--bg2);flex-shrink:0;}
+#chatia-counter.warn{color:#e0a030;}
+#chatia-counter.over{color:#e5484d;font-weight:600;}
+@media(max-width:600px){ #chatia-panel{left:8px;right:8px;width:auto;bottom:74px;} }
+
 </style>
 </head>
 <body>
@@ -3194,9 +3234,9 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  VERSIÓN DE LA APP — actualizar en cada cambio solicitado
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
-const APP_VERSION = 'v1.52.0';
-const APP_VERSION_DATE = '15/09/26 - 22:52'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Sincronizadas 6 mejoras al "📍 Historial de Kilometraje": (1) tarjetas nuevas de "Últimos 7 días" y "Últimos 30 días" recorridos (además de "Km actual" y "Último tramo" ya sincronizados); (2) proyección de mantenimiento (fecha estimada del próximo cambio) ahora usa el ritmo REAL de uso de los últimos 30 días en vez del promedio de toda la vida del registro, que se diluía con el tiempo; (3) aviso de confirmación al registrar o editar una lectura manual de km si el valor es menor al de la lectura anterior (probable error de tipeo); (4) filtro de fechas (Todo / 7 días / mes) sobre la lista y el gráfico del historial; (5) indicador de "tramo más largo" (récord histórico de km recorridos entre dos lecturas consecutivas); (6) el motivo de la lectura, cuando existe, ahora también aparece junto al récord. Verificado con node --check.';
+const APP_VERSION = 'v1.53.0';
+const APP_VERSION_DATE = '20/09/26 - 19:24'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Sincronizado — Cambio de nombre del chat IA: "💬 Asistente de Finanzas" ahora se llama "🤖AsisBot🚀" en el encabezado del panel del chat. Solo cosmético, no afecta nada de la lógica ni requiere redesplegar el bot.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -15803,7 +15843,7 @@ function renderPagosFrecuentes(){
     const descuentosDetalle = (esBaseDesc && pendientes.length)
       ? `<div style="font-size:10px;color:var(--text3);margin-top:3px">
            <div style="color:var(--accent);margin-bottom:2px">→ Se aplicará al registrar: <strong>${proximoPeriodoLabel}</strong></div>
-           ${pendientes.map((d,i)=>`${escapeHtml(d.concepto)} (${sym} ${d.monto.toFixed(2)})<span onclick="removePFDescuentoPendiente('${pf.id}',${i})" style="cursor:pointer;color:var(--red);margin-left:3px" title="Quitar">✕</span>`).join(', ')}
+           ${pendientes.map((d,i)=>`${escapeHtml(d.concepto)} (${sym} ${d.monto.toFixed(2)}${d.fecha?' · '+fmtFechaCorta(d.fecha):''})<span onclick="removePFDescuentoPendiente('${pf.id}',${i})" style="cursor:pointer;color:var(--red);margin-left:3px" title="Quitar">✕</span>`).join(', ')}
          </div>`
       : '';
     return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
@@ -15904,7 +15944,7 @@ function registrarPagoFrecuente(id){
   if(esBaseDesc){
     // Se precarga con lo que ya se fue guardando durante el mes (con "+
     // Descuento" en la lista) — no hace falta volver a escribirlo todo aquí.
-    pfDescuentosActuales=(pf.descuentosPendientes||[]).map(d=>({concepto:d.concepto, monto:d.monto}));
+    pfDescuentosActuales=(pf.descuentosPendientes||[]).map(d=>({concepto:d.concepto, monto:d.monto, fecha:d.fecha||todayISO()}));
     const sym=pf.currency==='USD'?'$':'S/';
     document.getElementById('pf-registrar-base-monto').textContent=sym+' '+pf.montoFijo.toFixed(2);
     document.getElementById('pf-desc-concepto').value='';
@@ -15962,7 +16002,7 @@ function addPFDescuento(){
   const monto=parseFloat(document.getElementById('pf-desc-monto').value)||0;
   if(!concepto){alert('Escribe un concepto (ej. "Zapatos").');return;}
   if(monto<=0){alert('Ingresa un monto válido.');return;}
-  pfDescuentosActuales.push({concepto,monto});
+  pfDescuentosActuales.push({concepto,monto,fecha:todayISO()});
   document.getElementById('pf-desc-concepto').value='';
   document.getElementById('pf-desc-monto').value='';
   document.getElementById('pf-desc-concepto').focus();
@@ -15979,7 +16019,7 @@ function renderPFDescuentosList(){
   const el=document.getElementById('pf-registrar-descuentos-list');
   el.innerHTML=pfDescuentosActuales.length
     ? pfDescuentosActuales.map((d,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px">
-        <span style="color:var(--text2)">${escapeHtml(d.concepto)}</span>
+        <span style="color:var(--text2)">${escapeHtml(d.concepto)}${d.fecha?` <span style="color:var(--text3);font-size:10px">· ${fmtFechaCorta(d.fecha)}</span>`:''}</span>
         <span style="display:flex;align-items:center;gap:8px"><span style="color:var(--red)">- ${symReal} ${d.monto.toFixed(2)}</span><span onclick="removePFDescuento(${i})" style="cursor:pointer;color:var(--text3)">✕</span></span>
       </div>`).join('')
     : `<div style="font-size:11px;color:var(--text3)">Sin descuentos agregados todavía.</div>`;
@@ -16221,7 +16261,7 @@ function openPFHistorial(id){
       pagadosCount++; aplicablesCount++;
       const desglose = (reg.deducciones && reg.deducciones.length)
         ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;padding-left:2px">
-            Base ${sym} ${reg.montoBase.toFixed(2)} − ${reg.deducciones.map(d=>`${escapeHtml(d.concepto)} (${sym} ${d.monto.toFixed(2)})`).join(', ')}
+            Base ${sym} ${reg.montoBase.toFixed(2)} − ${reg.deducciones.map(d=>`${escapeHtml(d.concepto)} (${sym} ${d.monto.toFixed(2)}${d.fecha?' · '+fmtFechaCorta(d.fecha):''})`).join(', ')}
           </div>`
         : '';
       return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
@@ -21811,6 +21851,835 @@ function detenerListenerTiempoReal(){
   if(_movsUnsubscribeListener){ _movsUnsubscribeListener(); _movsUnsubscribeListener=null; }
 }
 
+// ══════════════════════════════════════════════════════
+//  CHAT IA — botón flotante estilo WhatsApp para preguntar sobre TUS
+//  propios datos (gastos, deudas, tarjetas, metas, kilometraje, etc.)
+//  No lee Firestore de nuevo: arma el contexto con lo que YA está cargado
+//  en `state`, y se lo manda a la Cloud Function compartida (chatFinanzas,
+//  vive en el mismo bot de Miguel) que llama a Gemini. Cero costo extra de
+//  Firestore, mismo Gemini gratis del bot.
+// ══════════════════════════════════════════════════════
+const CHAT_FUNCTION_URL = 'https://us-central1-financedb-3bcff.cloudfunctions.net/chatFinanzas';
+// Ya no hay una clave fija aquí (CHAT_WIDGET_KEY) — se autentica con el ID
+// token real de tu sesión de Firebase Auth (ver enviarMensajeChatIA), que
+// nadie puede fabricar sin loguearse de verdad con tu contraseña.
+let chatIAHistorial = [];
+let chatIAPreguntaPendiente = null; // pregunta esperando que elijas un periodo
+(function cargarHistorialChatIA(){
+  try{ chatIAHistorial = JSON.parse(localStorage.getItem('nathy_mf_chatia_historial')||'[]'); }
+  catch(e){ chatIAHistorial = []; }
+})();
+
+// Detecta si la pregunta ya menciona un periodo de tiempo ("agosto",
+// "este mes", "2025", "últimos 3 meses", "todo el historial"...). Si no
+// detecta nada, se le pregunta al usuario con botones ANTES de llamar a
+// Gemini — así no se manda todo el historial en cada consulta (menos datos
+// = respuestas más rápidas y consumo más bajo, aunque de todos modos esté
+// dentro del free tier).
+function detectarPeriodoPregunta(texto){
+  const t = (texto||'').toLowerCase();
+  const hoy = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+
+  if(/\btodo\b|todo el historial|desde (el|que) (inicio|siempre)|historia completa|\bsiempre\b/.test(t)){
+    return { todo:true, etiqueta:'todo el historial' };
+  }
+  if(/\bhoy\b/.test(t)) return { inicio:iso(hoy), fin:iso(hoy), etiqueta:'hoy' };
+  if(/\bayer\b/.test(t)){
+    const y=new Date(hoy); y.setDate(y.getDate()-1);
+    return { inicio:iso(y), fin:iso(y), etiqueta:'ayer' };
+  }
+  if(/este mes|mes actual/.test(t)){
+    const ini=new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    return { inicio:iso(ini), fin:iso(hoy), etiqueta:'este mes' };
+  }
+  if(/mes pasado|el mes anterior/.test(t)){
+    const ini=new Date(hoy.getFullYear(), hoy.getMonth()-1, 1);
+    const fin=new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+    return { inicio:iso(ini), fin:iso(fin), etiqueta:'el mes pasado' };
+  }
+  let mRel = t.match(/últimos?\s+(\d+)\s*d[ií]as/);
+  if(mRel){
+    const n=parseInt(mRel[1],10);
+    const ini=new Date(hoy); ini.setDate(ini.getDate()-n);
+    return { inicio:iso(ini), fin:iso(hoy), etiqueta:'últimos '+n+' días' };
+  }
+  mRel = t.match(/últimos?\s+(\d+)\s*mes(es)?/);
+  if(mRel){
+    const n=parseInt(mRel[1],10);
+    const ini=new Date(hoy.getFullYear(), hoy.getMonth()-n+1, 1);
+    return { inicio:iso(ini), fin:iso(hoy), etiqueta:'últimos '+n+' meses' };
+  }
+  if(/este año|año actual/.test(t)){
+    return { inicio:hoy.getFullYear()+'-01-01', fin:iso(hoy), etiqueta:'este año' };
+  }
+  if(/año pasado|el año anterior/.test(t)){
+    const y=hoy.getFullYear()-1;
+    return { inicio:y+'-01-01', fin:y+'-12-31', etiqueta:'el '+y };
+  }
+  const MESES = {enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,setiembre:8,octubre:9,noviembre:10,diciembre:11};
+  for(const nombre in MESES){
+    if(t.includes(nombre)){
+      const yearMatch = t.match(/\b(20\d{2})\b/);
+      const year = yearMatch ? parseInt(yearMatch[1],10) : hoy.getFullYear();
+      const ini=new Date(year, MESES[nombre], 1);
+      const fin=new Date(year, MESES[nombre]+1, 0);
+      return { inicio:iso(ini), fin:iso(fin), etiqueta:nombre+' '+year };
+    }
+  }
+  const yearOnly = t.match(/\b(20\d{2})\b/);
+  if(yearOnly){
+    const y=yearOnly[1];
+    return { inicio:y+'-01-01', fin:y+'-12-31', etiqueta:y };
+  }
+  return null; // no se detectó ningún periodo
+}
+
+// Recorta `datosCompletos` (el `state` entero) al rango de fechas indicado
+// — solo afecta las colecciones que crecen con el tiempo (movimientos,
+// consumos de tarjeta, combustible, etc.); cuentas/deudas/metas/tarjetas
+// (metadata) se mandan siempre completas porque son "estado actual", no
+// historial, y son pequeñas.
+function filtrarDatosPorPeriodo(datos, rango){
+  if(!rango || rango.todo) return datos;
+  const ini = rango.inicio, fin = rango.fin;
+  const enRango = fecha => !!fecha && fecha>=ini && fecha<=fin;
+  const mesEnRango = mk => { // mk formato "YYYY-MM" (tcMonthKey)
+    if(!mk || mk.length<7) return true;
+    const primerDia = mk.slice(0,7)+'-01';
+    const ultimoDia  = mk.slice(0,7)+'-31';
+    return primerDia<=fin && ultimoDia>=ini;
+  };
+
+  const out = { ...datos };
+
+  out.movimientos = (datos.movimientos||[]).filter(mv=>enRango(mv.date));
+
+  out.tarjetas = (datos.tarjetas||[]).map(t=>{
+    // OJO: t.movs se agrupa por MES DE PAGO/CORTE (mk), no por fecha real de
+    // compra — un consumo del 18/09 puede vivir en el bucket "2026-10" si el
+    // ciclo de esa tarjeta ya cerró. Por eso filtramos cada consumo por su
+    // campo `fecha` real (la fecha en que se hizo la compra), no por el mk
+    // del bucket donde Firestore lo tiene agrupado.
+    const movsFiltrados = {};
+    Object.entries(t.movs||{}).forEach(([mk,arr])=>{
+      const itemsEnRango = (arr||[]).filter(item=>enRango(item.fecha));
+      if(itemsEnRango.length) movsFiltrados[mk]=itemsEnRango;
+    });
+    return { ...t, movs: movsFiltrados };
+  });
+
+  out.combustibleGlp = (datos.combustibleGlp||[]).filter(r=>enRango(r.fFinal||r.fInicial));
+  out.combustibleGas = (datos.combustibleGas||[]).filter(r=>enRango(r.fFinal||r.fInicial));
+  out.kmManual = (datos.kmManual||[]).filter(r=>enRango((r.fechaHora||'').slice(0,10)));
+  out.calendarEvents = (datos.calendarEvents||[]).filter(e=>enRango(e.fecha));
+
+  if(datos.inversiones){
+    out.inversiones = {
+      compras: (datos.inversiones.compras||[]).filter(c=>enRango(c.fecha)),
+      ventas: (datos.inversiones.ventas||[]).filter(v=>enRango(v.fecha)),
+      valorizaciones: (datos.inversiones.valorizaciones||[]).filter(v=>enRango(v.fecha)),
+      efectivo: (datos.inversiones.efectivo||[]).filter(e=>enRango(e.fecha))
+    };
+  }
+
+  out.tcOperaciones = (datos.tcOperaciones||[]).filter(o=>enRango(o.fecha));
+  out.tcTracker = (datos.tcTracker||[]).filter(o=>enRango(o.fecha));
+
+  const snapshotsFiltrados = {};
+  Object.entries(datos.snapshots||{}).forEach(([mk,val])=>{ if(mesEnRango(mk)) snapshotsFiltrados[mk]=val; });
+  out.snapshots = snapshotsFiltrados;
+
+  return out;
+}
+
+function construirContextoParaIA(){
+  try{
+    const rate = (state.tc && state.tc.venta) || 3.45;
+    const now = new Date();
+
+    // El usuario pidió que el chat tenga acceso a TODA su data, de TODO el
+    // tiempo (movimientos, consumos de tarjeta, combustible, deudas, deudas
+    // mayores, metas, kilometraje, calendario, inversiones, etc.) para poder
+    // responder cualquier pregunta, no solo un resumen curado de unos meses.
+    // Por eso se manda el objeto `state` completo tal cual — es exactamente
+    // la misma data que ya ves en la app, nada se recalcula ni se inventa.
+    // Se excluyen solo campos puramente visuales/de navegación que no
+    // aportan nada a una pregunta sobre datos (colores, tab abierta, id de
+    // algo que estás editando en ese momento).
+    const { cuentaColors, customCategorias, currentTab, editId, ...datosCompletos } = state;
+
+    // Combustible: en `state` cada fila solo guarda los campos base (fecha,
+    // galones, precio por galón, km) — el MONTO gastado y el km recorrido
+    // en esa recarga son campos CALCULADOS al vuelo por computeFuelRows()
+    // cuando la app renderiza la tabla (nunca se guardan directo en
+    // Firestore). Si mandara las filas crudas, la IA tendría que adivinar
+    // la fórmula (galones × precio) — mejor se calculan aquí con la MISMA
+    // función que usa la app, así el número siempre cuadra con lo que ves
+    // en pantalla.
+    try{
+      if(typeof computeFuelRows==='function'){
+        datosCompletos.combustibleGlp = computeFuelRows(state.combustibleGlp||[]).map(r=>({ ...r, montoPagado: r.totalGlp }));
+        datosCompletos.combustibleGas = computeFuelRows(state.combustibleGas||[]).map(r=>({ ...r, montoPagado: r.totalGlp }));
+      }
+    }catch(e){}
+
+    // Un par de cálculos ya resueltos para evitar que la IA se equivoque
+    // haciendo aritmética sobre kilometraje o deuda de tarjetas (que tienen
+    // lógica particular) — el resto de preguntas las resuelve directo sobre
+    // `datosCompletos`.
+    let resumenRapido = {};
+    try{
+      resumenRapido.kilometrajeActual = (typeof getKmActualVehiculo==='function') ? getKmActualVehiculo() : null;
+      let deudaTCTotal = 0;
+      (state.tarjetas||[]).forEach(t=>{
+        try{
+          const movs = (typeof getAllTCMovs==='function') ? (getAllTCMovs(t.id)||[]) : [];
+          movs.forEach(mv=>{ if(!mv.pagado) deudaTCTotal += ((mv.currency||t.currency)==='USD') ? mv.monto*rate : mv.monto; });
+        }catch(e){}
+      });
+      resumenRapido.deudaTotalTarjetasEnSoles = Math.round(deudaTCTotal*100)/100;
+    }catch(e){}
+
+    // Pagos/ingresos frecuentes: "pagosRegistrados" se guarda con una clave
+    // de periodo (mes "YYYY-MM", o año si es anual) que varía según la
+    // frecuencia de cada uno — mandar eso crudo hace que la IA adivine mal
+    // si ya está pagado o no. Aquí se resuelve con la MISMA lógica exacta
+    // que usa la propia app para mostrarlo en pantalla (pfActivoEnMes,
+    // getPFProximaFechaAnual, getPFProximoPeriodoSemestral,
+    // pfMesesSinRegistrar), así no hay margen de interpretación distinta.
+    try{
+      const hoyPF = new Date();
+      const mkActual = hoyPF.getFullYear()+'-'+String(hoyPF.getMonth()+1).padStart(2,'0');
+      resumenRapido.pagosFrecuentesEstado = (state.pagosFrecuentes||[]).filter(p=>!p.oculto).map(pf=>{
+        const esAnual = pf.frecuencia==='anual';
+        const esSemestral = pf.frecuencia==='semestral';
+        let periodoKey=null, proximoVencimiento=null;
+        try{
+          if(esAnual && typeof getPFProximaFechaAnual==='function'){
+            const pFecha = getPFProximaFechaAnual(pf);
+            periodoKey = pFecha ? String(pFecha.getFullYear()) : null;
+            proximoVencimiento = pFecha ? pFecha.toISOString().slice(0,10) : null;
+          } else if(esSemestral && typeof getPFProximoPeriodoSemestral==='function'){
+            const prox = getPFProximoPeriodoSemestral(pf);
+            periodoKey = prox ? prox.mk : null;
+          } else {
+            periodoKey = mkActual;
+          }
+        }catch(e){}
+        const yaPagadoEstePeriodo = !!(periodoKey && pf.pagosRegistrados && pf.pagosRegistrados[periodoKey]);
+        let vencidoSinRegistrar=false, mesesPendientesSinRegistrar=[];
+        try{
+          if(typeof pfActivoEnMes==='function' && !pfActivoEnMes(pf, hoyPF.getFullYear(), hoyPF.getMonth())){
+            mesesPendientesSinRegistrar = (typeof pfMesesSinRegistrar==='function') ? (pfMesesSinRegistrar(pf)||[]) : [];
+            vencidoSinRegistrar = mesesPendientesSinRegistrar.length>0;
+          }
+        }catch(e){}
+        return {
+          nombre: pf.nombre,
+          tipo: pf.tipo, // 'gasto' (pago) o 'ingreso'
+          frecuencia: pf.frecuencia,
+          monto: pf.montoFijo,
+          moneda: pf.currency,
+          periodoActualOProximo: periodoKey,
+          proximoVencimiento,
+          yaPagadoEstePeriodo,
+          vencidoSinRegistrar,
+          mesesPendientesSinRegistrar
+        };
+      });
+    }catch(e){}
+
+    // Servicios compartidos (Spotify, luz, etc. divididos entre personas)
+    // del mes actual: "payments" se guarda con una clave interna que ni
+    // siquiera es legible sin decodificarla — aquí se resuelve a nombre de
+    // servicio + persona + si pagó, para el mes real de hoy.
+    try{
+      const hoySrv = new Date();
+      const ySrv = hoySrv.getFullYear(), mSrv = hoySrv.getMonth();
+      const serviciosDelMes = (typeof getAllServices==='function') ? getAllServices(ySrv, mSrv) : {};
+      resumenRapido.serviciosCompartidosEsteMes = Object.entries(serviciosDelMes||{}).map(([sid,svc])=>{
+        const personas = (svc.people||[]).map(p=>{
+          // Misma fórmula que paymentKey(sid,pid) en la app, pero con el mes
+          // REAL de hoy en vez de depender de qué mes esté viendo el usuario
+          // en pantalla en ese momento (state.currentYear/currentMonth).
+          const keyReal = sid+'-'+p.id+'-'+ySrv+'-'+String(mSrv+1).padStart(2,'0');
+          return { nombre:p.name, pagado: !!(state.payments && state.payments[keyReal]), monto:svc.pricePerPerson };
+        });
+        return { servicio:svc.name, precioPorPersona:svc.pricePerPerson, diaPago:svc.payDay, cuenta:svc.account, personas };
+      });
+    }catch(e){}
+
+    // Metas de ahorro: para las "metas grandes" (esMetaGrande) el progreso REAL
+    // se lee de la cuenta vinculada (montoActualMetaGrande), NO del campo
+    // guardado m.montoActual que puede quedar desactualizado.
+    try{
+      resumenRapido.metasAhorroEstado = (state.metasAhorro||[]).map(m=>{
+        const montoActual = m.esMetaGrande
+          ? ((typeof montoActualMetaGrande==='function') ? montoActualMetaGrande(m.cuentaVinculada) : (m.montoActual||0))
+          : (m.montoActual||0);
+        const pct = m.montoObjetivo>0 ? Math.min(100,(montoActual/m.montoObjetivo)*100) : 0;
+        return {
+          nombre: m.nombre,
+          moneda: m.currency,
+          montoActual: Math.round(montoActual*100)/100,
+          montoObjetivo: m.montoObjetivo,
+          porcentajeCompletado: Math.round(pct*10)/10,
+          completada: montoActual>=m.montoObjetivo
+        };
+      });
+    }catch(e){}
+
+    // Inversiones: no existe ningún campo guardado con el resumen ya calculado
+    // (costo promedio, valorización, ganancia, XIRR) — todo se calcula al vuelo
+    // con las mismas funciones que usa la propia página de Inversiones, para
+    // no forzar a la IA a reimplementar promedios ponderados ni conversión de moneda.
+    try{
+      if(typeof invGetResumen==='function'){
+        const invResumen = invGetResumen();
+        const xirr = (typeof invXIRR==='function') ? invXIRR(invResumen) : null;
+        resumenRapido.inversionesResumen = {
+          PEN: invResumen.detalle.PEN,
+          USD: invResumen.detalle.USD,
+          utilidadRealizada: invResumen.utilidadRealizada,
+          rentabilidadAnualizadaXIRRPct: xirr!==null ? Math.round(xirr*100)/100 : null,
+          posiciones: (invResumen.posiciones||[]).map(p=>({
+            simbolo:p.simbolo, tipo:p.tipo, moneda:p.moneda, cantidad:p.cantidad,
+            costoPromedio:p.costoProm, valorActual:p.valorActual, ganancia:p.ganancia, gananciaPct:p.gananciaPct
+          }))
+        };
+      }
+    }catch(e){}
+
+    // Deudas mayores: el saldo pendiente de una deuda "amortizada" NO es la
+    // suma de las cuotas no pagadas (eso incluiría interés futuro) — es
+    // importe - amortizado ya pagado, exactamente como calcula getDMResumen().
+    try{
+      resumenRapido.deudasMayoresEstado = (state.deudasMayores||[]).map(d=>{
+        const r = (typeof getDMResumen==='function') ? getDMResumen(d) : null;
+        return {
+          nombre: d.nombre,
+          tipo: d.tipo,
+          cuotasTotales: r?r.total:null,
+          cuotasPagadas: r?r.pagadas:null,
+          cuotasRestantes: r?r.restantes:null,
+          saldoPendiente: r?Math.round(r.saldoPendiente*100)/100:null,
+          proximaFechaCuota: r?r.proximaFecha:null
+        };
+      });
+    }catch(e){}
+
+    // Presupuestos por categoría del mes REAL de hoy: el gasto combina
+    // movimientos de cuenta + consumos de tarjeta (por fecha real de compra,
+    // vía getCategorizedTCMovsForMonth), igual que la propia página de Presupuesto.
+    try{
+      const hoyBud = new Date();
+      const yBud=hoyBud.getFullYear(), mBud=hoyBud.getMonth();
+      const movsBud = (typeof getMovs==='function') ? getMovs(yBud,mBud).filter(mv=>mv.type==='expense') : [];
+      const tcMovsBud = (typeof getCategorizedTCMovsForMonth==='function') ? getCategorizedTCMovsForMonth(yBud,mBud) : [];
+      resumenRapido.presupuestosEstado = Object.keys(state.budgets||{}).map(cat=>{
+        const b = state.budgets[cat];
+        const spentMovs = movsBud.filter(mv=>mv.cat===cat).reduce((s,mv)=>s+(mv.currency==='USD'?mv.amount*rate:mv.amount),0);
+        const spentTC = tcMovsBud.filter(mv=>mv.cat===cat).reduce((s,mv)=>s+(mv.currency==='USD'?mv.monto*rate:mv.monto),0);
+        const spent = spentMovs+spentTC;
+        const pct = b.limit>0 ? Math.min(100,(spent/b.limit)*100) : 0;
+        return {
+          categoria: cat,
+          limite: b.limit,
+          gastadoEsteMes: Math.round(spent*100)/100,
+          porcentajeUsado: Math.round(pct*10)/10,
+          estado: pct>=100?'excedido':pct>=80?'alerta':'ok'
+        };
+      });
+    }catch(e){}
+
+    // Calendario: la próxima ocurrencia de un evento recurrente (anual o
+    // mensual/periódico) no se puede inferir del campo `fecha` crudo — se
+    // calcula con getEventCountdowns(), la misma función que usa la página.
+    try{
+      if(typeof getEventCountdowns==='function'){
+        resumenRapido.proximosEventosCalendario = getEventCountdowns()
+          .filter(it=>!it.isPast)
+          .slice(0,20)
+          .map(it=>({
+            titulo: it.event.titulo,
+            tipo: it.event.tipo,
+            fechaProximaOcurrencia: it.fecha.toISOString().slice(0,10),
+            diasFaltantes: it.diffDays,
+            esRecurrente: !!(it.event.recurrente||it.event.recurrenteAnual)
+          }));
+      }
+    }catch(e){}
+
+    // Nombre del administrador del dashboard, para que el chat pueda
+    // saludarlo por su nombre real en vez de un genérico ("amigo", etc.) —
+    // misma lógica exacta que usa el saludo del dashboard y el branding del
+    // login (state.ownerName, con el usuario de Firebase como respaldo).
+    let nombreUsuario = '';
+    try{
+      nombreUsuario = (state.ownerName||'').trim() ||
+        (typeof currentUser!=='undefined' && currentUser ? currentUser.split('@')[0].replace(/^[a-z]/,ch=>ch.toUpperCase()) : '');
+    }catch(e){}
+
+    return {
+      fechaHoy: (typeof todayLocalISO==='function') ? todayLocalISO() : now.toISOString().slice(0,10),
+      tipoCambioVenta: rate,
+      nombreUsuario,
+      resumenRapido,
+      datosCompletos
+    };
+  }catch(err){
+    console.error('Error armando contexto para chat IA:', err);
+    return { error:'no se pudo armar el contexto completo de tus datos' };
+  }
+}
+
+function toggleChatIA(){
+  const panel=document.getElementById('chatia-panel');
+  if(panel.classList.contains('open')) cerrarChatIA(); else abrirChatIA();
+}
+function abrirChatIA(){
+  document.getElementById('chatia-panel').classList.add('open');
+  renderChatIAMensajes();
+  const micBtn=document.getElementById('chatia-mic');
+  if(micBtn) micBtn.style.display = chatIAVoiceSupported() ? 'flex' : 'none';
+  actualizarContadorChatIA();
+  setTimeout(()=>{ const i=document.getElementById('chatia-input'); if(i) i.focus(); }, 50);
+}
+function cerrarChatIA(){
+  document.getElementById('chatia-panel').classList.remove('open');
+}
+function onChatIAKeydown(ev){
+  if(ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); enviarMensajeChatIA(); }
+}
+function renderChatIAMensajes(){
+  const cont=document.getElementById('chatia-msgs');
+  if(!cont) return;
+  if(!chatIAHistorial.length){
+    let nombreSaludo='';
+    try{
+      nombreSaludo = (state.ownerName||'').trim() ||
+        (typeof currentUser!=='undefined' && currentUser ? currentUser.split('@')[0].replace(/^[a-z]/,ch=>ch.toUpperCase()) : '');
+    }catch(e){}
+    const preguntasSugeridas=['¿Cuánto gasté este mes?','¿Qué debo pagar pronto?','¿Cómo van mis metas de ahorro?','/resumen'];
+    cont.innerHTML=`<div class="chatia-msg bot">Hola${nombreSaludo?' '+escapeHtml(nombreSaludo):''} 👋 Pregúntame lo que quieras sobre tus finanzas: gastos del mes, deudas, tarjetas, metas de ahorro, kilometraje... Respondo con tus datos reales.<br><br>💡 Tips: escribe <b>/resumen</b> para un resumen instantáneo (gratis, sin IA), <b>/ayuda</b> para ver todo lo que puedo hacer, o <b>/borrar</b> para empezar de cero.</div>`+
+      `<div class="chatia-chips">${preguntasSugeridas.map(q=>`<button class="btn" style="font-size:11px;padding:4px 9px" onclick="preguntaRapidaChatIA(${escapeHtml(JSON.stringify(q))})">${escapeHtml(q)}</button>`).join('')}</div>`;
+    return;
+  }
+  cont.innerHTML = chatIAHistorial.map((h,i)=>`<div class="chatia-msg ${h.rol==='user'?'user':'bot'}">${escapeHtml(h.texto)}${h.rol==='bot'?`<div class="chatia-copy" onclick="copiarMensajeChatIA(${i})">📋 Copiar</div>`:''}</div>`).join('');
+  cont.scrollTop = cont.scrollHeight;
+}
+function guardarHistorialChatIA(){
+  try{ localStorage.setItem('nathy_mf_chatia_historial', JSON.stringify(chatIAHistorial)); }catch(e){}
+}
+// Comando "/borrar": limpia el historial de la conversación del chat IA
+// (el ÚNICO lugar donde se guarda es localStorage — este chat nunca escribe
+// su historial en Firestore, así que "borrar todo, local o guardado" es
+// en la práctica un solo borrado). Deja el chat como recién abierto.
+function borrarHistorialChatIA(){
+  chatIAHistorial = [];
+  chatIAPreguntaPendiente = null;
+  const oldSel=document.getElementById('chatia-periodo-selector');
+  if(oldSel) oldSel.remove();
+  try{ localStorage.removeItem('nathy_mf_chatia_historial'); }catch(e){}
+  renderChatIAMensajes();
+  toast('🧹 Historial del chat borrado — empezamos de cero');
+}
+// Comandos "/resumen" y "/ayuda": responden con texto armado 100% en el
+// navegador (sin llamar a Gemini ni tocar Firestore) — ideal para no gastar
+// nada de cuota en preguntas que ya se pueden responder con lo que la app
+// ya tiene calculado.
+function responderComandoLocalChatIA(texto, respuestaBot){
+  chatIAHistorial.push({rol:'user', texto});
+  chatIAHistorial.push({rol:'bot', texto:respuestaBot});
+  if(chatIAHistorial.length>40) chatIAHistorial = chatIAHistorial.slice(-40);
+  renderChatIAMensajes();
+  guardarHistorialChatIA();
+}
+function generarResumenLocalChatIA(){
+  try{
+    const ctx = construirContextoParaIA();
+    if(!ctx || !ctx.resumenRapido) return 'No pude armar el resumen ahora mismo, intenta de nuevo en un momento.';
+    const r = ctx.resumenRapido;
+    const partes = ['📊 Resumen rápido — '+(ctx.fechaHoy||'')];
+
+    if(typeof r.deudaTotalTarjetasEnSoles==='number'){
+      partes.push('💳 Deuda pendiente en tarjetas: S/ '+r.deudaTotalTarjetasEnSoles.toFixed(2));
+    }
+    if(Array.isArray(r.pagosFrecuentesEstado) && r.pagosFrecuentesEstado.length){
+      const pendientes=r.pagosFrecuentesEstado.filter(p=>p.tipo==='gasto' && !p.yaPagadoEstePeriodo);
+      partes.push(pendientes.length
+        ? '📅 Pagos pendientes este periodo: '+pendientes.map(p=>p.nombre).join(', ')
+        : '📅 Pagos frecuentes: todos al día por ahora ✅');
+    }
+    if(Array.isArray(r.presupuestosEstado) && r.presupuestosEstado.length){
+      const excedidos=r.presupuestosEstado.filter(p=>p.estado==='excedido');
+      partes.push(excedidos.length
+        ? '🚨 Presupuestos excedidos este mes: '+excedidos.map(p=>p.categoria).join(', ')
+        : '🎯 Presupuestos: ningún límite excedido este mes');
+    }
+    if(Array.isArray(r.metasAhorroEstado) && r.metasAhorroEstado.length){
+      const top=r.metasAhorroEstado[0];
+      partes.push('🎯 Meta "'+top.nombre+'": '+top.porcentajeCompletado.toFixed(0)+'% completada');
+    }
+    if(Array.isArray(r.deudasMayoresEstado) && r.deudasMayoresEstado.length){
+      const totalPend=r.deudasMayoresEstado.reduce((s,d)=>s+(d.saldoPendiente||0),0);
+      partes.push('🏛️ Deudas mayores pendientes: S/ '+totalPend.toFixed(2));
+    }
+    if(r.inversionesResumen){
+      const pen=(r.inversionesResumen.PEN&&r.inversionesResumen.PEN.totalValorizado)||0;
+      const usd=(r.inversionesResumen.USD&&r.inversionesResumen.USD.totalValorizado)||0;
+      if(pen>0.004||usd>0.004){
+        partes.push('📈 Inversiones valorizadas: '+[pen>0.004?'S/ '+pen.toFixed(2):null, usd>0.004?'$ '+usd.toFixed(2):null].filter(Boolean).join(' + '));
+      }
+    }
+    if(Array.isArray(r.proximosEventosCalendario) && r.proximosEventosCalendario.length){
+      const prox=r.proximosEventosCalendario[0];
+      partes.push('📅 Próximo evento: '+prox.titulo+' (D-'+prox.diasFaltantes+')');
+    }
+    if(typeof r.kilometrajeActual==='number'){
+      partes.push('🚗 Kilometraje actual: '+r.kilometrajeActual.toLocaleString('es-PE')+' km');
+    }
+    partes.push('\n(Resumen calculado directo de tus datos, sin usar IA — no gasta tu cuota de Gemini 😉)');
+    return partes.join('\n');
+  }catch(e){
+    console.error('Error generando /resumen:', e);
+    return 'No pude armar el resumen ahora mismo, intenta de nuevo en un momento.';
+  }
+}
+const CHATIA_AYUDA_TEXTO = 'Esto es lo que puedo hacer 👋\n\n'+
+  'Pregúntame lo que quieras sobre tus movimientos, tarjetas, deudas, combustible, metas de ahorro, inversiones, presupuestos o calendario — respondo con tus datos reales.\n\n'+
+  'Si tu pregunta depende de una fecha, puedes indicar el periodo directo (ej. "este mes", "en agosto 2026", "los últimos 3 meses") o elegirlo de los botones que te muestro si no lo detecto.\n\n'+
+  'Comandos:\n'+
+  '- /resumen → un resumen rápido de tu situación actual (gratis, no usa IA)\n'+
+  '- /borrar → borra el historial de esta conversación y empieza de cero\n'+
+  '- /ayuda → este mensaje';
+
+// Por qué existe: cuando le preguntas al chat "cuánto gasté en Bembos este
+// año" (o cualquier comercio/concepto que se repite varias veces), antes se
+// le pedía a Gemini que recorriera TODO el JSON crudo (movimientos + cada
+// tarjeta) y sumara él mismo cada coincidencia — y una IA sumando a mano
+// sobre un arreglo grande a veces se salta una ocurrencia, cuenta una de
+// más, o simplemente varía la respuesta entre una pregunta y otra (aunque
+// sea la misma data). Acá se suma UNA sola vez, con código normal (100%
+// determinístico, siempre da el mismo resultado), y se le pasa el total ya
+// hecho — así la IA solo tiene que leerlo, no calcularlo.
+// Se agrupa por descripción normalizada (sin mayúsculas ni tildes, espacios
+// recortados) para que "Bembos", "BEMBOS" y "bembos " cuenten como el mismo
+// comercio. Si escribiste el mismo gasto con variaciones distintas cada vez
+// (ej. "Bembos" un día y "Bembos - combo" otro), esos quedan como grupos
+// separados — igual que le pasaría a un humano leyendo la lista, no hay
+// forma 100% automática de adivinar que son "lo mismo" sin arriesgarse a
+// mezclar comercios que en realidad son distintos.
+function calcularTotalesPorDescripcionRepetida(datosFiltrados){
+  try{
+    const rate = (state.tc && state.tc.venta) || 3.45;
+    const normalizar = s => (s||'').toString().trim().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const grupos = {};
+    const agregar = (descOriginal, monto, currency, fecha, fuente) => {
+      const desc = (descOriginal||'').toString().trim();
+      const key = normalizar(desc);
+      if(!key || !(monto>0)) return;
+      if(!grupos[key]) grupos[key] = { descripcionOriginal: desc, totalEnSoles:0, ocurrencias:[] };
+      const montoSoles = (currency==='USD') ? monto*rate : monto;
+      grupos[key].totalEnSoles += montoSoles;
+      grupos[key].ocurrencias.push({ fecha, monto, currency: currency||'PEN', fuente });
+    };
+    (datosFiltrados.movimientos||[]).forEach(mv=>{
+      if(mv.type==='expense') agregar(mv.desc, mv.amount, mv.currency, mv.date, 'movimiento de cuenta');
+    });
+    (datosFiltrados.tarjetas||[]).forEach(t=>{
+      Object.values(t.movs||{}).forEach(arr=>{
+        (arr||[]).forEach(c=>agregar(c.desc, c.monto, c.currency||t.currency, c.fecha, 'tarjeta '+(t.nombre||'')));
+      });
+    });
+    // Solo se devuelven los comercios/conceptos con 2+ ocurrencias — son los
+    // únicos donde sumar a mano puede salir mal; uno solo es una lectura
+    // directa que la IA no puede equivocar.
+    const resultado = {};
+    Object.values(grupos).forEach(g=>{
+      if(g.ocurrencias.length>=2){
+        resultado[g.descripcionOriginal] = {
+          totalEnSoles: Math.round(g.totalEnSoles*100)/100,
+          vecesQueAparece: g.ocurrencias.length,
+          detalle: g.ocurrencias
+        };
+      }
+    });
+    return resultado;
+  }catch(e){ console.error('Error en calcularTotalesPorDescripcionRepetida:', e); return {}; }
+}
+
+async function enviarMensajeChatIA(){
+  const input=document.getElementById('chatia-input');
+  const texto=(input.value||'').trim();
+  if(!texto) return;
+  if(texto.length>2000){
+    toast('Tu pregunta es muy larga (máx. 2000 caracteres) — acórtala un poco.', 'info');
+    return;
+  }
+  input.value='';
+  actualizarContadorChatIA();
+
+  // Comandos especiales: no se mandan a Gemini, se procesan acá mismo.
+  if(/^\/borrar$/i.test(texto)){
+    borrarHistorialChatIA();
+    return;
+  }
+  if(/^\/resumen$/i.test(texto)){
+    responderComandoLocalChatIA(texto, generarResumenLocalChatIA());
+    return;
+  }
+  if(/^\/ayuda$/i.test(texto)){
+    responderComandoLocalChatIA(texto, CHATIA_AYUDA_TEXTO);
+    return;
+  }
+
+  // Si había una pregunta esperando periodo y el usuario escribió otra cosa
+  // en vez de tocar un botón, abandonamos ese flujo pendiente.
+  if(chatIAPreguntaPendiente){
+    const oldSel=document.getElementById('chatia-periodo-selector');
+    if(oldSel) oldSel.remove();
+    chatIAPreguntaPendiente=null;
+  }
+
+  const rango = detectarPeriodoPregunta(texto);
+  chatIAHistorial.push({rol:'user', texto});
+  renderChatIAMensajes();
+  guardarHistorialChatIA();
+
+  if(!rango){
+    chatIAPreguntaPendiente = texto;
+    mostrarSelectorPeriodoChatIA();
+    return;
+  }
+  // El mensaje ya se agregó al historial arriba (líneas previas) — si aquí
+  // se le pasa `false`/nada a procesarPreguntaChatIA(), ella lo vuelve a
+  // agregar por su cuenta y la pregunta aparece DUPLICADA en el chat. Por
+  // eso siempre se pasa `true`: "ya está en el historial, no lo agregues de nuevo".
+  await procesarPreguntaChatIA(texto, rango, true);
+}
+
+// Chip de pregunta rápida (bienvenida): rellena el input y manda directo,
+// pasando por el mismo flujo de siempre (detección de periodo, comandos, etc.)
+function preguntaRapidaChatIA(texto){
+  const input=document.getElementById('chatia-input');
+  if(input){ input.value=texto; }
+  enviarMensajeChatIA();
+}
+
+// Contador de caracteres del input — el backend rechaza mensajes de más de
+// 2000 caracteres, esto lo avisa ANTES de que la persona se tope con el error.
+function actualizarContadorChatIA(){
+  const input=document.getElementById('chatia-input');
+  const counter=document.getElementById('chatia-counter');
+  if(!input||!counter) return;
+  const len=(input.value||'').length;
+  counter.textContent=len+'/2000';
+  counter.classList.toggle('warn', len>1600 && len<=2000);
+  counter.classList.toggle('over', len>2000);
+}
+
+// Copiar una respuesta del bot al portapapeles (ej. para pasarle un dato a
+// Miguel por WhatsApp sin retipearlo).
+function copiarMensajeChatIA(idx){
+  const h=chatIAHistorial[idx];
+  if(!h) return;
+  const texto=h.texto||'';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(()=>toast('📋 Copiado')).catch(()=>copiarMensajeChatIAFallback(texto));
+  } else {
+    copiarMensajeChatIAFallback(texto);
+  }
+}
+function copiarMensajeChatIAFallback(texto){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=texto; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('📋 Copiado');
+  }catch(e){ toast('No se pudo copiar', 'info'); }
+}
+
+// Exportar la conversación completa como archivo .txt — todo local, no sube
+// nada a ningún lado.
+function exportarConversacionChatIA(){
+  if(!chatIAHistorial.length){ toast('No hay conversación que exportar todavía', 'info'); return; }
+  const lineas=chatIAHistorial.map(h=>(h.rol==='user'?'Tú: ':'Asistente: ')+h.texto);
+  const contenido='Conversación del Asistente de Finanzas — '+(typeof todayLocalISO==='function'?todayLocalISO():'')+'\n\n'+lineas.join('\n\n');
+  try{
+    const blob=new Blob([contenido], {type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='chat-finanzas-'+(typeof todayLocalISO==='function'?todayLocalISO():'export')+'.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  }catch(e){ toast('No se pudo exportar la conversación', 'info'); }
+}
+
+// Entrada por voz (Web Speech API del navegador) — gratis, nativa de Chrome,
+// no depende de ninguna API de pago ni consume tu cuota de Gemini.
+let chatIARecognition=null, chatIARecognizing=false;
+function chatIAVoiceSupported(){ return !!(window.SpeechRecognition||window.webkitSpeechRecognition); }
+function toggleDictadoChatIA(){
+  if(!chatIAVoiceSupported()) return;
+  if(chatIARecognizing){ if(chatIARecognition) chatIARecognition.stop(); return; }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  chatIARecognition=new SR();
+  chatIARecognition.lang='es-PE';
+  chatIARecognition.interimResults=false;
+  chatIARecognition.maxAlternatives=1;
+  const micBtn=document.getElementById('chatia-mic');
+  chatIARecognition.onstart=()=>{ chatIARecognizing=true; if(micBtn) micBtn.classList.add('recording'); };
+  chatIARecognition.onerror=()=>{ chatIARecognizing=false; if(micBtn) micBtn.classList.remove('recording'); };
+  chatIARecognition.onend=()=>{ chatIARecognizing=false; if(micBtn) micBtn.classList.remove('recording'); };
+  chatIARecognition.onresult=(ev)=>{
+    const texto=ev.results[0][0].transcript;
+    const input=document.getElementById('chatia-input');
+    if(input){ input.value=(input.value?input.value+' ':'')+texto; actualizarContadorChatIA(); input.focus(); }
+  };
+  try{ chatIARecognition.start(); }catch(e){}
+}
+
+// Caché de respuestas de Gemini en localStorage: si repites la MISMA
+// pregunta (mismo texto + mismo periodo) dentro de los próximos 10 minutos,
+// se reusa la respuesta guardada en vez de volver a llamar a la API — cero
+// costo extra y respuesta instantánea para el caso típico de "pregunté dos
+// veces sin querer" o "volví a preguntar lo mismo al ratito".
+const CHATIA_CACHE_KEY = 'nathy_mf_chatia_cache';
+const CHATIA_CACHE_TTL_MS = 10*60*1000;
+function chatIACacheClave(texto, rango){
+  return (texto||'').trim().toLowerCase()+'|'+((rango&&rango.etiqueta)||'todo el historial');
+}
+function leerCacheChatIA(clave){
+  try{
+    const raw=JSON.parse(localStorage.getItem(CHATIA_CACHE_KEY)||'{}');
+    const entry=raw[clave];
+    if(entry && (Date.now()-entry.ts)<CHATIA_CACHE_TTL_MS) return entry.respuesta;
+  }catch(e){}
+  return null;
+}
+function guardarCacheChatIA(clave, respuesta){
+  try{
+    const raw=JSON.parse(localStorage.getItem(CHATIA_CACHE_KEY)||'{}');
+    raw[clave]={respuesta, ts:Date.now()};
+    const claves=Object.keys(raw);
+    if(claves.length>30){
+      claves.sort((a,b)=>raw[a].ts-raw[b].ts);
+      delete raw[claves[0]];
+    }
+    localStorage.setItem(CHATIA_CACHE_KEY, JSON.stringify(raw));
+  }catch(e){}
+}
+
+function mostrarSelectorPeriodoChatIA(){
+  const cont=document.getElementById('chatia-msgs');
+  const wrap=document.createElement('div');
+  wrap.className='chatia-msg bot';
+  wrap.id='chatia-periodo-selector';
+  const opciones=['Hoy','Este mes','Últimos 3 meses','Este año','Todo el historial'];
+  wrap.innerHTML = '¿De qué periodo? Así reviso solo lo necesario en vez de todo tu historial.' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' +
+    opciones.map(op=>`<button class="btn" style="font-size:11px;padding:4px 9px" onclick="elegirPeriodoChatIA('${op}')">${op}</button>`).join('') +
+    '</div>';
+  cont.appendChild(wrap);
+  cont.scrollTop=cont.scrollHeight;
+}
+
+function elegirPeriodoChatIA(opcion){
+  const sel=document.getElementById('chatia-periodo-selector');
+  if(sel) sel.remove();
+  if(!chatIAPreguntaPendiente) return;
+  const mapaTextos = {
+    'Hoy':'hoy', 'Este mes':'este mes', 'Últimos 3 meses':'últimos 3 meses',
+    'Este año':'este año', 'Todo el historial':'todo el historial'
+  };
+  const rango = detectarPeriodoPregunta(mapaTextos[opcion] || opcion) || { todo:true, etiqueta:'todo el historial' };
+  const preguntaOriginal = chatIAPreguntaPendiente;
+  chatIAPreguntaPendiente = null;
+  procesarPreguntaChatIA(preguntaOriginal, rango, true);
+}
+
+async function procesarPreguntaChatIA(texto, rango, yaEnHistorial){
+  if(!yaEnHistorial){
+    chatIAHistorial.push({rol:'user', texto});
+    renderChatIAMensajes();
+    guardarHistorialChatIA();
+  }
+
+  // Caché local: si ya preguntaste EXACTAMENTE esto, con el mismo periodo,
+  // hace menos de 10 minutos, se reusa la respuesta sin llamar a Gemini.
+  const claveCache = chatIACacheClave(texto, rango);
+  const respuestaCacheada = leerCacheChatIA(claveCache);
+  if(respuestaCacheada){
+    chatIAHistorial.push({rol:'bot', texto:respuestaCacheada});
+    if(chatIAHistorial.length>40) chatIAHistorial = chatIAHistorial.slice(-40);
+    guardarHistorialChatIA();
+    renderChatIAMensajes();
+    return;
+  }
+
+  const cont=document.getElementById('chatia-msgs');
+  const loadingEl=document.createElement('div');
+  loadingEl.className='chatia-msg bot loading';
+  loadingEl.textContent='Pensando' + (rango && rango.etiqueta ? ' ('+rango.etiqueta+')' : '') + '...';
+  cont.appendChild(loadingEl);
+  cont.scrollTop=cont.scrollHeight;
+
+  const sendBtn=document.getElementById('chatia-send');
+  sendBtn.disabled=true;
+  try{
+    const contextoBase=construirContextoParaIA();
+    const datosFiltradosParaIA = filtrarDatosPorPeriodo(contextoBase.datosCompletos, rango);
+    const contexto = {
+      ...contextoBase,
+      datosCompletos: datosFiltradosParaIA,
+      resumenRapido: {
+        ...contextoBase.resumenRapido,
+        // Ver calcularTotalesPorDescripcionRepetida() más arriba — resuelve
+        // el bug de dar montos distintos cada vez que preguntas cuánto
+        // gastaste en un comercio que se repite (ej. Bembos): el propio
+        // código ya suma cada uno antes de mandárselo a la IA.
+        totalesPorDescripcionRepetida: calcularTotalesPorDescripcionRepetida(datosFiltradosParaIA)
+      },
+      periodoConsultado: (rango && rango.etiqueta) || 'todo el historial'
+    };
+    // Autenticación real en vez de la clave fija: se manda el ID token de
+    // Firebase Auth de la sesión ya logueada (nadie puede fabricar uno sin
+    // conocer tu contraseña real, a diferencia de la clave fija de antes,
+    // que cualquiera podía copiar del código fuente público). El backend
+    // (chatFinanzas) lo verifica contra Firebase antes de responder.
+    const idToken = await firebase.auth().currentUser.getIdToken();
+    const res=await fetch(CHAT_FUNCTION_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},
+      body:JSON.stringify({ mensaje:texto, contexto, historial:chatIAHistorial.slice(-10) })
+    });
+    const data=await res.json();
+    loadingEl.remove();
+    if(data && data.success && data.respuesta){
+      chatIAHistorial.push({rol:'bot', texto:data.respuesta});
+      guardarCacheChatIA(claveCache, data.respuesta);
+    } else if(data && data.error==='cuota_agotada'){
+      chatIAHistorial.push({rol:'bot', texto:'🚦 Por hoy se acabó la cuota gratuita de Gemini (se resetea a medianoche, hora de California). Prueba de nuevo más tarde — esto no te genera ningún cobro, solo hay que esperar a que se renueve.'});
+    } else {
+      chatIAHistorial.push({rol:'bot', texto:'No pude responder eso ahora mismo. Intenta de nuevo en un momento.'});
+    }
+  }catch(err){
+    console.error('Error en chat IA:', err);
+    loadingEl.remove();
+    chatIAHistorial.push({rol:'bot', texto:'No pude conectarme al asistente. Revisa tu conexión e intenta de nuevo.'});
+  }
+  sendBtn.disabled=false;
+  if(chatIAHistorial.length>40) chatIAHistorial = chatIAHistorial.slice(-40);
+  guardarHistorialChatIA();
+  renderChatIAMensajes();
+}
+
 function startApp(){
   initFirebase();
 }
@@ -22970,6 +23839,25 @@ if(state.projGoals){
 </div>
 <button class="fab-add" id="fab-add-btn" onclick="toggleFabMenu(event)" title="Agregar" style="z-index:300">+</button>
 <button id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Volver arriba" style="display:none;position:fixed;right:84px;bottom:20px;width:40px;height:40px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:16px;cursor:pointer;align-items:center;justify-content:center;z-index:290;box-shadow:0 4px 14px rgba(0,0,0,.3);transition:transform .15s">⬆</button>
+
+<!-- Chat IA: preguntas sobre tus propias finanzas, respondidas con Gemini -->
+<div id="chatia-panel">
+  <div id="chatia-header">
+    <div><b>🤖AsisBot🚀</b><small>Pregúntame sobre tus datos</small></div>
+    <div id="chatia-header-actions">
+      <button id="chatia-export" onclick="exportarConversacionChatIA()" title="Exportar esta conversación (.txt)">⬇</button>
+      <button id="chatia-close" onclick="cerrarChatIA()">✕</button>
+    </div>
+  </div>
+  <div id="chatia-msgs"></div>
+  <div id="chatia-input-wrap">
+    <button id="chatia-mic" onclick="toggleDictadoChatIA()" title="Preguntar por voz">🎤</button>
+    <textarea id="chatia-input" rows="1" placeholder="Ej: ¿cuánto gasté en comida este mes?" onkeydown="onChatIAKeydown(event)" oninput="actualizarContadorChatIA()"></textarea>
+    <button id="chatia-send" onclick="enviarMensajeChatIA()">➤</button>
+  </div>
+  <div id="chatia-counter">0/2000</div>
+</div>
+<button id="chatia-btn" onclick="toggleChatIA()" title="Preguntar a la IA sobre tus finanzas">💬</button>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
