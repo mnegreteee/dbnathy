@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,9 +15,8 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231a1b23'/%3E%3Ccircle cx='50' cy='50' r='16' fill='%23555766'/%3E%3C/svg%3E">
 <!-- Favicon de la pestaña del navegador: antes no había ninguno definido,
      así que el navegador mostraba su ícono genérico por defecto (el
-     "planeta"/globo). Se usa el emoji 💾 renderizado como SVG, mismo truco
-     que un favicon normal pero sin necesitar un archivo .ico aparte. -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%91%BD</text></svg>">
+     "planeta"/globo). Se usa el emoji 👽 renderizado como SVG. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%91%91</text></svg>">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Notas%22%2C%22short_name%22%3A%22Notas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f1115%22%2C%22theme_color%22%3A%22%230f1115%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520100%2520100%2527%253E%253Crect%2520width%253D%2527100%2527%2520height%253D%2527100%2527%2520rx%253D%252722%2527%2520fill%253D%2527%25231a1b23%2527%252F%253E%253Ccircle%2520cx%253D%252750%2527%2520cy%253D%252750%2527%2520r%253D%252716%2527%2520fill%253D%2527%2523555766%2527%252F%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -116,6 +115,9 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .login-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;margin-top:6px;}
 .login-btn:hover{background:var(--accent2);}
 .login-err{background:var(--red-bg);border:1px solid var(--red);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:12px;display:none;}
+.login-info{background:var(--green-bg);border:1px solid var(--green);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--green);margin-top:12px;display:none;}
+.login-forgot-link{display:block;text-align:center;font-size:11px;color:var(--text3);margin-top:12px;cursor:pointer;background:none;border:none;font-family:var(--font);width:100%;}
+.login-forgot-link:hover{color:var(--accent);text-decoration:underline;}
 
 /* ── NOTIFY BANNER ── */
 .notify-banner{background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;font-size:13px;}
@@ -146,19 +148,6 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 /* ── CARDS ── */
 .main-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px;}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;box-shadow:var(--card-shadow);}
-/* Efecto de elevación en CUALQUIER elemento clickeable (ya tiene onclick) —
-   mismo criterio que ya usaban las tarjetas KPI del Resumen, extendido a
-   toda la app: tarjetas de crédito, filas de movimientos, deudas, metas,
-   etc. No se aplica a tarjetas sin onclick (ej. formularios), para no
-   sugerir que algo es clickeable cuando no lo es. */
-.card[onclick]:hover, .dash-mov-row[onclick]:hover, .dash-tc-row[onclick]:hover, .tc-card-item[onclick]:hover{
-  transform:translateY(-2px);
-  box-shadow:0 6px 16px rgba(0,0,0,.18);
-  transition:transform .15s,box-shadow .15s;
-}
-.card[onclick], .dash-mov-row[onclick], .dash-tc-row[onclick], .tc-card-item[onclick]{
-  transition:transform .15s,box-shadow .15s;
-}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .card.c-green::before{background:var(--green);}
 .card.c-red::before{background:var(--red);}
@@ -504,7 +493,6 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .tc-group-item.selected-row{background:rgba(91,141,239,.08);}
 .tc-group-paid-dot{width:16px;height:16px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
 
-
 /* Resumen global */
 .tc-global-table{width:100%;border-collapse:collapse;min-width:600px;}
 .tc-global-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:0 8px 8px;text-align:left;border-bottom:1px solid var(--border);}
@@ -533,8 +521,6 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .dash-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px;}
 .dash-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:transform .12s,border-color .12s;}
 .dash-kpi:hover{transform:translateY(-2px);border-color:var(--border2);}
-.kpi-toggle-num{cursor:pointer;border-bottom:1px dotted transparent;transition:border-color .15s;}
-.kpi-toggle-num:hover{border-bottom-color:currentColor;}
 .dash-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .dash-kpi.kpi-green::before{background:var(--green);}
 .dash-kpi.kpi-red::before{background:var(--red);}
@@ -546,6 +532,7 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .dash-kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:4px;}
 .dash-kpi-val{font-family:var(--mono);font-size:20px;font-weight:500;letter-spacing:-0.5px;}
 .dash-kpi-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.kpi-toggle-num{cursor:pointer;border-bottom:1px dotted transparent;transition:border-color .15s;}
 
 .dash-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
 .dash-widgets-container{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
@@ -570,8 +557,7 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;d
 .dash-shortcut-icon{font-size:20px;}
 .dash-shortcut-label{font-size:13px;font-weight:600;}
 .dash-shortcut-sub{font-size:11px;color:var(--text2);}
-.dash-empty{text-align:center;color:var(--text3);font-size:12px;padding:26px 12px;}
-.dash-empty-icon{font-size:30px;margin-bottom:8px;opacity:.45;line-height:1;}
+.dash-empty{text-align:center;color:var(--text3);font-size:12px;padding:16px 0;}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:5px;}
@@ -862,19 +848,6 @@ body.compact-mode .anual-table{font-size:11px;}
 .cp-row-actions{display:flex;gap:4px;flex-shrink:0;}
 @media(max-width:600px){.cp-row{flex-wrap:wrap;}.cp-row-dias{min-width:0;}}
 
-/* Aprobaciones bancarias — badge de pendientes en el nav, y tarjetas de la
-   lista (una por correo detectado, con Aprobar/Rechazar). */
-.nav-badge{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;line-height:1;padding:2px 5px;border-radius:9px;min-width:14px;text-align:center;}
-.pb-card{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--card-shadow);}
-.pb-icon{width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.pb-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
-.pb-info-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
-.pb-monto{font-size:16px;font-weight:700;font-family:var(--mono);}
-.pb-quien{font-size:12px;font-weight:600;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pb-meta{font-size:10px;color:var(--text3);}
-.pb-actions{display:flex;gap:6px;flex-shrink:0;}
-@media(max-width:600px){.pb-card{flex-wrap:wrap;}.pb-actions{width:100%;justify-content:flex-end;}}
-
 
 /* ══ CALENDARIO ══ */
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:20px;}
@@ -1088,6 +1061,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <div class="login-field"><label>Contraseña</label><input id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" onclick="doLogin()">Ingresar</button>
     <div class="login-err" id="login-err">Correo o contraseña incorrectos.</div>
+    <div class="login-info" id="login-info"></div>
+    <button class="login-forgot-link" onclick="enviarResetPassword()">¿Olvidaste tu contraseña?</button>
     <div id="app-version-label" style="text-align:center;font-size:10px;color:var(--text3);margin-top:18px;letter-spacing:.3px"></div>
   </div>
 </div>
@@ -1138,8 +1113,6 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
         <button class="nav-dropdown-item" id="nav-minijuegos" onclick="showPage('minijuegos')">🎮 Minijuegos</button>
       </div>
     </div>
-
-    <button class="nav-tab" id="nav-aprobaciones" onclick="showPage('aprobaciones')" style="position:relative">🔔 Aprobaciones<span id="nav-aprobaciones-badge" class="nav-badge" style="display:none">0</span></button>
   </div>
   <div class="nav-right">
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
@@ -1374,8 +1347,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
      para nunca arriesgarse a sobreescribir datos reales de otro dispositivo
      con un estado local incompleto. La app reintenta sola en segundo plano
      (ver intentarRecuperarCargaFallida) — este banner es solo para que,
-     mientras tanto, el bloqueo nunca pase desapercibido, y muestra el
-     detalle técnico real del error para no depender de la consola. -->
+     mientras tanto, el bloqueo nunca pase desapercibido como un simple
+     puntito rojo chiquito en el header. -->
 <div id="carga-fallida-banner" style="display:none;position:sticky;top:0;z-index:149;background:linear-gradient(90deg,#dc2626,#991b1b);color:#fff;padding:8px 20px;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-wrap:wrap">
   <span>🚫 No se pudo cargar tu información desde la nube. Lo que veas ahora puede estar incompleto — tus cambios NO se van a guardar hasta reconectar (se está reintentando solo).<span id="carga-fallida-detalle" style="display:block;font-size:11px;font-weight:400;opacity:.85;margin-top:2px"></span></span>
   <button onclick="retrySync()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Reintentar ahora</button>
@@ -2370,7 +2343,6 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 <div class="page" id="page-compras">
 <div class="container">
 
-
   <div class="section-header" style="margin-bottom:16px">
     <div class="section-title">🛒 Lista de Compras</div>
     <button class="btn btn-primary" style="font-size:11px" onclick="abrirCompraModal()">+ Nuevo</button>
@@ -2479,81 +2451,6 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
       <button class="btn" onclick="cerrarMarcarLlegadoModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarMarcarLlegado()">📦 Confirmar llegada</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ PÁGINA: APROBACIONES BANCARIAS ══════════ -->
-<!-- Consumos/transferencias detectados automáticamente desde los correos del
-     banco (ver bankEmailWebhook en el bot) llegan aquí como "pendientes" —
-     nunca se registran solos, porque puede que ya se hayan cargado a mano
-     o que sean un movimiento entre cuentas propias que no es un gasto real. -->
-<div class="page" id="page-aprobaciones">
-<div class="container">
-
-  <div class="section-header" style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-    <div class="section-title">🔔 Aprobaciones</div>
-    <button id="btn-vaciar-pendientes" class="config-action-btn danger" style="font-size:10px;display:none" onclick="vaciarTodosPendientes()">🗑 Vaciar todos</button>
-  </div>
-
-  <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Consumos y transferencias detectados en tu correo del banco. Revisa cada uno antes de que se registre — puede que ya lo hayas cargado a mano.</div>
-
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-    <label style="font-size:11px;color:var(--text3)">Ordenar por</label>
-    <select id="aprobaciones-orden" onchange="renderAprobacionesBanco()" style="font-size:11px;padding:5px 8px;border-radius:7px;background:var(--bg2);color:var(--text);border:1px solid var(--border2)">
-      <option value="fecha-desc">Fecha (más reciente primero)</option>
-      <option value="fecha-asc">Fecha (más antigua primero)</option>
-      <option value="banco">Banco (A-Z)</option>
-      <option value="reconocidos-primero">Reconocidos primero</option>
-      <option value="no-reconocidos-primero">No reconocidos primero</option>
-    </select>
-  </div>
-
-  <div id="aprobaciones-list" style="display:flex;flex-direction:column;gap:10px"></div>
-  <div id="aprobaciones-empty" class="dash-empty" style="display:none">No tienes pendientes por aprobar. 🎉</div>
-
-</div>
-</div>
-
-<!-- MODAL: EDITAR/APROBAR PENDIENTE BANCARIO (crea el movimiento real) -->
-<div class="modal-overlay" id="pbm-overlay" onclick="if(event.target===this)cerrarAprobarPendienteModal()">
-  <div class="modal" style="width:380px">
-    <div class="modal-title"><span id="pbm-title">Aprobar movimiento</span><button class="modal-close" onclick="cerrarAprobarPendienteModal()">✕</button></div>
-    <div id="pbm-noreconocido-info" style="display:none;font-size:11px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;margin-bottom:10px">
-      <div style="font-weight:600;color:var(--text2);margin-bottom:4px">⚠ No se pudo interpretar este correo automáticamente</div>
-      <div>Asunto: <span id="pbm-nr-asunto"></span></div>
-      <div>De: <span id="pbm-nr-remitente"></span></div>
-      <div id="pbm-nr-fragmento" style="margin-top:4px;color:var(--text3);white-space:pre-wrap;max-height:120px;overflow-y:auto"></div>
-    </div>
-    <div id="pbm-duplicado-aviso" style="display:none;font-size:11px;background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:8px 10px;margin-bottom:10px">⚠ Ya existe un movimiento parecido — revisa que no sea el mismo antes de aprobar.</div>
-    <div class="field"><label>Descripción</label><input id="pbm-desc" type="text"></div>
-    <div class="field-row">
-      <div class="field"><label>Tipo</label>
-        <select id="pbm-tipo-mov" onchange="onAprobarPendienteMetodoChange()">
-          <option value="gasto">Gasto</option>
-          <option value="ingreso">Ingreso</option>
-        </select>
-      </div>
-      <div class="field"><label>Método de pago</label>
-        <select id="pbm-metodo" onchange="onAprobarPendienteMetodoChange()">
-          <option value="cuenta">Cuenta (débito / efectivo)</option>
-          <option value="tarjeta">Tarjeta de crédito</option>
-        </select>
-      </div>
-    </div>
-    <div class="field" id="pbm-cuenta-wrap"><label>Cuenta</label><select id="pbm-cuenta"></select></div>
-    <div class="field" id="pbm-tarjeta-wrap" style="display:none"><label>Tarjeta</label><select id="pbm-tarjeta"></select></div>
-    <div class="field-row">
-      <div class="field"><label>Monto</label><input id="pbm-monto" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="field"><label>Moneda</label>
-        <select id="pbm-currency"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select>
-      </div>
-    </div>
-    <div class="field"><label>Fecha</label><input id="pbm-fecha" type="date"></div>
-    <div class="field"><label>Categoría <small>(opcional)</small></label><select id="pbm-cat"></select></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      <button class="btn" onclick="cerrarAprobarPendienteModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarAprobarPendiente()">✅ Registrar</button>
     </div>
   </div>
 </div>
@@ -3550,8 +3447,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
 const APP_VERSION = 'v1.53.0';
-const APP_VERSION_DATE = '05/10/26 - 21:13'; // hora de Lima, Perú (UTC-5)
-const APP_VERSION_NOTE = 'Todos los insights (Gastos, Resumen, Presupuesto, Tarjetas, Deudas, Año completo y el análisis con IA) ahora se calculan por moneda: soles y dólares por separado, sin convertir ni usar tipo de cambio. Gastos: tendencia diaria separada por moneda.';
+const APP_VERSION_DATE = '05/10/26 - 21:20'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Todas las tarjetas de insights con IA (Gastos, Resumen, Presupuesto, Tarjetas, Deudas, Año completo) ahora se pueden contraer/expandir: arrancan contraídas y recuerdan lo último que elegiste. Insights y análisis por moneda, sin convertir.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -3611,29 +3508,29 @@ let editingBudgetCat=null;
 let db = null;
 let DOC_REF = null;
 
-// Pendientes de aprobación bancaria (users/{uid}/pendientesBanco) — viven
-// SOLO en memoria, poblados en vivo por su propio listener de Firestore
-// (ver iniciarListenerTiempoReal). No forman parte de `state`: nunca pasan
-// por saveState()/_doFirestoreWrite, así que aprobar/rechazar uno es
-// siempre una escritura/borrado puntual a SU documento, nunca una
-// reescritura de nada más.
-let pendientesBanco = [];
-
 // ══════════════════════════════════════════════════════
 //  SINCRONIZACIÓN MULTI-DISPOSITIVO — antes, cada guardado sobreescribía
 //  TODO el bloque "meta" (todo el state salvo movimientos) con lo que ese
 //  dispositivo tenía en memoria, sin importar si otro dispositivo había
 //  cambiado algo más mientras tanto. Con la app abierta en varios
 //  dispositivos a la vez, esto podía borrar en silencio cambios reales
-//  hechos desde otro lado (motivó un incidente real de pérdida de datos).
+//  hechos desde otro lado.
 //
-//  Solución: cada sección (cuentas, customCuentas, pagosFrecuentes,
-//  metasAhorro, tcTracker, etc.) vive en su PROPIO documento de Firestore
-//  — igual que ya hacían los movimientos —, así que escribir "cuentas" es
-//  físicamente imposible que pise "pagosFrecuentes" de otro dispositivo,
-//  ni siquiera si ambos guardan en el mismo instante. Solo se escriben las
-//  secciones que ESTE dispositivo cambió desde su última sincronización.
+//  EVOLUCIÓN: primero se resolvió con una fusión "a mano" antes de cada
+//  guardado (comparar sección por sección contra la última foto conocida).
+//  Ahora se va un paso más allá: cada sección (cuentas, customCuentas,
+//  pagosFrecuentes, metasAhorro, tcTracker, etc.) vive en su PROPIO
+//  documento de Firestore — igual que ya hacían los movimientos —, así que
+//  escribir "cuentas" es físicamente imposible que pise "pagosFrecuentes"
+//  de otro dispositivo, ni siquiera si ambos guardan en el mismo instante.
+//  Ya no hace falta "fusionar" nada: solo se escriben las secciones que
+//  ESTE dispositivo cambió, y punto.
 let _lastSyncedMeta = null;
+// Guarda el detalle real (código + mensaje) del último error al intentar
+// cargar desde Firestore, para poder mostrarlo directo en el banner rojo
+// de la app — así no hace falta abrir la consola del navegador para saber
+// qué está fallando de verdad.
+let _ultimoErrorCarga = null;
 // Claves que son "vista" de este dispositivo puntual, no datos compartidos
 // — nunca se sincronizan ni se fusionan entre dispositivos (si Device B
 // adoptara el mes que Device A estaba viendo, saltaría de mes solo, sin
@@ -3653,8 +3550,6 @@ function _seccionesColl(){
 // sincronización (comparando contra _lastSyncedMeta) — las que no se
 // tocaron acá ni se leen ni se escriben, así jamás se pisan entre
 // dispositivos. Devuelve la lista de claves que sí se escribieron.
-// que registrar el cambio no cuente a su vez como otro cambio pendiente.
-
 async function _writeSeccionesCambiadas(localMeta, lastSynced){
   const claves = Object.keys(localMeta);
   const batch = db.batch();
@@ -3706,8 +3601,7 @@ async function _migrarASeccionesSiNecesario(metaVieja){
 // Muestra el banner de arriba si nunca se completó una carga real desde la
 // nube en esta sesión (mismo criterio que el circuito de seguridad de
 // _doFirestoreWrite) — así el bloqueo de guardado nunca pasa desapercibido
-// como un simple puntito rojo en el header, y muestra el detalle técnico
-// real del error para no depender de la consola del navegador.
+// como un simple puntito rojo en el header.
 function actualizarBannerCargaFallida(){
   const banner=document.getElementById('carga-fallida-banner');
   if(!banner) return;
@@ -3825,9 +3719,7 @@ let _movimientosBorradosExplicitamente = [];
 // (Firestore permite hasta 500 por batch; 450 deja margen de seguridad).
 // `aplicarOp(batch, item)` decide qué hacer con cada item dentro del batch
 // (ej. batch.set(ref,data) o batch.delete(ref)). Devuelve una promesa que
-// resuelve cuando TODOS los lotes ya se confirmaron, en orden. Reutilizado
-// por syncMovimientosSubcollection() y vaciarTodosPendientes() — antes cada
-// una tenía su propia copia idéntica de este chunking.
+// resuelve cuando TODOS los lotes ya se confirmaron, en orden.
 function _commitEnChunks(items, aplicarOp, tam){
   tam = tam || 450;
   const chunks = [];
@@ -3888,20 +3780,19 @@ async function _doFirestoreWrite(){
   if(demoMode){ console.warn('_doFirestoreWrite() bloqueado: modo demo activo.'); return; }
   if(!DOC_REF){setSyncStatus('error');return;}
   // 🚨 CIRCUITO DE SEGURIDAD (agregado tras un incidente real de pérdida de
-  // datos entre dispositivos, en la cuenta de Nathy): si nunca se completó
-  // con éxito una LECTURA desde la nube en esta sesión (_lastSyncedMeta
-  // sigue en null) — típicamente porque loadState() falló por red/timing al
-  // abrir la app en un dispositivo nuevo — escribir ahora sería subir el
-  // estado local (posiblemente incompleto, recién inicializado) como si
-  // fuera la verdad completa, pisando en la nube secciones enteras
-  // (tarjetas, servicios, deudas...) con una versión que le falta lo que
-  // otro dispositivo agregó. La ÚNICA excepción segura es una cuenta
-  // genuinamente nueva (_remoteDocExisted===false: no hay nada que perder
-  // porque no hay documento en la nube todavía). Mientras esté bloqueado,
-  // se reintenta la CARGA solo, en segundo plano (ver
-  // intentarRecuperarCargaFallida) — así un corte de internet momentáneo se
-  // resuelve solo, sin que el usuario tenga que notar nada ni hacer clic en
-  // ningún lado.
+  // datos entre dispositivos): si nunca se completó con éxito una LECTURA
+  // desde la nube en esta sesión (_lastSyncedMeta sigue en null) — típicamente
+  // porque loadState() falló por red/timing al abrir la app en un dispositivo
+  // nuevo — escribir ahora sería subir el estado local (posiblemente
+  // incompleto, recién inicializado) como si fuera la verdad completa,
+  // pisando en la nube secciones enteras (tarjetas, servicios, deudas...)
+  // con una versión que le falta lo que otro dispositivo agregó. La ÚNICA
+  // excepción segura es una cuenta genuinamente nueva (_remoteDocExisted
+  // ===false: no hay nada que perder porque no hay documento en la nube
+  // todavía). Mientras esté bloqueado, se reintenta la CARGA solo, en
+  // segundo plano (ver intentarRecuperarCargaFallida) — así un corte de
+  // internet momentáneo se resuelve solo, sin que el usuario tenga que
+  // notar nada ni hacer clic en ningún lado.
   if(_lastSyncedMeta===null && _remoteDocExisted!==false){
     console.warn('_doFirestoreWrite() bloqueado: todavía no se completó una carga real desde la nube en esta sesión (posible problema de red al abrir la app) — no se escribe nada hasta confirmar qué hay realmente en Firestore, para no arriesgarse a borrar datos de otro dispositivo.');
     setSyncStatus('error');
@@ -4734,7 +4625,7 @@ function saveState(immediate){
   state.lastUpdated=new Date().toISOString();
   clearSaldoCache(); // invalidate saldo cache on any state change
   // Save to localStorage immediately as backup
-  localStorage.setItem('miguel_mf_v5',JSON.stringify(state));
+  localStorage.setItem('nathy_mf_v5',JSON.stringify(state));
   updateLastUpdated();
   setSyncStatus('saving');
   clearTimeout(saveTimer);
@@ -4943,11 +4834,6 @@ function migrateState(){
 }
 
 let _remoteDocExisted = null; // null=desconocido/offline, true=había doc, false=no había doc (cuenta nueva)
-// Guarda el detalle real (código + mensaje) del último error al intentar
-// cargar desde Firestore, para poder mostrarlo directo en el banner rojo
-// de la app — así no hace falta abrir la consola del navegador para saber
-// qué está fallando de verdad.
-let _ultimoErrorCarga = null;
 
 // Firestore NO tiene un límite de tiempo propio para sus lecturas — si algo
 // en la red (un firewall, proxy o VPN que corta conexiones largas en
@@ -4967,9 +4853,9 @@ function conTimeout(promesa, ms, mensaje){
 }
 
 function loadState(){
-  ['miguel_mf_state_v2','miguel_mf_state_v3','miguel_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
+  ['nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
   // Load from localStorage first for instant render
-  const s=localStorage.getItem('miguel_mf_v5');
+  const s=localStorage.getItem('nathy_mf_v5');
   if(s){try{const p=JSON.parse(s);state={...state,...p};}catch(e){}}
   migrateState();
   clearSaldoCache();
@@ -4983,13 +4869,13 @@ function loadState(){
   // aplicarse una sola vez (la primera carga después de "Borrar todos los
   // datos"), no para quedarse pegada para siempre. Antes dependía de que
   // seedDemo() la limpiara más adelante en el flujo de login, pero esa
-  // función quedó vacía (para no sembrar datos de ejemplo) y sin querer se
-  // llevó también esta limpieza — dejando la bandera trabada en '1' para
-  // siempre, y con eso, TODA carga futura desde la nube bloqueada
-  // silenciosamente (este fue el bug real detrás de un incidente real en
-  // la cuenta de Nathy).
-  if(localStorage.getItem('miguel_mf_cleared')==='1'){
-    localStorage.removeItem('miguel_mf_cleared');
+  // función quedó vacía en una sesión anterior (para no sembrar datos de
+  // ejemplo) y sin querer se llevó también esta limpieza — dejando la
+  // bandera trabada en '1' para siempre, y con eso, TODA carga futura desde
+  // la nube bloqueada silenciosamente (este fue el bug real detrás de la
+  // sesión de soporte que motivó este comentario).
+  if(localStorage.getItem('nathy_mf_cleared')==='1'){
+    localStorage.removeItem('nathy_mf_cleared');
     setSyncStatus('ok');
     // Push the fresh blank state to Firestore to guarantee it's clean there too
     if(DOC_REF){
@@ -5066,7 +4952,7 @@ function loadState(){
               state.currentYear=now.getFullYear();
               state.currentMonth=now.getMonth();
             }
-            localStorage.setItem('miguel_mf_v5',JSON.stringify(state));
+            localStorage.setItem('nathy_mf_v5',JSON.stringify(state));
             const snap={};
             subMovs.forEach(mv=>{ if(mv.id) snap[mv.id]=JSON.stringify(mv); });
             _lastSyncedMovs = snap;
@@ -5084,7 +4970,7 @@ function loadState(){
               const now=new Date();
               state.currentYear=now.getFullYear();
               state.currentMonth=now.getMonth();
-              localStorage.setItem('miguel_mf_v5',JSON.stringify(state));
+              localStorage.setItem('nathy_mf_v5',JSON.stringify(state));
             }
             // Forzar que la próxima sincronización suba TODOS los movimientos actuales
             // como documentos individuales (migración transparente, no destructiva).
@@ -5121,20 +5007,22 @@ function toggleTheme(){
   const cur=document.documentElement.getAttribute('data-theme');
   const next=cur==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('miguel_mf_theme',next);
+  localStorage.setItem('nathy_mf_theme',next);
   if(mainChart)renderChart();
   if(projChart)renderProyeccion();
 }
 function loadTheme(){
-  const t=localStorage.getItem('miguel_mf_theme')||'dark';
+  const t=localStorage.getItem('nathy_mf_theme')||'light';
   document.documentElement.setAttribute('data-theme',t);
 }
 
-// ── COLOR DE ACENTO PERSONALIZABLE ──────────────────────
-// Se pinta como variables CSS (--accent, --accent2) por encima de lo que
-// ya defina el tema oscuro/claro — el resto de la app sigue funcionando
-// con esto, "pintando" del color que la persona elija, sin tocar nada de
-// la lógica de light/dark (que sigue controlando fondos y textos).
+// ── COLOR DE ACENTO PERSONALIZADO ──────────────────────
+// --accent/--accent2 son las únicas 2 variables de color que NO cambian
+// entre tema oscuro/claro (ver :root{...} arriba) — se usan en botones,
+// links y resaltados en TODA la app. Sobreescribirlas con style.setProperty
+// en <html> tiene más prioridad que la regla :root del CSS, así que basta
+// con esto para "pintar" la app del color que la persona elija, sin tocar
+// nada de la lógica de light/dark (que sigue controlando fondos y textos).
 function hexToRgb(hex){
   const h=hex.replace('#','');
   return {r:parseInt(h.substring(0,2),16), g:parseInt(h.substring(2,4),16), b:parseInt(h.substring(4,6),16)};
@@ -5149,23 +5037,23 @@ function setAccentColor(hex){
   if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
   document.documentElement.style.setProperty('--accent', hex);
   document.documentElement.style.setProperty('--accent2', shadeColor(hex,-18)); // versión más oscura, para hover/gradientes
-  localStorage.setItem('miguel_mf_accent', hex);
+  localStorage.setItem('nathy_mf_accent', hex);
   if(mainChart) renderChart();
   if(projChart) renderProyeccion();
   // El patrón de fondo usa el color de acento — se recolorea solo al cambiarlo.
-  const patronActivo=localStorage.getItem('miguel_mf_fondo_patron');
-  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('miguel_mf_fondo_opacidad')||'8',10));
+  const patronActivo=localStorage.getItem('nathy_mf_fondo_patron');
+  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('nathy_mf_fondo_opacidad')||'8',10));
 }
 function resetAccentColor(){
   document.documentElement.style.removeProperty('--accent');
   document.documentElement.style.removeProperty('--accent2');
-  localStorage.removeItem('miguel_mf_accent');
+  localStorage.removeItem('nathy_mf_accent');
   const picker=document.getElementById('cfg-accent-picker');
   if(picker) picker.value='#5b8def';
   if(mainChart) renderChart();
   if(projChart) renderProyeccion();
-  const patronActivo=localStorage.getItem('miguel_mf_fondo_patron');
-  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('miguel_mf_fondo_opacidad')||'8',10));
+  const patronActivo=localStorage.getItem('nathy_mf_fondo_patron');
+  if(patronActivo) aplicarFondoPersonalizado(patronActivo, parseInt(localStorage.getItem('nathy_mf_fondo_opacidad')||'8',10));
 }
 
 // Ícono del botón flotante del chat IA — 100% cosmético, guardado en
@@ -5173,7 +5061,7 @@ function resetAccentColor(){
 // el color de acento). Si el usuario pega algo raro/vacío, se ignora y se
 // mantiene el ícono anterior en vez de dejar el botón sin nada.
 function getChatIAIcono(){
-  try{ return localStorage.getItem('miguel_mf_chatia_icono') || '🤖'; }catch(e){ return '🤖'; }
+  try{ return localStorage.getItem('nathy_mf_chatia_icono') || '🤖'; }catch(e){ return '🤖'; }
 }
 function aplicarChatIAIcono(){
   const btn=document.getElementById('chatia-btn');
@@ -5184,12 +5072,12 @@ function aplicarChatIAIcono(){
 function setChatIAIcono(valor){
   const v=(valor||'').trim();
   if(!v){ aplicarChatIAIcono(); return; }
-  try{ localStorage.setItem('miguel_mf_chatia_icono', v.slice(0,4)); }catch(e){}
+  try{ localStorage.setItem('nathy_mf_chatia_icono', v.slice(0,4)); }catch(e){}
   aplicarChatIAIcono();
   toast('Ícono del chat actualizado');
 }
 function resetChatIAIcono(){
-  try{ localStorage.removeItem('miguel_mf_chatia_icono'); }catch(e){}
+  try{ localStorage.removeItem('nathy_mf_chatia_icono'); }catch(e){}
   aplicarChatIAIcono();
   toast('Ícono restablecido');
 }
@@ -5199,7 +5087,7 @@ function resetChatIAIcono(){
 // dispositivo, no se sincroniza por Firestore). Verde WhatsApp (#25d366) es
 // el valor por defecto, igual que ya estaba fijo en el CSS.
 function getChatIAColor(){
-  try{ return localStorage.getItem('miguel_mf_chatia_color') || '#25d366'; }catch(e){ return '#25d366'; }
+  try{ return localStorage.getItem('nathy_mf_chatia_color') || '#25d366'; }catch(e){ return '#25d366'; }
 }
 function aplicarChatIAColor(){
   const btn=document.getElementById('chatia-btn');
@@ -5209,18 +5097,18 @@ function aplicarChatIAColor(){
 }
 function setChatIAColor(hex){
   if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
-  try{ localStorage.setItem('miguel_mf_chatia_color', hex); }catch(e){}
+  try{ localStorage.setItem('nathy_mf_chatia_color', hex); }catch(e){}
   aplicarChatIAColor();
   toast('Color del chat actualizado');
 }
 function resetChatIAColor(){
-  try{ localStorage.removeItem('miguel_mf_chatia_color'); }catch(e){}
+  try{ localStorage.removeItem('nathy_mf_chatia_color'); }catch(e){}
   aplicarChatIAColor();
   toast('Color restablecido');
 }
 
 function loadAccentColor(){
-  const saved=localStorage.getItem('miguel_mf_accent');
+  const saved=localStorage.getItem('nathy_mf_accent');
   const picker=document.getElementById('cfg-accent-picker');
   if(saved){
     document.documentElement.style.setProperty('--accent', saved);
@@ -5229,10 +5117,7 @@ function loadAccentColor(){
   }
 }
 
-// ── FONDO PERSONALIZABLE ─────────────────────────────────
-// 4 patrones armados con CSS puro (gradientes) salvo "ondas", que usa un
-// SVG chiquito embebido — todos toman el color de acento actual, así el
-// fondo combina automáticamente con lo que elijas en "Color de acento".
+// ── HIDE CIFRAS ───────────────────────────────────────
 const BG_PATTERNS={
   ninguno:()=>'none',
   puntos:(c)=>`radial-gradient(circle, ${c} 1.5px, transparent 1.5px)`,
@@ -5255,19 +5140,19 @@ function aplicarFondoPersonalizado(patron, opacidad){
 }
 function setFondoPatron(patron){
   const opacidad=parseInt(document.getElementById('cfg-fondo-opacidad')?.value||'8',10);
-  localStorage.setItem('miguel_mf_fondo_patron', patron);
+  localStorage.setItem('nathy_mf_fondo_patron', patron);
   aplicarFondoPersonalizado(patron, opacidad);
 }
 function setFondoOpacidad(valor){
-  const patron=localStorage.getItem('miguel_mf_fondo_patron')||'ninguno';
-  localStorage.setItem('miguel_mf_fondo_opacidad', valor);
+  const patron=localStorage.getItem('nathy_mf_fondo_patron')||'ninguno';
+  localStorage.setItem('nathy_mf_fondo_opacidad', valor);
   aplicarFondoPersonalizado(patron, valor);
   const label=document.getElementById('cfg-fondo-opacidad-label');
   if(label) label.textContent=valor+'%';
 }
 function loadFondoPersonalizado(){
-  const patron=localStorage.getItem('miguel_mf_fondo_patron')||'ninguno';
-  const opacidad=parseInt(localStorage.getItem('miguel_mf_fondo_opacidad')||'8',10);
+  const patron=localStorage.getItem('nathy_mf_fondo_patron')||'ninguno';
+  const opacidad=parseInt(localStorage.getItem('nathy_mf_fondo_opacidad')||'8',10);
   aplicarFondoPersonalizado(patron, opacidad);
   const sel=document.getElementById('cfg-fondo-patron');
   if(sel) sel.value=patron;
@@ -5277,7 +5162,6 @@ function loadFondoPersonalizado(){
   if(label) label.textContent=opacidad+'%';
 }
 
-// ── HIDE CIFRAS ───────────────────────────────────────
 function toggleHide(){
   hiddenMode=!hiddenMode;
   const btn=document.getElementById('eye-btn');
@@ -5848,7 +5732,7 @@ function gsRenderLaterales(items){
     <div style="flex:1;min-width:140px">${sc.slice(0,8).map(([k,o])=>`<div class="gs-line" style="padding:2px 0"><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${gsCatColor(k)};margin-right:6px"></span>${escapeHtml(k?k.replace(/^\S+\s/,''):'Sin categoría')}</span><b>${Math.round(o.v/tot*100)}%</b></div>`).join('')}</div></div>`:'<div class="empty">—</div>');
 }
 // ── INSIGHTS DE GASTOS (automáticos + análisis con IA bajo demanda) ──
-const GS_IA_KEY='miguel_gs_ia_v1';
+const GS_IA_KEY='nathy_gs_ia_v1';
 let gsIALoading=false, gsIAErr='';
 function gsIAGet(){ try{ return (JSON.parse(localStorage.getItem(GS_IA_KEY)||'{}'))[GS.y+'-'+GS.m]||null; }catch(e){ return null; } }
 function gsIASet(v){ try{ const r=JSON.parse(localStorage.getItem(GS_IA_KEY)||'{}'); r[GS.y+'-'+GS.m]=v; const ks=Object.keys(r); if(ks.length>12){ ks.sort((a,b)=>r[a].ts-r[b].ts); delete r[ks[0]]; } localStorage.setItem(GS_IA_KEY,JSON.stringify(r)); }catch(e){} }
@@ -5870,6 +5754,15 @@ function insRitmo(P,cu,y,m){
     return rest>=0?{ico:'✅',tono:'ok',cu,txt:`A tu ritmo cerrarías gastando ${b(f(Q.cierre))} de lo que has ingresado hasta hoy (${f(ing)}): te quedarían ${b(f(rest))}.`}
       :{ico:'⚠️',tono:'warn',cu,txt:`A tu ritmo cerrarías gastando ${b(f(Q.cierre))}, ${b(f(-rest))} más de lo que has ingresado hasta hoy (${f(ing)}).`}; }
   return {ico:'📈',tono:'neu',cu,txt:`Proyección de cierre: ${b(f(Q.cierre))} (incluye ${f(Q.knownTotal)} de pagos programados). Aún no registras ingresos en ${insNomCu(cu)} este mes.`};
+}
+// ── contraer / expandir las tarjetas de insights (por defecto contraídas; se recuerda lo último que elegiste) ──
+const insColMem={};
+function insColGet(k){ try{ const r=JSON.parse(localStorage.getItem('nathy_ins_col_v1')||'{}'); if(k in r) return !!r[k]; }catch(e){ if(k in insColMem) return !!insColMem[k]; } return true; }
+function insColToggle(k){ const nv=!insColGet(k); insColMem[k]=nv; try{ const r=JSON.parse(localStorage.getItem('nathy_ins_col_v1')||'{}'); r[k]=nv; localStorage.setItem('nathy_ins_col_v1',JSON.stringify(r)); }catch(e){} if(k==='gastos') gsRenderIA(); else insRender(k); }
+function insCab(k,tit,ins,tieneIA){
+  const col=insColGet(k), n=ins.length, aten=ins.filter(x=>x.tono==='warn'||x.tono==='bad').length;
+  const res=col?`${n} insight${n===1?'':'s'}${aten?` · <b style="color:var(--amber)">${aten} por atender</b>`:''}${tieneIA?' · ✨ análisis listo':''}`:'';
+  return `<div class="gs-cab" role="button" tabindex="0" aria-expanded="${!col}" title="${col?'Expandir':'Contraer'}" onclick="insColToggle('${k}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();insColToggle('${k}')}"><div class="section-title" style="margin-bottom:${col?'0':'10px'}"><span class="gs-chev${col?' c':''}">▾</span> ${tit}</div><div class="gs-res">${res}</div></div>`;
 }
 // renderiza una lista de insights agrupada por moneda
 function insListaHtml(ins){
@@ -5974,7 +5867,9 @@ function gsRenderIA(base){
   const el=document.getElementById('gs-ia'); if(!el) return;
   base=base||gsItems(GS.y,GS.m);
   const ins=gsInsights(base);
-  let h=`<div class="section-title" style="margin-bottom:10px">💡 Insights de tus gastos</div>`;
+  const cab=insCab('gastos','💡 Insights de tus gastos',ins,!!gsIAGet());
+  if(insColGet('gastos')){ el.innerHTML=cab; return; }
+  let h=cab;
   h+=insListaHtml(ins);
   h+=`<div style="font-size:10px;color:var(--text3);margin:6px 0 12px">Calculados al instante con tus datos (gratis, sin IA).</div>`;
   const c=gsIAGet();
@@ -6045,7 +5940,6 @@ function showPage(name){
   if(name==='sueldos')     renderSueldos();
   if(name==='afp')         renderAFP();
   if(name==='compras')     renderListaCompras();
-  if(name==='aprobaciones') renderAprobacionesBanco();
   if(name==='ahorros-intereses') renderAhorrosIntereses();
   if(name==='minijuegos')  initMinijuegos();
 }
@@ -6133,10 +6027,6 @@ function renderNumerosCompactosBtn(){
   const btn=document.getElementById('cfg-numeros-compactos-btn');
   if(btn) btn.textContent = state.numerosCompactosPorDefecto===false ? '🔢 Mostrando completos' : '🔢 Mostrando compactos (15.4K)';
 }
-// Animación de conteo (0 -> valor final) para el número "hero" del
-// Resumen — se usa solo ahí (no en las 20 tarjetas KPI, para no pelear con
-// el toggle compacto/completo). Solo anima cuando el valor REALMENTE
-// cambió desde la última vez mostrado, no en cada re-render sin cambios.
 let _patrimonioUltimoValorAnimado=null;
 function animarConteo(el, valorFinal, prefijo, duracionMs){
   duracionMs=duracionMs||700;
@@ -6167,9 +6057,9 @@ function prevMY(y,m){return m===0?{year:y-1,month:11}:{year:y,month:m-1};}
 // reportes/proyecciones que repasan varios meses seguidos. Se arma una sola
 // vez (perezoso, la primera vez que se necesita) y se invalida junto con
 // _saldoCache — en clearSaldoCache(), que ya se llama en TODOS los puntos
-// donde state.movimientos puede cambiar (saveState, loadState, modo demo,
-// fusión de datos en tiempo real) — así que queda con la misma cobertura
-// de invalidación que el cache de saldos, ya probado.
+// donde state.movimientos puede cambiar (saveState, loadState, fusión de
+// datos en tiempo real) — así que queda con la misma cobertura de
+// invalidación que el cache de saldos, ya probado.
 let _movsPorMesCache = null;
 function _indiceMovsPorMes(){
   if(_movsPorMesCache) return _movsPorMesCache;
@@ -6315,15 +6205,6 @@ function esCuentaDeAhorro(nombreCuenta){
   const c=(state.customCuentas||{})[nombreCuenta];
   return !!(c && c.type==='ahorro');
 }
-// ── TREA (Tasa de Rendimiento Efectivo Anual) por cuenta de ahorro ──────
-// Se guarda un % anual POR MES (state.ahorroTREA[cuenta][mesKey]) — la
-// tasa vigente en un mes cualquiera es la del cambio MÁS RECIENTE que sea
-// igual o anterior a ese mes ("efecto hacia adelante", igual que el tipo
-// de cambio: no hace falta repetirla cada mes si no cambió).
-// El interés mensual proyectado se calcula con la tasa mensual EQUIVALENTE
-// de esa TREA (no simplemente TREA/12) — la TREA ya es una tasa efectiva
-// anual que incluye capitalización, así que "desanualizarla" correctamente es:
-//   tasaMensual = (1 + TREA/100)^(1/12) − 1
 function migrarTREASiNecesario(){
   // Versión anterior de esta función guardaba UN solo valor por cuenta
   // (state.treaCuentas), sin historial mensual — se migra sembrando ese
@@ -7057,11 +6938,11 @@ function setTCAuto(){
 //  navegador esté cerrado — esa sigue siendo la opción para eso).
 // ══════════════════════════════════════════════════════
 function browserNotifsEnabled(){
-  return localStorage.getItem('miguel_mf_browser_notifs')==='1';
+  return localStorage.getItem('nathy_mf_browser_notifs')==='1';
 }
 async function toggleBrowserNotifs(){
   if(browserNotifsEnabled()){
-    localStorage.removeItem('miguel_mf_browser_notifs');
+    localStorage.removeItem('nathy_mf_browser_notifs');
     updateBrowserNotifsBtn();
     return;
   }
@@ -7071,7 +6952,7 @@ async function toggleBrowserNotifs(){
   }
   const perm=await Notification.requestPermission();
   if(perm==='granted'){
-    localStorage.setItem('miguel_mf_browser_notifs','1');
+    localStorage.setItem('nathy_mf_browser_notifs','1');
     updateBrowserNotifsBtn();
     new Notification('Notificaciones activadas', {body:'Te avisaremos aquí mientras tengas esta pestaña abierta.'});
     checkBrowserNotifications(true);
@@ -7095,7 +6976,7 @@ function checkBrowserNotifications(forzar){
   if(!('Notification' in window) || Notification.permission!=='granted') return;
   if(demoMode) return; // nunca notificar con datos falsos del Modo Demo
   const hoyISO=todayISO();
-  if(!forzar && localStorage.getItem('miguel_mf_last_notif_date')===hoyISO) return;
+  if(!forzar && localStorage.getItem('nathy_mf_last_notif_date')===hoyISO) return;
 
   const mensajes=[];
   const hoy=new Date(); hoy.setHours(0,0,0,0);
@@ -7196,7 +7077,7 @@ function checkBrowserNotifications(forzar){
     new Notification('🔔 Recordatorios de hoy', {
       body: mensajes.slice(0,5).join('\n')+(mensajes.length>5?`\n...y ${mensajes.length-5} más`:''),
     });
-    localStorage.setItem('miguel_mf_last_notif_date', hoyISO);
+    localStorage.setItem('nathy_mf_last_notif_date', hoyISO);
   }
 }
 
@@ -7712,7 +7593,7 @@ function renderAccountsTables(){
 
   // El subtítulo bajo "Cuentas" antes decía siempre "BCP · BBVA · Efectivo"
   // sin importar cuáles tuvieras de verdad — ahora refleja las cuentas
-  // operativas reales (incluye las personalizadas, ej. "Agora (YT)").
+  // operativas reales (incluye las personalizadas).
   const subtituloEl=document.getElementById('cuentas-op-subtitulo');
   if(subtituloEl){
     subtituloEl.textContent = allOpRowsDeduped.length ? allOpRowsDeduped.map(r=>r.l).join(' · ') : 'Sin cuentas registradas';
@@ -9651,7 +9532,7 @@ function renderRachaRegistro(){
 // para cuando el usuario le da "Guardar" ya suele estar listo. NUNCA
 // bloquea el guardado: si no hay permiso, falla, o aún no terminó de
 // detectar, el movimiento se guarda igual, simplemente sin país.
-const PAIS_CACHE_KEY='miguel_mf_pais_cache';
+const PAIS_CACHE_KEY='nathy_mf_pais_cache';
 const PAIS_CACHE_HORAS=6; // se vuelve a chequear cada 6h (por si viajas)
 let paisDetectando=false;
 function getPaisCache(){
@@ -9756,8 +9637,7 @@ async function detectarUbicacionPorIP(){
 // en ese momento) — si el resto de tus datos reales todavía no había
 // terminado de cargar en el navegador cuando esto se dispara, un
 // saveState() normal sobreescribiría (borraría) todo lo demás sin querer.
-// Esto es justo lo que causó una pérdida de datos real (en la copia de
-// Nathy) — no debe repetirse.
+// Esto es justo lo que causó una pérdida de datos real — no debe repetirse.
 async function guardarSesionesEnLaNubeSinRiesgo(){
   if(!DOC_REF) return;
   try{
@@ -9813,11 +9693,6 @@ function tiempoRelativoSesion(iso){
   const dias=Math.round(horas/24);
   return `hace ${dias}d`;
 }
-// La app NO sincroniza en tiempo real (carga los datos 1 sola vez al
-// entrar) — así que si solo mirara lo que ya está en memoria, nunca vería
-// que abriste la app en otro dispositivo después. Por eso, justo al abrir
-// este modal, se trae un vistazo fresco directo de Firestore (sin tocar el
-// resto del state local, para no arriesgar pisar algo sin guardar).
 async function obtenerSesionesFrescas(){
   if(!DOC_REF) return state.historialSesiones||[];
   try{
@@ -11790,9 +11665,9 @@ async function deleteAllData(){
   if(!confirm('⚠️ ¿Estás seguro? Se eliminarán TODOS los movimientos, snapshots, servicios y presupuestos. Esta acción no se puede deshacer.')) return;
   // Set the cleared flag FIRST so loadState() skips any Firestore fetch on reload,
   // regardless of whether the delete below has fully propagated yet.
-  localStorage.setItem('miguel_mf_cleared','1');
+  localStorage.setItem('nathy_mf_cleared','1');
   // Clear localStorage completely (all versions)
-  ['miguel_mf_v5','miguel_mf_state_v2','miguel_mf_state_v3','miguel_mf_state_v4','miguel_mf_theme','miguel_mf_inactivity'].forEach(k=>localStorage.removeItem(k));
+  ['nathy_mf_v5','nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4','nathy_mf_theme','nathy_mf_inactivity'].forEach(k=>localStorage.removeItem(k));
   // AWAIT Firestore deletion before reloading — prevents the old race condition
   // where reload happened before the delete finished, pulling old data back.
   if(DOC_REF){
@@ -12011,7 +11886,7 @@ function executeDeleteMonths(){
 // exigen request.auth != null, así que sin sesión iniciada no se puede leer
 // ni escribir nada (ver README de reglas).
 let currentUser = null;
-let inactivityMinutes = parseInt(localStorage.getItem('miguel_mf_inactivity')||'5');
+let inactivityMinutes = parseInt(localStorage.getItem('nathy_mf_inactivity')||'5');
 let inactivityTimer = null;
 
 async function doLogin(){
@@ -12045,6 +11920,51 @@ async function doLogin(){
   }
 }
 
+// Restablecer contraseña vía Firebase Authentication — como todavía no hay
+// sesión iniciada en este punto, no se puede "cambiar" la contraseña
+// directo; se manda un correo con un enlace de Firebase para poner una
+// nueva. Usa el correo que ya esté escrito en el campo de arriba.
+async function enviarResetPassword(){
+  const email=(document.getElementById('login-email').value||'').trim();
+  const errEl=document.getElementById('login-err');
+  const infoEl=document.getElementById('login-info');
+  errEl.style.display='none';
+  infoEl.style.display='none';
+
+  if(!email){
+    errEl.textContent='Escribe tu correo arriba primero, y después toca "¿Olvidaste tu contraseña?".';
+    errEl.style.display='block';
+    return;
+  }
+
+  const link=document.querySelector('.login-forgot-link');
+  if(link){ link.disabled=true; link.textContent='Enviando...'; }
+  try{
+    await firebase.auth().sendPasswordResetEmail(email);
+    infoEl.textContent='Si ese correo tiene una cuenta, te llegará un enlace para poner una contraseña nueva. Revisa también spam.';
+    infoEl.style.display='block';
+  }catch(e){
+    console.warn('Reset password error:', e.code);
+    if(e.code==='auth/invalid-email'){
+      errEl.textContent='Ese correo no tiene un formato válido.';
+      errEl.style.display='block';
+    } else if(e.code==='auth/user-not-found'){
+      // Por seguridad, no se confirma si el correo existe o no — mismo
+      // mensaje que si el envío fue exitoso, para no revelar cuentas.
+      infoEl.textContent='Si ese correo tiene una cuenta, te llegará un enlace para poner una contraseña nueva. Revisa también spam.';
+      infoEl.style.display='block';
+    } else if(e.code==='auth/too-many-requests'){
+      errEl.textContent='Demasiados intentos. Espera un momento e intenta de nuevo.';
+      errEl.style.display='block';
+    } else {
+      errEl.textContent='No se pudo enviar el correo. Intenta de nuevo en un momento.';
+      errEl.style.display='block';
+    }
+  } finally {
+    if(link){ link.disabled=false; link.textContent='¿Olvidaste tu contraseña?'; }
+  }
+}
+
 function showApp(){
   document.getElementById('login-screen').classList.add('hidden');
   setTimeout(()=>{ document.getElementById('login-screen').style.display='none'; }, 300);
@@ -12061,7 +11981,7 @@ function lockApp(){
   // Se borra también el caché local — si no, los datos financieros completos
   // quedarían legibles en localStorage (DevTools → Application) para
   // cualquiera con acceso físico al dispositivo, incluso ya sin sesión activa.
-  ['miguel_mf_v5','miguel_mf_state_v2','miguel_mf_state_v3','miguel_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
+  ['nathy_mf_v5','nathy_mf_state_v2','nathy_mf_state_v3','nathy_mf_state_v4'].forEach(k=>localStorage.removeItem(k));
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
   document.getElementById('login-err').style.display='none';
@@ -12087,7 +12007,7 @@ function openInactivityModal(){
 function closeInactivityModal(){ document.getElementById('inactivity-modal-overlay').classList.remove('open'); }
 function saveInactivity(){
   inactivityMinutes=parseInt(document.getElementById('inactivity-select').value);
-  localStorage.setItem('miguel_mf_inactivity',String(inactivityMinutes));
+  localStorage.setItem('nathy_mf_inactivity',String(inactivityMinutes));
   const lbl = inactivityMinutes===0?'Nunca':inactivityMinutes+' minutos';
   document.getElementById('cfg-inactivity-label').textContent=lbl;
   closeInactivityModal();
@@ -12140,11 +12060,11 @@ function getCuentaColor(key){
 }
 
 // ══════════════════════════════════════════════════════
-//  VISIBILIDAD DE CUENTAS DE AHORRO EN S/0 — cuando una cuenta de ahorro
+//  VISIBILIDAD DE CUENTAS EN S/0 — cuando una cuenta (ahorro u operativa)
 //  queda en S/0 (ej. moviste toda la plata a otro banco), se OCULTA sola
-//  de la tabla de Ahorros (Finanzas) y de las pestañas de "Ahorros e
-//  Intereses" — sin borrar nada, el historial sigue intacto. Se puede
-//  volver a mostrar en cualquier momento desde "🙈 Cuentas ocultas".
+//  de la tabla correspondiente (Cuentas y/o Ahorros, en Finanzas) y de las
+//  pestañas de "Ahorros e Intereses" — sin borrar nada, el historial sigue
+//  intacto. Se puede volver a mostrar en cualquier momento desde "🙈 Ocultas".
 // ══════════════════════════════════════════════════════
 function cuentaAhorroVisible(nombre, saldo){
   // Ocultamiento MANUAL (botón 🙈 en cualquier cuenta) tiene la máxima
@@ -12727,7 +12647,7 @@ function getAllCategorias(){
 function updateCategorySelects(){
   const cats = Object.keys(getAllCategorias());
   // f-cat y tc-m-cat sí permiten "Sin categoría"; bm-cat (presupuesto) no.
-  ['f-cat','tc-m-cat','cf-cat','tr-cat','cpc-cat','srv-edit-cat','tcopc-cat','tcopv-cat','pbm-cat'].forEach(id=>{
+  ['f-cat','tc-m-cat','cf-cat','tr-cat','cpc-cat','srv-edit-cat','tcopc-cat','tcopv-cat'].forEach(id=>{
     const sel=document.getElementById(id); if(!sel) return;
     const cur=sel.value;
     sel.innerHTML='<option value="">Sin categoría</option>'+cats.map(c=>`<option value="${c}">${escapeHtml(c)}</option>`).join('');
@@ -12823,11 +12743,11 @@ function aplicarCategoriaRetroactiva(texto, categoria, matchTipo){
 //  MÓDULO TARJETAS DE CRÉDITO
 // ══════════════════════════════════════════════════════
 
+let tcSearchQuery='';       // texto/monto escrito en el buscador de Consumos — solo UI, no se persiste
 let currentTCId=null;       // ID of card being viewed
 let currentTCMonth=null;    // "YYYY-MM" string for detail view
 let editingTCMovId=null;    // ID of mov being edited
 let pendingPayMovIds=[];    // mov IDs pending payment
-let tcSearchQuery='';       // texto/monto escrito en el buscador de Consumos — solo UI, no se persiste
 
 // ── HELPERS ──────────────────────────────────────────
 function tcMesesLong(){ return ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; }
@@ -15730,9 +15650,6 @@ const DASHBOARD_WIDGET_DEFS = {
 // Orden y visibilidad por defecto — igual a como se veía la app antes de
 // que existiera esta opción, para que a nadie se le mueva nada hasta que
 // entre a personalizar. Los widgets nuevos empiezan OCULTOS por defecto.
-// Orden y visibilidad por defecto — igual a como se veía la app antes de
-// que existiera esta opción, para que a nadie se le mueva nada hasta que
-// entre a personalizar. Los widgets nuevos empiezan OCULTOS por defecto.
 function defaultSpanForSize(size){
   if(size==='large') return 99;
   if(size==='medium') return 2;
@@ -15952,7 +15869,6 @@ function guardarEditorWidgets(){
   cerrarEditorWidgets();
   renderDashboard();
 }
-
 
 function renderDashboard(){
   setupDashboardResponsive();
@@ -16556,15 +16472,43 @@ function renderNuevosWidgetsDashboard(){
 }
 
 
+function renderFechasImportantes(){
+  const grid = document.getElementById('fecha-imp-grid');
+  if(!grid) return; // el widget está oculto — ni existe en el DOM
+  // Solo mostrar próximos/hoy — los que ya pasaron se ocultan, salvo que estén
+  // marcados como "fijado" (el usuario quiere conservarlos siempre visibles).
+  const items = getEventCountdowns().filter(it=>!it.isPast || it.event.fijado);
+  if(!items.length){ grid.innerHTML='<div class="dash-empty"><div class="dash-empty-icon">📅</div>Sin fechas próximas.</div>'; return; }
+  grid.innerHTML = items.map(it=>{
+    const t = CAL_TIPOS[it.event.tipo] || CAL_TIPOS.otro;
+    const dateLabel = it.fecha.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit',weekday:'short'});
+    const countColor = it.isPast ? 'var(--text2)' : (it.diffDays<=7 ? 'var(--red)' : t.color);
+    const clickAccion = it.event.auto ? `showPage('${it.event.origenPage}')` : `showPage('calendario')`;
+    return `<div class="fecha-imp-card" onclick="${clickAccion}">
+      <div class="fecha-imp-top">
+        <div class="fecha-imp-icon" style="background:${t.color}22">${it.event.icono||t.icon}</div>
+        ${it.event.auto ? '<span title="Automático — se calcula solo, no se puede editar" style="font-size:9px;color:var(--text3)">🔄</span>' : ''}
+        ${it.isPast && it.event.fijado ? '<span title="Fijado" style="font-size:12px;opacity:.7">📌</span>' : ''}
+      </div>
+      <div>
+        <div class="fecha-imp-title">${escapeHtml(it.event.titulo)}</div>
+        <div class="fecha-imp-date">${dateLabel}</div>
+      </div>
+      <div class="fecha-imp-count" style="color:${countColor}">${it.countLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+
 // ── COMPACT / RESPONSIVE MODE ─────────────────────
 function toggleCompact(){
   const isCompact = document.body.classList.toggle('compact-mode');
   document.getElementById('compact-btn').textContent = isCompact ? '🖥️' : '📱';
   document.getElementById('compact-btn').title = isCompact ? 'Volver a vista normal' : 'Adaptar vista al dispositivo';
-  localStorage.setItem('miguel_mf_compact', isCompact?'1':'0');
+  localStorage.setItem('nathy_mf_compact', isCompact?'1':'0');
 }
 function loadCompact(){
-  if(localStorage.getItem('miguel_mf_compact')==='1'){
+  if(localStorage.getItem('nathy_mf_compact')==='1'){
     document.body.classList.add('compact-mode');
     document.getElementById('compact-btn').textContent='🖥️';
   }
@@ -16738,10 +16682,7 @@ function getPFProximaFechaAnual(pf){
 // Un ingreso (ej. sueldo) solo puede depositarse en una cuenta — no tiene
 // sentido "consumirlo" en una tarjeta de crédito, así que para ese tipo se
 // oculta el selector de método de pago entero y se fuerza a "cuenta". La
-// categoría SÍ se muestra también para ingresos (ej. "Sueldo" → categoría
-// "Trabajo") — útil para verlo etiquetado en tu historial de movimientos,
-// aunque no sume a los reportes de gasto por categoría (esos son solo de
-// gastos, no de ingresos, así que no hay riesgo de inflar nada ahí).
+// categoría tampoco aplica (las categorías son para presupuesto de gastos).
 function onPFTipoChange(){
   const esIngreso=document.getElementById('pf-tipo').value==='ingreso';
   document.getElementById('pf-metodo-wrap').style.display=esIngreso?'none':'block';
@@ -17216,9 +17157,8 @@ function confirmarPFRegistrar(){
 // (que es cuando realmente sale o entra el dinero), pero lo marca como
 // "registrado" bajo el mes OBJETIVO elegido — así se puede adelantar el
 // pago del próximo mes sin que quede mal registrado en el mes equivocado.
-// Un ingreso (ej. sueldo) también puede llevar categoría (ej. "Trabajo")
-// para que se vea etiquetado en tu historial de movimientos — no afecta
-// los reportes de gasto por categoría, esos son solo de gastos.
+// Un ingreso (tipo:'ingreso') SIEMPRE va a una cuenta (nunca a tarjeta,
+// eso no tendría sentido) y no lleva categoría (las categorías son de gasto).
 // Si el tipo es "base con descuentos", `detalle` trae el desglose (monto
 // base + cada concepto descontado) para poder mostrarlo luego en el
 // historial — el movimiento en sí solo guarda el monto FINAL ya calculado.
@@ -17661,7 +17601,6 @@ function saveDeuda(){
     }
   } else {
     const symD=currency==='USD'?'$':'S/';
-    const verboAccion=esYoDebo?'Deuda':'Préstamo (acumulativa)';
     if(tipo==='acumulativa'){
       const nuevaDeuda={
         id:'deu'+Date.now(), nombre, monto:0, currency, fecha, nota, cat, direccion,
@@ -18170,11 +18109,6 @@ function renderKmManualUltimo(){
   }
   el.innerHTML=`Última lectura manual: ${Math.round(ult.km).toLocaleString('es-PE')} km — registrada el ${fechaTxt}${ult.motivo?' · '+escapeHtml(ult.motivo):''}${alertaHtml}`;
 }
-// Km actual = la lectura más reciente entre TODAS las recargas (GLP+Gas) Y las
-// lecturas manuales del odómetro (state.kmManual) — la que tenga la fecha/hora
-// más reciente gana, sin importar de qué fuente venga. Las recargas solo tienen
-// fecha (sin hora), así que se comparan al mediodía de ese día (mismo criterio
-// que el resto de la app); las lecturas manuales sí llevan hora exacta.
 // ── HISTORIAL DE KILOMETRAJE ────────────────────────────────────────
 // Une en una sola línea de tiempo TODAS las lecturas del odómetro que
 // existen en la app — lecturas manuales (state.kmManual, desde la web 💻
@@ -18458,6 +18392,11 @@ function exportarHistorialKmExcel(){
   XLSX.utils.book_append_sheet(wb,ws,'Historial Km');
   XLSX.writeFile(wb,'historial_km_'+todayLocalISO()+'.xlsx');
 }
+// Km actual = la lectura más reciente entre TODAS las recargas (GLP+Gas) Y las
+// lecturas manuales del odómetro (state.kmManual) — la que tenga la fecha/hora
+// más reciente gana, sin importar de qué fuente venga. Las recargas solo tienen
+// fecha (sin hora), así que se comparan al mediodía de ese día (mismo criterio
+// que el resto de la app); las lecturas manuales sí llevan hora exacta.
 function getKmActualVehiculo(){
   let mejor=null;
   ['combustibleGlp','combustibleGas'].forEach(key=>{
@@ -19217,7 +19156,6 @@ function renderTcOperaciones(){
     </tr>`;
   }).join('');
 }
-
 // Aviso entre las casas de cambio y la tabla: (1) según el ÚLTIMO registro,
 // qué empresa conviene más para comprar/vender dólares ahora mismo, y (2)
 // el mejor tipo de cambio de compra/venta en TODO el histórico ingresado
@@ -19831,9 +19769,6 @@ function elapsedMonthsDays(from, to){
   return {months, days};
 }
 
-// Calcula, para CADA evento del calendario (sin importar el mes, a diferencia
-// de getUpcomingCalEventsThisMonth), la próxima ocurrencia relevante y el
-// texto de conteo: "D-XX" días restantes, o "Xm Yd" transcurridos si ya pasó.
 // ── EVENTOS AUTOMÁTICOS (cuotas de tarjeta + deudas mayores) ──────────
 // Se calculan al vuelo cada vez que se necesitan, NUNCA se guardan en
 // state.calendarEvents — así siempre reflejan el estado real de las
@@ -19866,6 +19801,9 @@ function getEventosAutomaticos(){
   });
   return autos;
 }
+// Calcula, para CADA evento del calendario (sin importar el mes, a diferencia
+// de getUpcomingCalEventsThisMonth), la próxima ocurrencia relevante y el
+// texto de conteo: "D-XX" días restantes, o "Xm Yd" transcurridos si ya pasó.
 function getEventCountdowns(){
   const events = [...(state.calendarEvents || []), ...getEventosAutomaticos()];
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -19906,33 +19844,6 @@ function getEventCountdowns(){
     if(a.isPast!==b.isPast) return a.isPast?1:-1;
     return a.isPast ? a.diffDays-b.diffDays : a.diffDays-b.diffDays;
   });
-}
-
-function renderFechasImportantes(){
-  const grid = document.getElementById('fecha-imp-grid');
-  if(!grid) return; // el widget está oculto — ni existe en el DOM
-  // Solo mostrar próximos/hoy — los que ya pasaron se ocultan, salvo que estén
-  // marcados como "fijado" (el usuario quiere conservarlos siempre visibles).
-  const items = getEventCountdowns().filter(it=>!it.isPast || it.event.fijado);
-  if(!items.length){ grid.innerHTML='<div class="dash-empty"><div class="dash-empty-icon">📅</div>Sin fechas próximas.</div>'; return; }
-  grid.innerHTML = items.map(it=>{
-    const t = CAL_TIPOS[it.event.tipo] || CAL_TIPOS.otro;
-    const dateLabel = it.fecha.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit',weekday:'short'});
-    const countColor = it.isPast ? 'var(--text2)' : (it.diffDays<=7 ? 'var(--red)' : t.color);
-    const clickAccion = it.event.auto ? `showPage('${it.event.origenPage}')` : `showPage('calendario')`;
-    return `<div class="fecha-imp-card" onclick="${clickAccion}">
-      <div class="fecha-imp-top">
-        <div class="fecha-imp-icon" style="background:${t.color}22">${it.event.icono||t.icon}</div>
-        ${it.event.auto ? '<span title="Automático — se calcula solo, no se puede editar" style="font-size:9px;color:var(--text3)">🔄</span>' : ''}
-        ${it.isPast && it.event.fijado ? '<span title="Fijado" style="font-size:12px;opacity:.7">📌</span>' : ''}
-      </div>
-      <div>
-        <div class="fecha-imp-title">${escapeHtml(it.event.titulo)}</div>
-        <div class="fecha-imp-date">${dateLabel}</div>
-      </div>
-      <div class="fecha-imp-count" style="color:${countColor}">${it.countLabel}</div>
-    </div>`;
-  }).join('');
 }
 
 // Devuelve todas las ocurrencias (evento + fecha concreta) que caen en un año/mes dado,
@@ -20586,7 +20497,6 @@ function calcularSimuladorNeto(){
     <div style="font-size:10px;color:var(--text3);margin-top:8px">⚠️ Simplificado: asume el mismo sueldo todo el año, sin bono variable ni CTS. Para tu sueldo real usa el registro de boletas de arriba, que sí calcula con precisión mes a mes.</div>
   `;
 }
-
 // ══════════════════════════════════════════════════════
 //  AFP — seguimiento del fondo de pensiones, en DOS listas independientes:
 //  (1) "Aportes" — el monto mensual que se descuenta/deposita, mes a mes.
@@ -20841,6 +20751,12 @@ function toggleAFPEnPatrimonio(){
   // cambio de inmediato sin tener que navegar de ida y vuelta.
   if(document.getElementById('page-dashboard')) renderDashboard();
 }
+function renderAFPPatrimonioToggleBtn(){
+  const btn=document.getElementById('afp-patrimonio-toggle-btn');
+  if(!btn) return;
+  const activo=!!state.incluirAFPEnPatrimonio;
+  btn.textContent=activo?'🟢 Activado':'⚪ Desactivado';
+}
 // Toggle para sumar (o no) el valor de Inversiones al Patrimonio Neto del
 // Resumen. ACTIVADO por defecto — es el comportamiento que ya existía, así
 // que a nadie le cambia el número sin decidirlo explícitamente; a diferencia
@@ -20855,12 +20771,6 @@ function renderInvPatrimonioToggleBtn(){
   const btn=document.getElementById('inv-patrimonio-toggle-btn');
   if(!btn) return;
   const activo=state.incluirInvEnPatrimonio!==false;
-  btn.textContent=activo?'🟢 Activado':'⚪ Desactivado';
-}
-function renderAFPPatrimonioToggleBtn(){
-  const btn=document.getElementById('afp-patrimonio-toggle-btn');
-  if(!btn) return;
-  const activo=!!state.incluirAFPEnPatrimonio;
   btn.textContent=activo?'🟢 Activado':'⚪ Desactivado';
 }
 // Qué años están expandidos en cada tabla (Aportes / Saldos), por separado.
@@ -21434,286 +21344,6 @@ function renderListaCompras(){
 }
 
 // ══════════════════════════════════════════════════════
-//  APROBACIONES BANCARIAS — consumos/transferencias detectados por el
-//  webhook (bankEmailWebhook, desde Apps Script leyendo Gmail, para BBVA,
-//  BCP, Interbank y Falabella) quedan en users/{uid}/pendientesBanco hasta
-//  que se aprueban, editan o eliminan acá. Nunca se registran solos: puede
-//  que ya estén cargados a mano, ser una transferencia entre cuentas
-//  propias que no es un gasto real, o venir "sin reconocer" (el banco
-//  cambió el formato del correo y el Apps Script no pudo interpretarlo) —
-//  para esos últimos, la única acción útil es "✏ Editar" y completar todo
-//  a mano con el asunto/remitente/fragmento como contexto.
-// ══════════════════════════════════════════════════════
-function updateAprobacionesBadge(){
-  const badge=document.getElementById('nav-aprobaciones-badge');
-  if(!badge) return;
-  const n=pendientesBanco.length;
-  badge.style.display = n ? 'block' : 'none';
-  badge.textContent = n>9 ? '9+' : String(n);
-}
-// Intenta hacer calzar el "hint" que mandó el Apps Script (ej. 'BBVA',
-// 'Amex Platinum', 'CMR,Falabella') contra las cuentas/tarjetas REALES que
-// el usuario tiene configuradas ahora mismo en el app — nunca contra una
-// lista fija, así que si agrega o renombra una tarjeta, la próxima vez que
-// entre a Aprobaciones ya calza sin tocar nada del bot/script. Un hint
-// puede traer varias alternativas separadas por coma (se prueba cada una).
-function _normTexto(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
-function resolverCuentaOTarjeta(p){
-  if(p.tarjetaHint){
-    const alternativas=p.tarjetaHint.split(',').map(_normTexto).filter(Boolean);
-    const t=(state.tarjetas||[]).find(t=>{
-      const label=_normTexto(t.banco+(t.cat?' '+t.cat:''));
-      const soloBanco=_normTexto(t.banco);
-      return alternativas.some(h=>label.includes(h)||h.includes(soloBanco));
-    });
-    if(t) return {tipo:'tarjeta', id:t.id, label:t.banco+(t.cat?' '+t.cat:'')};
-  }
-  if(p.cuentaHint){
-    const alternativas=p.cuentaHint.split(',').map(_normTexto).filter(Boolean);
-    const key=getAllAccountKeys().find(k=>{
-      const nk=_normTexto(k);
-      return alternativas.some(h=>nk.includes(h)||h.includes(nk));
-    });
-    if(key) return {tipo:'cuenta', id:key, label:key};
-  }
-  return null;
-}
-function _ordenarPendientesBanco(lista, orden){
-  const arr=[...lista];
-  switch(orden){
-    case 'fecha-asc':
-      return arr.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
-    case 'banco':
-      return arr.sort((a,b)=>(a.banco||'').localeCompare(b.banco||'', 'es', {sensitivity:'base'}));
-    case 'reconocidos-primero':
-      return arr.sort((a,b)=>(a.noReconocido?1:0)-(b.noReconocido?1:0) || (b.fecha||'').localeCompare(a.fecha||''));
-    case 'no-reconocidos-primero':
-      return arr.sort((a,b)=>(b.noReconocido?1:0)-(a.noReconocido?1:0) || (b.fecha||'').localeCompare(a.fecha||''));
-    case 'fecha-desc':
-    default:
-      return arr.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
-  }
-}
-function renderAprobacionesBanco(){
-  const list=document.getElementById('aprobaciones-list');
-  if(!list) return;
-  document.getElementById('aprobaciones-empty').style.display = pendientesBanco.length ? 'none' : 'block';
-  const btnVaciar=document.getElementById('btn-vaciar-pendientes');
-  if(btnVaciar) btnVaciar.style.display = pendientesBanco.length ? 'inline-block' : 'none';
-  const ordenSel=document.getElementById('aprobaciones-orden');
-  const orden = ordenSel ? ordenSel.value : 'fecha-desc';
-  const pendientesOrdenados = _ordenarPendientesBanco(pendientesBanco, orden);
-  list.innerHTML = pendientesOrdenados.map(p=>{
-    if(p.noReconocido){
-      return `<div class="pb-card" id="pb-card-${p.id}" style="align-items:flex-start">
-        <div class="pb-icon">❓</div>
-        <div class="pb-info">
-          <div class="pb-info-top"><span class="pb-quien">${escapeHtml(p.banco||'Desconocido')} — no reconocido</span></div>
-          <div class="pb-meta">Asunto: "${escapeHtml(p.asunto||'')}"${p.remitente?' · De: '+escapeHtml(p.remitente):''}</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px">Completa los datos a mano con "Editar".</div>
-        </div>
-        <div class="pb-actions">
-          <button class="config-action-btn danger" style="font-size:10px" onclick="eliminarPendiente('${p.id}')">🗑 Eliminar</button>
-          <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="abrirAprobarPendienteModal('${p.id}')">✏ Editar</button>
-        </div>
-      </div>`;
-    }
-    const sym = p.moneda==='USD' ? '$' : 'S/';
-    const esIngreso = p.tipoMovimiento==='ingreso';
-    const resuelto = resolverCuentaOTarjeta(p);
-    const catSugerida = suggestCategoriaForDesc(p.descripcion);
-    const iconoTipo = esIngreso ? '⬆️' : '⬇️';
-    return `<div class="pb-card" id="pb-card-${p.id}" style="align-items:flex-start">
-      <div class="pb-icon">${iconoTipo}</div>
-      <div class="pb-info">
-        <div class="pb-info-top">
-          <span class="pb-monto" style="color:${esIngreso?'var(--green)':'var(--text)'}">${sym} ${numFmt(p.monto)}</span>
-          <span class="pb-quien">${escapeHtml(p.descripcion||'Sin nombre')}</span>
-          <span class="cp-badge ${esIngreso?'entregado':'en-camino'}">${esIngreso?'Ingreso':'Gasto'}</span>
-        </div>
-        <div class="pb-meta">${escapeHtml(p.banco||'')} · ${escapeHtml(p.tipoLabel||'')} · ${fmtFechaCorta(p.fecha)}${p.hora?' '+p.hora.slice(0,5):''}</div>
-        <div class="pb-meta" style="margin-top:2px">
-          ${resuelto ? `Va a: <b>${escapeHtml(resuelto.label)}</b> ${resuelto.tipo==='tarjeta'?'(tarjeta)':'(cuenta)'}` : `<span style="color:var(--amber)">⚠ No se detectó a qué cuenta/tarjeta va — usa Editar</span>`}
-          ${catSugerida?` · Categoría sugerida: <b>${escapeHtml(catSugerida)}</b>`:' · Sin categoría sugerida'}
-        </div>
-      </div>
-      <div class="pb-actions">
-        <button class="config-action-btn danger" style="font-size:10px" onclick="eliminarPendiente('${p.id}')">🗑 Eliminar</button>
-        <button class="config-action-btn neutral" style="font-size:10px" onclick="abrirAprobarPendienteModal('${p.id}')">✏ Editar</button>
-        <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="aprobarRapido('${p.id}')" ${resuelto?'':'disabled title="Primero usa Editar para elegir cuenta/tarjeta"'}>✅ Aprobar</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-// Compara fecha+monto contra el historial ya cargado (movimientos de
-// cuenta + consumos de tarjeta) — la descripción casi nunca va a calzar
-// exacto (el banco manda "PLUZ ENERGIA APP", uno a mano quizás puso "Luz"),
-// así que solo avisa, nunca bloquea.
-function buscarPosibleDuplicado(fecha, monto){
-  if(!(monto>0)) return null;
-  const objetivo = Math.round(Number(monto)*100);
-  const enMovs = (state.movimientos||[]).find(m=>m.date===fecha && Math.round(Number(m.amount)*100)===objetivo);
-  if(enMovs) return enMovs.desc||'un movimiento';
-  for(const t of (state.tarjetas||[])){
-    for(const arr of Object.values(t.movs||{})){
-      const found=(arr||[]).find(m=>m.fecha===fecha && Math.round(Number(m.monto)*100)===objetivo);
-      if(found) return found.desc||'un consumo de tarjeta';
-    }
-  }
-  return null;
-}
-// Registra el movimiento real a partir de un pendiente + los valores ya
-// decididos (a mano en el modal, o auto-resueltos en el camino rápido) —
-// un solo lugar para las dos rutas, así no se puede desincronizar.
-function _registrarDesdePendiente(p, {desc, tipoMov, destino, monto, currency, fecha, cat}){
-  if(tipoMov==='ingreso' && destino.tipo==='tarjeta'){ alert('No se puede registrar un ingreso a una tarjeta de crédito — elige una cuenta.'); return false; }
-  if(destino.tipo==='cuenta'){
-    pushMovimiento({
-      id:'pb-mov-'+Date.now(), type: tipoMov==='ingreso'?'income':'expense', desc, amount:monto,
-      account:destino.id, date:fecha, currency, cat,
-    });
-  } else {
-    const t=getTarjeta(destino.id);
-    if(!t){ alert('Esa tarjeta ya no existe — selecciona otra.'); return false; }
-    const monthKey=getBillingMonthKey(fecha, t);
-    if(!t.movs) t.movs={};
-    if(!t.movs[monthKey]) t.movs[monthKey]=[];
-    t.movs[monthKey].push({ id:'pb-tcm-'+Date.now(), desc, fecha, monto, pagado:false, cat, currency });
-  }
-  logActividad('pendiente_banco_aprobado', `Aprobado desde correo del banco: ${desc} — ${currency==='USD'?'$':'S/'} ${numFmtSigned(monto,2)}`, {pendienteId:p.id});
-  saveState();
-  DOC_REF.collection('pendientesBanco').doc(p.id).delete().catch(e=>console.warn('No se pudo borrar el pendiente aprobado:', e));
-  toast('✅ Movimiento registrado');
-  return true;
-}
-// Camino rápido: usa tal cual lo que se detectó/sugirió, pero SIEMPRE
-// muestra un resumen completo antes de registrar (lo que pediste: poder
-// ver a qué cuenta/tarjeta va, si es ingreso o gasto, categoría, etc. antes
-// de confirmar) — si algo no calza, se cancela y se usa "Editar" en su lugar.
-function aprobarRapido(id){
-  const p=pendientesBanco.find(x=>x.id===id);
-  if(!p) return;
-  const resuelto=resolverCuentaOTarjeta(p);
-  if(!resuelto){ alert('No se detectó a qué cuenta/tarjeta va este movimiento — usa "Editar" para elegirla a mano.'); return; }
-  const cat=suggestCategoriaForDesc(p.descripcion);
-  const sym=p.moneda==='USD'?'$':'S/';
-  const dup=buscarPosibleDuplicado(p.fecha, p.monto);
-  const resumen = `¿Registrar este movimiento?\n\n`+
-    `Tipo: ${p.tipoMovimiento==='ingreso'?'Ingreso':'Gasto'}\n`+
-    `Descripción: ${p.descripcion}\n`+
-    `Monto: ${sym} ${numFmt(p.monto)}\n`+
-    `Va a: ${resuelto.label} (${resuelto.tipo==='tarjeta'?'tarjeta':'cuenta'})\n`+
-    `Categoría: ${cat||'(sin categoría)'}\n`+
-    `Fecha: ${fmtFechaCorta(p.fecha)}`+
-    (dup?`\n\n⚠ Ya existe "${dup}" el ${fmtFechaCorta(p.fecha)} por el mismo monto — revisa que no sea el mismo.`:'');
-  if(!confirm(resumen)) return;
-  _registrarDesdePendiente(p, {desc:p.descripcion, tipoMov:p.tipoMovimiento||'gasto', destino:resuelto, monto:p.monto, currency:p.moneda, fecha:p.fecha, cat});
-}
-let aprobarPendienteId=null;
-function abrirAprobarPendienteModal(id){
-  const p=pendientesBanco.find(x=>x.id===id);
-  if(!p) return;
-  aprobarPendienteId=id;
-  document.getElementById('pbm-title').textContent = (p.noReconocido?'✏ Completar movimiento':'✏ Editar movimiento')+' — '+(p.banco||'');
-  document.getElementById('pbm-noreconocido-info').style.display = p.noReconocido ? 'block' : 'none';
-  if(p.noReconocido){
-    document.getElementById('pbm-nr-asunto').textContent = p.asunto||'(sin asunto)';
-    document.getElementById('pbm-nr-remitente').textContent = p.remitente||'(desconocido)';
-    document.getElementById('pbm-nr-fragmento').textContent = p.fragmentoCuerpo||'';
-  }
-  document.getElementById('pbm-desc').value = p.descripcion||'';
-  document.getElementById('pbm-tipo-mov').value = p.tipoMovimiento==='ingreso' ? 'ingreso' : 'gasto';
-  const resuelto = resolverCuentaOTarjeta(p);
-  const cuentas=getAllAccountKeys();
-  document.getElementById('pbm-cuenta').innerHTML=cuentas.map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
-  const tarjetas=state.tarjetas||[];
-  document.getElementById('pbm-tarjeta').innerHTML=tarjetas.map(t=>`<option value="${t.id}">${escapeHtml(t.banco)}${t.cat?' '+escapeHtml(t.cat):''}</option>`).join('');
-  document.getElementById('pbm-metodo').value = (resuelto&&resuelto.tipo==='tarjeta') ? 'tarjeta' : 'cuenta';
-  if(resuelto){
-    if(resuelto.tipo==='cuenta') document.getElementById('pbm-cuenta').value=resuelto.id;
-    else document.getElementById('pbm-tarjeta').value=resuelto.id;
-  }
-  document.getElementById('pbm-monto').value = p.monto||'';
-  document.getElementById('pbm-currency').value = p.moneda||'PEN';
-  document.getElementById('pbm-fecha').value = p.fecha||todayLocalISO();
-  onAprobarPendienteMetodoChange();
-  updateCategorySelects();
-  const sugerida = suggestCategoriaForDesc(p.descripcion);
-  document.getElementById('pbm-cat').value = sugerida || '';
-  const dup = p.monto>0 ? buscarPosibleDuplicado(p.fecha, p.monto) : null;
-  const avisoEl = document.getElementById('pbm-duplicado-aviso');
-  avisoEl.style.display = dup ? 'block' : 'none';
-  if(dup) avisoEl.textContent = `⚠ Ya existe "${dup}" el ${fmtFechaCorta(p.fecha)} por el mismo monto — revisa que no sea el mismo antes de aprobar.`;
-  document.getElementById('pbm-overlay').classList.add('open');
-}
-function cerrarAprobarPendienteModal(){
-  document.getElementById('pbm-overlay').classList.remove('open');
-  aprobarPendienteId=null;
-}
-function onAprobarPendienteMetodoChange(){
-  const esIngreso=document.getElementById('pbm-tipo-mov').value==='ingreso';
-  const metodoSel=document.getElementById('pbm-metodo');
-  // Este app no tiene el concepto de "ingreso a una tarjeta de crédito" —
-  // si se elige Ingreso, se fuerza el método a Cuenta.
-  if(esIngreso) metodoSel.value='cuenta';
-  [...metodoSel.options].forEach(o=>{ if(o.value==='tarjeta') o.disabled=esIngreso; });
-  const esTarjeta=metodoSel.value==='tarjeta';
-  document.getElementById('pbm-cuenta-wrap').style.display=esTarjeta?'none':'block';
-  document.getElementById('pbm-tarjeta-wrap').style.display=esTarjeta?'block':'none';
-  if(esTarjeta){
-    const t=getTarjeta(document.getElementById('pbm-tarjeta').value);
-    if(t) document.getElementById('pbm-currency').value=t.currency||'PEN';
-  }
-}
-function confirmarAprobarPendiente(){
-  const p=pendientesBanco.find(x=>x.id===aprobarPendienteId);
-  if(!p) return;
-  const desc=document.getElementById('pbm-desc').value.trim();
-  const tipoMov=document.getElementById('pbm-tipo-mov').value;
-  const metodo=document.getElementById('pbm-metodo').value;
-  const monto=parseFloat(document.getElementById('pbm-monto').value);
-  const currency=document.getElementById('pbm-currency').value;
-  const fecha=document.getElementById('pbm-fecha').value;
-  const cat=document.getElementById('pbm-cat').value||undefined;
-  if(!desc){ alert('Ingresa una descripción.'); return; }
-  if(isNaN(monto)||monto<=0){ alert('Ingresa un monto válido.'); return; }
-  if(!fecha){ alert('Ingresa una fecha.'); return; }
-  let destino;
-  if(metodo==='cuenta'){
-    const cuenta=document.getElementById('pbm-cuenta').value;
-    if(!cuenta){ alert('Selecciona una cuenta.'); return; }
-    destino={tipo:'cuenta', id:cuenta};
-  } else {
-    const tarjetaId=document.getElementById('pbm-tarjeta').value;
-    if(!tarjetaId){ alert('Selecciona una tarjeta.'); return; }
-    destino={tipo:'tarjeta', id:tarjetaId};
-  }
-  if(_registrarDesdePendiente(p, {desc, tipoMov, destino, monto, currency, fecha, cat})){
-    cerrarAprobarPendienteModal();
-  }
-}
-function eliminarPendiente(id){
-  const p=pendientesBanco.find(x=>x.id===id);
-  if(!p) return;
-  const quien = p.descripcion || (p.noReconocido?('correo sin reconocer de '+(p.banco||'?')):'este movimiento');
-  if(!confirm(`¿Eliminar "${quien}"? No se va a registrar ningún movimiento (útil si ya lo cargaste a mano, si no corresponde a un gasto real, o si el correo no trae nada usable).`)) return;
-  DOC_REF.collection('pendientesBanco').doc(id).delete().catch(e=>console.warn('No se pudo borrar el pendiente eliminado:', e));
-}
-// Borra TODOS los pendientes de una sola vez (útil tras un mal arranque del
-// Apps Script que procesó correos viejos de golpe) — nunca toca movimientos
-// reales, solo la cola de "🔔 Aprobaciones". Firestore permite máx. 500
-// operaciones por batch, así que se agrupan en lotes de 450 por seguridad.
-function vaciarTodosPendientes(){
-  if(!pendientesBanco.length) return;
-  if(!confirm(`¿Eliminar los ${pendientesBanco.length} pendientes de "🔔 Aprobaciones"? No se va a registrar ningún movimiento por ninguno de ellos — es solo para vaciar la lista.`)) return;
-  if(!DOC_REF){ alert('No se pudo conectar con la base de datos — intenta de nuevo en un momento.'); return; }
-  const coleccion = DOC_REF.collection('pendientesBanco');
-  const ids = pendientesBanco.map(p=>p.id);
-  _commitEnChunks(ids, (batch, id)=>batch.delete(coleccion.doc(id)))
-  .then(()=>toast(`✅ ${ids.length} pendiente(s) eliminado(s)`))
-  .catch(e=>{ console.warn('Error al vaciar pendientes:', e); alert('Hubo un error al vaciar los pendientes — revisa la consola o intenta de nuevo.'); });
-}
-
 // ══════════════════════════════════════════════════════
 //  MINIJUEGOS — 14 clásicos hechos con Canvas 2D / HTML nativo, sin
 //  librerías externas. Los mejores puntajes se guardan en Firestore
@@ -23138,12 +22768,59 @@ function seedDemo(){
   // para no tener que tocar esa parte del código.
   return;
 }
+function seedDemo_DISABLED_ORIGINAL(){
+  // Don't seed if user explicitly cleared all data
+  if(localStorage.getItem('nathy_mf_cleared')==='1'){
+    localStorage.removeItem('nathy_mf_cleared');
+    return;
+  }
+  if(state.movimientos.length>0)return;
+  state.movimientos=[
+    {id:'m01',type:'expense',desc:'Café',amount:2.20,account:'BBVA',date:'2026-05-10',currency:'PEN',cat:'🍔 Comida'},
+    {id:'m02',type:'expense',desc:'Recarga',amount:5.00,account:'BBVA',date:'2026-05-10',currency:'PEN',cat:'📱 Servicios'},
+    {id:'m03',type:'expense',desc:'Terno',amount:120.00,account:'BBVA',date:'2026-05-12',currency:'PEN',cat:'👗 Ropa'},
+    {id:'m04',type:'expense',desc:'GLP',amount:50.00,account:'BBVA',date:'2026-05-13',currency:'PEN',cat:'🏠 Vivienda'},
+    {id:'m05',type:'expense',desc:'Terno',amount:110.00,account:'BBVA',date:'2026-05-19',currency:'PEN',cat:'👗 Ropa'},
+    {id:'m06',type:'expense',desc:'Pacifico 14',amount:212.40,account:'BBVA',date:'2026-05-20',currency:'PEN',cat:'🏦 Finanzas'},
+    {id:'m07',type:'expense',desc:'Crédito',amount:2773.27,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'🏦 Finanzas'},
+    {id:'m08',type:'expense',desc:'Cuota 15 Ripley',amount:1053.48,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'🏦 Finanzas'},
+    {id:'m09',type:'expense',desc:'Vanessa',amount:74.00,account:'BBVA',date:'2026-05-29',currency:'PEN'},
+    {id:'m10',type:'income',desc:'Jose',amount:6.48,account:'BBVA',date:'2026-05-06',currency:'PEN'},
+    {id:'m11',type:'income',desc:'Spotify',amount:27.50,account:'BBVA',date:'2026-05-09',currency:'PEN',cat:'📱 Servicios'},
+    {id:'m12',type:'income',desc:'CTS',amount:2454.00,account:'BBVA',date:'2026-05-15',currency:'PEN',cat:'💼 Trabajo'},
+    {id:'m13',type:'income',desc:'Vanessa',amount:1170.00,account:'BBVA',date:'2026-05-20',currency:'PEN'},
+    {id:'m14',type:'income',desc:'Sueldo',amount:4694.85,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'💼 Trabajo'},
+    {id:'m15',type:'income',desc:'Bono',amount:634.21,account:'BBVA',date:'2026-05-29',currency:'PEN',cat:'💼 Trabajo'},
+    {id:'m16',type:'ahorro',desc:'Ahorro',amount:4660.69,account:'Ahorro Soles',date:'2026-05-29',currency:'PEN'},
+    {id:'m17',type:'ahorro',desc:'Intereses',amount:12.81,account:'Ahorro Soles',date:'2026-05-31',currency:'PEN'},
+    {id:'m18',type:'income',desc:'Fabian',amount:17.50,account:'Ahorro Soles',date:'2026-05-24',currency:'PEN'},
+    {id:'m19',type:'ahorro',desc:'Intereses',amount:3.46,account:'Ahorro Dólares',date:'2026-05-31',currency:'USD'},
+    {id:'j01',type:'expense',desc:'Otro',amount:40.05,account:'BBVA',date:'2026-06-02',currency:'PEN',cat:'📦 Otros'},
+    {id:'j02',type:'expense',desc:'Katherine',amount:300.00,account:'BBVA',date:'2026-06-05',currency:'PEN'},
+    {id:'j03',type:'ahorro',desc:'Katherine',amount:310.30,account:'Ahorro Soles',date:'2026-06-05',currency:'PEN'},
+    {id:'j04',type:'income',desc:'Spotify',amount:15.13,account:'BBVA',date:'2026-06-09',currency:'PEN',cat:'📱 Servicios'},
+  ];
+  state.cuentas={BCP:0,BBVA:101.08,Efectivo:5.50,'Ahorro Soles':13109.74,'Ahorro Dólares':1808.98};
+  state.customCuentas={};
+  state.tarjetas=[];
+  state.deudas=[];
+  state.serviciosByMonth={};
+  state.combustibleGlp=[];
+  state.combustibleGas=[];
+  state.tcTracker=[];
+  state.deudasMayores=[];
+  state.calendarEvents=[];
+  state.snapshots={'2026-05':{BCP:0,BBVA:426.00,Efectivo:0,'Ahorro Soles':12799.44,'Ahorro Dólares':1805.52}};
+  state.budgets={'🍔 Comida':{limit:300},'👗 Ropa':{limit:200},'🏦 Finanzas':{limit:4500},'📱 Servicios':{limit:50}};
+  state.projGoals={soles:20000,dolar:3000};
+  saveState();
+}
 
 
 // Show login branding instantly from localStorage cache (before Firebase loads)
 (function(){
   try{
-    const cached = localStorage.getItem('miguel_mf_v5');
+    const cached = localStorage.getItem('nathy_mf_v5');
     if(cached){
       const parsed = JSON.parse(cached);
       const name = (parsed.ownerName||'').trim();
@@ -23177,17 +22854,17 @@ window.addEventListener('beforeunload', actualizarUltimaActividadSesion);
 // Init Firebase then load state
 function initFirebase(){
   const firebaseConfig = {
-    apiKey: "AIzaSyDxszRWIYlIPckVf3QM6E9u9seFw1evp3s",
-    authDomain: "financedb-3bcff.firebaseapp.com",
-    projectId: "financedb-3bcff",
-    storageBucket: "financedb-3bcff.firebasestorage.app",
-    messagingSenderId: "237237834861",
-    appId: "1:237237834861:web:a6bb3e59c4691127029b64"
+    apiKey: "AIzaSyAKQgyKwtT4Gd_Ndnd6AQ7rJl9ZZyVnhQ4",
+    authDomain: "finanzasnathy-ee3fb.firebaseapp.com",
+    projectId: "finanzasnathy-ee3fb",
+    storageBucket: "finanzasnathy-ee3fb.firebasestorage.app",
+    messagingSenderId: "178183558794",
+    appId: "1:178183558794:web:257788b3ff57e27e837f73"
   };
   try{
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
-    DOC_REF = db.collection('users').doc('mnegreteee');
+    DOC_REF = db.collection('users').doc('nathy');
   } catch(e){ console.warn('Firebase init error:',e); }
 
   // onAuthStateChanged es la ÚNICA puerta de entrada a los datos: mientras no
@@ -23259,7 +22936,6 @@ function initFirebase(){
 // ══════════════════════════════════════════════════════
 let _tcUnsubscribeListener = null;
 let _movsUnsubscribeListener = null;
-let _pendientesBancoUnsub = null;
 function iniciarListenerTiempoReal(){
   detenerListenerTiempoReal(); // por si quedó uno de una sesión anterior
   if(!DOC_REF) return;
@@ -23325,32 +23001,19 @@ function iniciarListenerTiempoReal(){
       toast('🔄 Nuevo movimiento de otro dispositivo');
     }
   }, err=>console.warn('Listener de movimientos desconectado:', err));
-
-  // Pendientes de aprobación bancaria — colección chica (unos pocos a la
-  // vez), así que simplemente se reconstruye completa en cada cambio en vez
-  // de diffear como con movimientos (no vale la pena la complejidad extra).
-  _pendientesBancoUnsub = DOC_REF.collection('pendientesBanco').onSnapshot(snap=>{
-    if(demoMode) return;
-    pendientesBanco = snap.docs.map(d=>d.data());
-    // Más nuevo primero, para que lo recién detectado se vea arriba.
-    pendientesBanco.sort((a,b)=>(b.creadoEn&&b.creadoEn.seconds||0)-(a.creadoEn&&a.creadoEn.seconds||0));
-    updateAprobacionesBadge();
-    const pageEl=document.getElementById('page-aprobaciones');
-    if(pageEl && pageEl.classList.contains('active')) renderAprobacionesBanco();
-  }, err=>console.warn('Listener de pendientes bancarios desconectado:', err));
 }
 function detenerListenerTiempoReal(){
   if(_tcUnsubscribeListener){ _tcUnsubscribeListener(); _tcUnsubscribeListener=null; }
   if(_movsUnsubscribeListener){ _movsUnsubscribeListener(); _movsUnsubscribeListener=null; }
-  if(_pendientesBancoUnsub){ _pendientesBancoUnsub(); _pendientesBancoUnsub=null; }
 }
 
 // ══════════════════════════════════════════════════════
 //  CHAT IA — botón flotante estilo WhatsApp para preguntar sobre TUS
 //  propios datos (gastos, deudas, tarjetas, metas, kilometraje, etc.)
 //  No lee Firestore de nuevo: arma el contexto con lo que YA está cargado
-//  en `state`, y se lo manda a una Cloud Function (chatFinanzas) que llama
-//  a Gemini. Cero costo extra de Firestore, mismo Gemini gratis del bot.
+//  en `state`, y se lo manda a la Cloud Function compartida (chatFinanzas,
+//  vive en el mismo bot de Miguel) que llama a Gemini. Cero costo extra de
+//  Firestore, mismo Gemini gratis del bot.
 // ══════════════════════════════════════════════════════
 const CHAT_FUNCTION_URL = 'https://us-central1-financedb-3bcff.cloudfunctions.net/chatFinanzas';
 // Ya no hay una clave fija aquí (CHAT_WIDGET_KEY) — se autentica con el ID
@@ -23359,7 +23022,7 @@ const CHAT_FUNCTION_URL = 'https://us-central1-financedb-3bcff.cloudfunctions.ne
 let chatIAHistorial = [];
 let chatIAPreguntaPendiente = null; // pregunta esperando que elijas un periodo
 (function cargarHistorialChatIA(){
-  try{ chatIAHistorial = JSON.parse(localStorage.getItem('miguel_mf_chatia_historial')||'[]'); }
+  try{ chatIAHistorial = JSON.parse(localStorage.getItem('nathy_mf_chatia_historial')||'[]'); }
   catch(e){ chatIAHistorial = []; }
 })();
 
@@ -23764,7 +23427,7 @@ function renderChatIAMensajes(){
   cont.scrollTop = cont.scrollHeight;
 }
 function guardarHistorialChatIA(){
-  try{ localStorage.setItem('miguel_mf_chatia_historial', JSON.stringify(chatIAHistorial)); }catch(e){}
+  try{ localStorage.setItem('nathy_mf_chatia_historial', JSON.stringify(chatIAHistorial)); }catch(e){}
 }
 // Comando "/borrar": limpia el historial de la conversación del chat IA
 // (el ÚNICO lugar donde se guarda es localStorage — este chat nunca escribe
@@ -23775,7 +23438,7 @@ function borrarHistorialChatIA(){
   chatIAPreguntaPendiente = null;
   const oldSel=document.getElementById('chatia-periodo-selector');
   if(oldSel) oldSel.remove();
-  try{ localStorage.removeItem('miguel_mf_chatia_historial'); }catch(e){}
+  try{ localStorage.removeItem('nathy_mf_chatia_historial'); }catch(e){}
   renderChatIAMensajes();
   toast('🧹 Historial del chat borrado — empezamos de cero');
 }
@@ -24050,7 +23713,7 @@ function actualizarContadorChatIA(){
 }
 
 // Copiar una respuesta del bot al portapapeles (ej. para pasarle un dato a
-// Nathy por WhatsApp sin retipearlo).
+// Miguel por WhatsApp sin retipearlo).
 function copiarMensajeChatIA(idx){
   const h=chatIAHistorial[idx];
   if(!h) return;
@@ -24117,7 +23780,7 @@ function toggleDictadoChatIA(){
 // se reusa la respuesta guardada en vez de volver a llamar a la API — cero
 // costo extra y respuesta instantánea para el caso típico de "pregunté dos
 // veces sin querer" o "volví a preguntar lo mismo al ratito".
-const CHATIA_CACHE_KEY = 'miguel_mf_chatia_cache';
+const CHATIA_CACHE_KEY = 'nathy_mf_chatia_cache';
 const CHATIA_CACHE_TTL_MS = 10*60*1000;
 function chatIACacheClave(texto, rango){
   return (texto||'').trim().toLowerCase()+'|'+((rango&&rango.etiqueta)||'todo el historial');
@@ -24207,19 +23870,14 @@ async function procesarPreguntaChatIA(texto, rango, yaEnHistorial){
       datosCompletos: datosFiltradosParaIA,
       resumenRapido: {
         ...contextoBase.resumenRapido,
-        // Ver calcularTotalesPorDescripcionRepetida() más abajo — resuelve
-        // el bug de "cuánto gasté en Bembos" dando montos distintos cada vez
-        // que se pregunta: en vez de dejar que la IA sume manualmente sobre
-        // el JSON crudo (donde a veces se salta o duplica alguna ocurrencia),
-        // el propio código ya suma cada comercio/concepto repetido antes de
-        // mandárselo, para el periodo que se está consultando.
+        // Ver calcularTotalesPorDescripcionRepetida() más arriba — resuelve
+        // el bug de dar montos distintos cada vez que preguntas cuánto
+        // gastaste en un comercio que se repite (ej. Bembos): el propio
+        // código ya suma cada uno antes de mandárselo a la IA.
         totalesPorDescripcionRepetida: calcularTotalesPorDescripcionRepetida(datosFiltradosParaIA),
-        // Ver calcularCoincidenciasPorPalabrasDelMensaje() más abajo — busca
-        // en tus movimientos y consumos con el MISMO motor que usa el botón
-        // 🔍 "Buscar en toda la app" (contiene, sin tildes/mayúsculas),
-        // aplicado directo a las palabras de ESTA pregunta. Es la fuente más
-        // confiable para "cuánto gasté en X" porque no depende de que la IA
-        // adivine qué claves de arriba corresponden a X.
+        // Ver calcularCoincidenciasPorPalabrasDelMensaje() más arriba — busca
+        // con el MISMO motor que el botón 🔍 "Buscar en toda la app",
+        // aplicado directo a las palabras de ESTA pregunta.
         coincidenciasPorPalabraDelMensaje: calcularCoincidenciasPorPalabrasDelMensaje(datosFiltradosParaIA, texto)
       },
       periodoConsultado: (rango && rango.etiqueta) || 'todo el historial'
@@ -24262,7 +23920,7 @@ async function procesarPreguntaChatIA(texto, rango, yaEnHistorial){
 //  · Parte IA: botón "Generar análisis" → misma Cloud Function (Gemini) del chat;
 //    se guarda por sección y periodo para no gastar cuota de más.
 // ══════════════════════════════════════════════════════
-const INS_KEY='miguel_ins_ia_v1';
+const INS_KEY='nathy_ins_ia_v1';
 const insLoading={}, insErr={};
 const insHoyISO=()=>{ const h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); };
 const insPlano=h=>String(h).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
@@ -24454,7 +24112,9 @@ async function insGenerarIA(k){
 function insRender(k){
   const el=document.getElementById('ins-'+k); if(!el) return; const S=INS[k];
   let ins=[]; try{ ins=S.local(); }catch(e){ console.error('insRender',k,e); }
-  let h=`<div class="section-title" style="margin-bottom:10px">${S.tit}</div>`;
+  const cab=insCab(k,S.tit,ins,!!insCacheGet(k));
+  if(insColGet(k)){ el.innerHTML=cab; return; }
+  let h=cab;
   h+=insListaHtml(ins)||'<div style="font-size:12px;color:var(--text3)">Sin datos suficientes todavía.</div>';
   h+=`<div style="font-size:10px;color:var(--text3);margin:6px 0 12px">Calculados al instante con tus datos (gratis, sin IA).</div>`;
   const c=insCacheGet(k);
@@ -24509,12 +24169,12 @@ if(state.projGoals){
       información, ya que comparten el mismo documento de datos):
     </p>
     <div style="background:var(--bg3);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:12px;line-height:1.8">
-      1. Ve a <a href="https://console.firebase.google.com/project/financedb-3bcff/authentication/users" target="_blank" style="color:var(--accent)">Firebase Console → Authentication → Users</a><br>
+      1. Ve a <a href="https://console.firebase.google.com/project/finanzasnathy-ee3fb/authentication/users" target="_blank" style="color:var(--accent)">Firebase Console → Authentication → Users</a><br>
       2. Clic en <strong>"Add user"</strong><br>
       3. Ingresa el correo y una contraseña (mínimo 6 caracteres)<br>
       4. Comparte esas credenciales con la persona — ya puede ingresar al dashboard
     </div>
-    <button class="btn btn-primary" style="width:100%" onclick="window.open('https://console.firebase.google.com/project/financedb-3bcff/authentication/users','_blank')">Abrir Firebase Console →</button>
+    <button class="btn btn-primary" style="width:100%" onclick="window.open('https://console.firebase.google.com/project/finanzasnathy-ee3fb/authentication/users','_blank')">Abrir Firebase Console →</button>
   </div>
 </div>
 
