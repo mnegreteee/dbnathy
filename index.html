@@ -3671,9 +3671,9 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  VERSIÓN DE LA APP — actualizar en cada cambio solicitado
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
-const APP_VERSION = 'v1.64.6';
-const APP_VERSION_DATE = '11/10/26 - 18:02'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Ahorros e Intereses: el detalle de cada mes del gráfico ahora muestra ahorro del mes, saldo al inicio (cierre del mes anterior), interés y saldo al cierre; en los meses cerrados usa el interés registrado y el estimado queda como referencia.'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
+const APP_VERSION = 'v1.64.9';
+const APP_VERSION_DATE = '12/10/26 - 21:05'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Editar consumo de tarjeta: ahora puedes elegir (o cambiar) si el gasto se descuenta de un pago frecuente y/o se carga a la deuda de una persona, aunque lo hayas olvidado al registrarlo.'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -10608,17 +10608,30 @@ function deudasCargables(currency){
   const cur=currency==='USD'?'USD':'PEN';
   return (state.deudas||[]).filter(d=>(d.direccion||'me_deben')==='me_deben' && d.status==='pendiente' && (d.currency==='USD'?'USD':'PEN')===cur);
 }
-function refrescarDescPF(selId, wrapId, currency, visible, reset){
+// Qué pago frecuente / deuda tiene ya enlazado un gasto (por su id de origen).
+function vinculosPorOrigenWeb(origenId){
+  const r={pfId:'',deudaId:''}; if(!origenId) return r;
+  const pf=(state.pagosFrecuentes||[]).find(p=>(p.descuentosPendientes||[]).some(d=>d.origenId===origenId)); if(pf) r.pfId=pf.id;
+  const de=(state.deudas||[]).find(d=>(d.items||[]).some(it=>it.origenId===origenId)||(d.cargos||[]).some(c=>c.origenId===origenId)); if(de) r.deudaId=de.id;
+  return r;
+}
+function refrescarDescPF(selId, wrapId, currency, visible, reset, origenId){
   const sel=document.getElementById(selId), wrap=document.getElementById(wrapId); if(!sel||!wrap) return;
-  const lista=visible?pfsDescontables(currency):[];
-  const prev=reset?'':sel.value;
+  const vinc=vinculosPorOrigenWeb(origenId);
+  if(reset) sel.dataset.orig=vinc.pfId;
+  let lista=visible?pfsDescontables(currency):[];
+  // al editar, el pago frecuente ya enlazado siempre aparece (aunque sea de otra moneda)
+  if(visible&&vinc.pfId&&!lista.some(p=>p.id===vinc.pfId)){ const x=(state.pagosFrecuentes||[]).find(p=>p.id===vinc.pfId); if(x) lista=[x].concat(lista); }
+  const prev=reset?vinc.pfId:sel.value;
   sel.innerHTML='<option value="">No descontar</option>'+lista.map(p=>'<option value="'+escapeHtml(p.id)+'">➖ '+escapeHtml(p.nombre)+'</option>').join('');
   if(lista.some(p=>p.id===prev)) sel.value=prev;
   wrap.style.display=lista.length?'':'none';
   // 🤝 Cargar a la deuda de una persona (monto único o "voy sumando gastos") o crear una nueva
   const dsel=document.getElementById(selId.replace('descpf','deuda')), dwrap=document.getElementById(wrapId.replace('descpf','deuda')); if(!dsel||!dwrap) return;
-  const dl=visible?deudasCargables(currency):[];
-  const dprev=reset?'':dsel.value;
+  let dl=visible?deudasCargables(currency):[];
+  if(visible&&vinc.deudaId&&!dl.some(d=>d.id===vinc.deudaId)){ const x=(state.deudas||[]).find(d=>d.id===vinc.deudaId); if(x) dl=[x].concat(dl); }
+  if(reset) dsel.dataset.orig=vinc.deudaId;
+  const dprev=reset?vinc.deudaId:dsel.value;
   dsel.innerHTML='<option value="">No cargar a deuda</option>'+dl.map(d=>'<option value="'+escapeHtml(d.id)+'">🤝 '+escapeHtml(d.nombre)+(Array.isArray(d.items)?' (voy sumando gastos)':' (monto único)')+'</option>').join('')+(visible?'<option value="__new__">➕ Deuda nueva…</option>':'');
   if(dprev==='__new__'||dl.some(d=>d.id===dprev)) dsel.value=dprev;
   dwrap.style.display=visible?'':'none';
@@ -10635,7 +10648,7 @@ function validarDeudaNuevaWeb(dselId){
   return true;
 }
 function refrescarDescPFTC(reset){
-  refrescarDescPF('tc-m-descpf','tc-m-descpf-wrap',document.getElementById('tc-m-currency').value,!editingTCMovId,reset===true);
+  refrescarDescPF('tc-m-descpf','tc-m-descpf-wrap',document.getElementById('tc-m-currency').value,true,reset===true,editingTCMovId||'');
 }
 function refrescarDescPFTransfer(){
   const o=document.getElementById('tr-origen');
@@ -10643,6 +10656,9 @@ function refrescarDescPFTransfer(){
 }
 function aplicarDescuentoPF(selId, concepto, monto, origenId, fecha, currency){
   aplicarCargoDeudaWeb(selId, concepto, monto, origenId, fecha, currency);
+  aplicarSoloPFWeb(selId, concepto, monto, origenId, fecha, currency);
+}
+function aplicarSoloPFWeb(selId, concepto, monto, origenId, fecha, currency){
   const sel=document.getElementById(selId); const pfId=sel&&sel.value; if(!pfId||!(monto>0)) return;
   const pf=(state.pagosFrecuentes||[]).find(p=>p.id===pfId); if(!pf) return;
   if(!pf.descuentosPendientes) pf.descuentosPendientes=[];
@@ -10679,8 +10695,14 @@ function aplicarCargoDeudaWeb(selId, concepto, monto, origenId, fecha, currency)
   }
 }
 function quitarDescuentosPorOrigenWeb(ids){
+  quitarPFPorOrigenWeb(ids); quitarDeudaPorOrigenWeb(ids);
+}
+function quitarPFPorOrigenWeb(ids){
   ids=(ids||[]).filter(Boolean); if(!ids.length) return;
   (state.pagosFrecuentes||[]).forEach(p=>{ if(Array.isArray(p.descuentosPendientes)) p.descuentosPendientes=p.descuentosPendientes.filter(d=>!ids.includes(d.origenId)); });
+}
+function quitarDeudaPorOrigenWeb(ids){
+  ids=(ids||[]).filter(Boolean); if(!ids.length) return;
   // 🤝 también quita lo cargado a deudas; si la deuda se creó desde ese gasto y quedó vacía, se elimina
   if(!Array.isArray(state.deudas)) return;
   state.deudas.forEach(d=>{
@@ -10688,6 +10710,18 @@ function quitarDescuentosPorOrigenWeb(ids){
     if(Array.isArray(d.cargos)){ const q=d.cargos.filter(c=>ids.includes(c.origenId)); if(q.length){ d.monto=(Number(d.monto)||0)-q.reduce((s,c)=>s+c.monto,0); d.cargos=d.cargos.filter(c=>!ids.includes(c.origenId)); } }
   });
   state.deudas=state.deudas.filter(d=>!(d.creadaDesdeOrigen && ids.includes(d.creadaDesdeOrigen) && Array.isArray(d.items) && !d.items.length));
+}
+// Al editar un consumo: si cambiaste el pago frecuente y/o la deuda, quita el enlace anterior y crea el nuevo.
+function cambiarVinculosConsumoWeb(selId, concepto, monto, origenId, fecha, currency){
+  const sel=document.getElementById(selId), dsel=document.getElementById(selId.replace('descpf','deuda')); if(!sel||!dsel) return;
+  if((sel.value||'')!==(sel.dataset.orig||'')){
+    quitarPFPorOrigenWeb([origenId]);
+    if(sel.value) aplicarSoloPFWeb(selId, concepto, monto, origenId, fecha, currency);
+  }
+  if((dsel.value||'')!==(dsel.dataset.orig||'')){
+    quitarDeudaPorOrigenWeb([origenId]);
+    if(dsel.value) aplicarCargoDeudaWeb(selId, concepto, monto, origenId, fecha, currency);
+  }
 }
 function actualizarDescuentoPorOrigenWeb(id, monto){
   (state.pagosFrecuentes||[]).forEach(p=>(p.descuentosPendientes||[]).forEach(d=>{ if(d.origenId===id && monto>0) d.monto=monto; }));
@@ -15605,6 +15639,7 @@ function saveTCMov(){
       // Update the mov data
       foundMov.desc=desc; foundMov.fecha=fecha; foundMov.monto=monto; foundMov.pagado=pagado; foundMov.cat=cat; foundMov.currency=currency;
       actualizarDescuentoPorOrigenWeb(foundMov.id,monto);
+      cambiarVinculosConsumoWeb('tc-m-descpf',desc,monto,foundMov.id,fecha,currency);
       if(hora) foundMov.hora=hora; else delete foundMov.hora;
       if(newMk!==foundInMonth){
         // Move to the new billing month
@@ -24437,16 +24472,29 @@ function _verAFecha(s){ // 'dd/mm/yy - hh:mm' -> número comparable
   const m=String(s||'').match(/(\d{2})\/(\d{2})\/(\d{2})\s*-\s*(\d{2}):(\d{2})/);
   return m?Number(m[3]+m[2]+m[1]+m[4]+m[5]):0;
 }
-let _avisoActDescartado=null, _ultimaBusquedaAct=0;
+let _avisoActDescartado=null, _ultimaBusquedaAct=0, _sigRemota=null; // _sigRemota: huella (ETag/Last-Modified) de la última versión descargada, para no volver a bajar el archivo completo si no cambió
 function cerrarAvisoActualizacion(){ const b=document.getElementById('update-banner'); if(b){ b.classList.remove('show'); } }
 async function buscarActualizacion(manual){
   try{
     if(!/^https?:$/.test(location.protocol)) { if(manual) toast('Solo disponible en la app publicada','info'); return; }
+    if(!manual && document.hidden) return; // pestaña en segundo plano: se revisa al volver (visibilitychange)
     if(!manual && Date.now()-_ultimaBusquedaAct<60000) return;
     _ultimaBusquedaAct=Date.now();
     const url=location.origin+location.pathname+'?_v='+Date.now();
+    const huella=(resp)=>resp.headers.get('etag')||resp.headers.get('last-modified')||null;
+    // Revisión liviana: una petición HEAD (sin descargar los ~1.6 MB). Si la huella del servidor
+    // es la misma que la de la última descarga, no hay nada nuevo y se termina aquí. Si no hay
+    // huella, falla o cambió, se hace la descarga completa de siempre. La búsqueda manual
+    // (botón «Buscar actualización») siempre descarga completo.
+    if(!manual && _sigRemota){
+      try{
+        const h=await fetch(url,{method:'HEAD',cache:'no-store'});
+        if(h.ok){ const sig=huella(h); if(sig && sig===_sigRemota) return; }
+      }catch(e){ /* sin HEAD: se cae a la descarga completa */ }
+    }
     const r=await fetch(url,{cache:'no-store'});
     if(!r.ok) throw new Error('HTTP '+r.status);
+    const sigNueva=huella(r); if(sigNueva) _sigRemota=sigNueva;
     const t=await r.text();
     const m=t.match(/const APP_VERSION_DATE = '([^']+)'/);
     if(!m) throw new Error('sin versión');
