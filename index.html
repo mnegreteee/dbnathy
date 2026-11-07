@@ -1179,7 +1179,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 .gs-seg button{background:none;border:none;color:var(--text2);font-family:var(--font);font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer}
 .gs-seg button.on{background:var(--accent);color:#fff}
 .gs-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.gs-filters input,.gs-filters select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);padding:6px 10px;font-family:var(--font);font-size:12px;min-width:0}
+.gs-filters input,.gs-filters select,#gs-mx-sel{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);padding:6px 10px;font-family:var(--font);font-size:12px;min-width:0}
 .gs-filters input[type=search]{flex:1 1 180px}
 @media(max-width:600px){
   /* móvil: todos los filtros en UNA fila que se desliza hacia los lados (igual que la barra de pestañas) */
@@ -1284,6 +1284,33 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 .cfg-group-b .cfg-sub:first-child{border-top:none;}
 .cfg-group.cfg-danger .cfg-group-t b{color:var(--red);}
 .cfg-group.cfg-danger{border-color:rgba(248,113,113,.35);}
+
+.gs-mx-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gs-mx{width:100%;border-collapse:collapse;font-size:12px}
+.gs-mx th,.gs-mx td{padding:8px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
+.gs-mx td{text-align:right;font-family:var(--mono);color:var(--text2)}
+.gs-mx thead th{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);text-align:right}
+.gs-mx thead th.gs-mx-m{cursor:pointer}
+.gs-mx thead th.gs-mx-m:hover{color:var(--accent)}
+.gs-mx th.gs-mx-c{text-align:left;position:sticky;left:0;background:var(--bg2);font-weight:600;color:var(--text);z-index:1}
+.gs-mx-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+.gs-mx td.gs-mx-t,.gs-mx th.gs-mx-t{border-left:1px solid var(--border);color:var(--text);font-weight:600}
+.gs-mx-h1{background:rgba(79,134,255,.10)}.gs-mx-h2{background:rgba(79,134,255,.20)}.gs-mx-h3{background:rgba(79,134,255,.33)}.gs-mx-h4{background:rgba(79,134,255,.48);color:var(--text)!important}
+.gs-mx-u{display:block;font-size:10px;line-height:1.2;color:var(--teal)}
+.gs-mx td,.gs-mx th.gs-mx-c{line-height:1.25}
+.gs-mx-k{cursor:pointer}.gs-mx-k:hover{outline:1px solid var(--accent);outline-offset:-1px}.gs-mx-k:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.gs-mxd{width:640px!important}
+.gs-mxd-l{margin-top:14px;max-height:62vh;overflow-y:auto}
+.gs-mxd-r{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.gs-mxd-d{width:96px;flex:none;font-size:11px;color:var(--text3);font-family:var(--mono);padding-top:2px}
+.gs-mxd-m{flex:1;min-width:0}.gs-mxd-n{font-size:13px;font-weight:600;word-break:break-word}
+.gs-mxd-s{font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.gs-mxd-a{text-align:right;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--red);flex:none}
+.gs-mxd-e{display:block;font-size:10px;color:var(--text3);font-weight:400}
+.gs-mxd-g{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding:6px 8px;background:var(--bg3);border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--text2)}
+@media(max-width:700px){.gs-mxd{width:100%!important;max-height:92vh}.gs-mxd-d{width:70px}}
+.gs-mx-h0{color:var(--text3)!important}
+.gs-mx-foot th,.gs-mx-foot td{border-top:1px solid var(--text3);border-bottom:0;font-weight:700;color:var(--text)}
 </style>
 </head>
 <body>
@@ -2034,6 +2061,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <div class="card" style="padding:16px;margin-top:16px" id="gs-ia"></div>
     </div>
   </div>
+
+  <div class="card" style="padding:16px;margin-top:16px" id="gs-matriz"></div>
 </div>
 </div>
 
@@ -3903,9 +3932,9 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  VERSIÓN DE LA APP — actualizar en cada cambio solicitado
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
-const APP_VERSION = 'v1.82.0';
-const APP_VERSION_DATE = '07/11/26 - 09:52'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Servicios compartidos: los pagos adelantados quedan con la fecha real de pago y se muestran como adelanto del mes que cubren.'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
+const APP_VERSION = 'v1.86.0';
+const APP_VERSION_DATE = '07/11/26 - 14:18'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Gastos: en la tabla «Por categoría y mes», al tocar un monto (celda, total de categoría o total del mes) se abre el detalle de los movimientos que lo forman.'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -6214,6 +6243,7 @@ function renderGastos(){
   gsSegmentos();
   gsRenderDisp();
   gsRefrescarLista();
+  gsRenderMatriz();
 }
 function gsSegmentos(){
   const seg=(id,key,opts)=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts.map(([v,l])=>`<button class="${GS[key]===v?'on':''}" onclick="GS['${key}']='${v}';gsSegmentos();gsRefrescarLista()">${l}</button>`).join(''); };
@@ -6323,6 +6353,111 @@ function gsRenderDisp(){
   el.innerHTML=h;
 }
 
+
+// ── TABLA «POR CATEGORÍA Y MES» (debajo de Gastos) ──
+const GS_MX_OPC=[['anio','Este año'],['12','Últimos 12 meses'],['6','Últimos 6 meses'],['3','Últimos 3 meses'],['pasado','Año pasado'],['todo','Todo el historial']];
+GS.mx='anio';
+try{ const v=localStorage.getItem('gs_mx_v1'); if(v) GS.mx=v; }catch(e){ console.warn('Cálculo omitido por error:', e&&e.message); }
+function gsMxSet(v){ GS.mx=v; try{ localStorage.setItem('gs_mx_v1',v); }catch(e){} gsRenderMatriz(); }
+function gsMxMeses(){
+  const h=new Date(), y=h.getFullYear(), m=h.getMonth(), out=[];
+  const add=(yy,mm)=>out.push([yy,mm]);
+  const mod=GS.mx;
+  if(mod==='anio'){ for(let i=0;i<=m;i++) add(y,i); }
+  else if(mod==='pasado'){ for(let i=0;i<12;i++) add(y-1,i); }
+  else if(mod==='12'||mod==='6'||mod==='3'){ const n=+mod; for(let i=n-1;i>=0;i--){ const d=new Date(y,m-i,1); add(d.getFullYear(),d.getMonth()); } }
+  else if(/^\d{4}$/.test(mod)){ const yy=+mod; const hasta=yy===y?m:11; for(let i=0;i<=hasta;i++) add(yy,i); }
+  else { // todo: desde el primer mes con gastos
+    let ini=y; for(let yy=y-1;yy>=y-15;yy--){ let hay=false; for(let mm=0;mm<12&&!hay;mm++) if(gsItems(yy,mm).length) hay=true; if(hay) ini=yy; else if(yy<ini-1) break; }
+    for(let yy=ini;yy<=y;yy++) for(let mm=0;mm<(yy===y?m+1:12);mm++) add(yy,mm);
+    while(out.length>1&&!gsItems(out[0][0],out[0][1]).length) out.shift();
+  }
+  return out;
+}
+function gsMxDatos(){
+  // cada celda guarda soles y dólares por separado (sin convertir) y el equivalente en S/ solo para el color
+  const meses=gsMxMeses(), cats=new Map(), n=meses.length, z=()=>meses.map(()=>({p:0,u:0,e:0}));
+  const tot=z();
+  meses.forEach(([yy,mm],k)=>{ gsItems(yy,mm).forEach(i=>{ const c=i.cat||'Sin categoría'; if(!cats.has(c)) cats.set(c,z()); const o=cats.get(c)[k], t=tot[k];
+    if(i.cur==='USD'){ o.u+=i.amount; t.u+=i.amount; } else { o.p+=i.amount; t.p+=i.amount; } o.e+=i.pen; t.e+=i.pen; }); });
+  const sum=a=>a.reduce((r,x)=>({p:r.p+x.p,u:r.u+x.u,e:r.e+x.e}),{p:0,u:0,e:0});
+  const filas=[...cats.entries()].map(([c,v])=>({c,v,t:sum(v)})).filter(f=>f.t.e>0.004).sort((a,b)=>b.t.e-a.t.e);
+  return {meses,filas,tot,total:sum(tot)};
+}
+function gsMxEtq(yy,mm,multi){ return GS_MES[mm].charAt(0).toUpperCase()+GS_MES[mm].slice(1)+(multi?' '+String(yy).slice(2):''); }
+function gsMxCelda(o){
+  const fp=Math.round(o.p).toLocaleString('en-US'), fu=Math.round(o.u).toLocaleString('en-US');
+  const hp=o.p>0.004, hu=o.u>0.004;
+  if(!hp&&!hu) return '—';
+  return (hp?'S/ '+fp:'')+(hu?`<span class="gs-mx-u">$ ${fu}</span>`:'');
+}
+function gsRenderMatriz(){
+  const el=document.getElementById('gs-matriz'); if(!el) return;
+  const hoy=new Date(), aniosOpc=[]; for(let yy=hoy.getFullYear()-2;yy>=hoy.getFullYear()-4;yy--) aniosOpc.push(yy);
+  const opts=GS_MX_OPC.map(([v,l])=>`<option value="${v}"${GS.mx===v?' selected':''}>${l}</option>`).join('')+aniosOpc.map(yy=>`<option value="${yy}"${GS.mx===String(yy)?' selected':''}>Año ${yy}</option>`).join('');
+  const D=gsMxDatos(), multi=D.meses.length&&D.meses[0][0]!==D.meses[D.meses.length-1][0];
+  const cab=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div class="section-title" style="margin:0">📊 Por categoría y mes</div><span style="font-size:11px;color:var(--text3)">S/ y <span style="color:var(--teal)">$</span> en la misma celda</span><div style="flex:1"></div><select id="gs-mx-sel" onchange="gsMxSet(this.value)" aria-label="Periodo">${opts}</select><button class="btn" style="font-size:11px;padding:5px 12px" onclick="gsMxExportar()">⬇ Exportar Excel</button></div>`;
+  if(!D.filas.length){ el.innerHTML=cab+'<div class="empty">Sin gastos en este periodo.</div>'; return; }
+  const hdr=D.meses.map(([yy,mm])=>`<th class="gs-mx-m" title="Ver ${MONTHS[mm]} ${yy}" onclick="GS.y=${yy};GS.m=${mm};renderGastos();window.scrollTo({top:0,behavior:'smooth'})">${gsMxEtq(yy,mm,multi)}</th>`).join('');
+  window._gsMxD=D;
+  const clk=(o,fi,j)=>o.e>0.004?` class="gs-mx-k" tabindex="0" role="button" onclick="gsMxDet(${fi},${j})" onkeydown="if(event.key==='Enter'){gsMxDet(${fi},${j})}"`:'';
+  const body=D.filas.map((r,fi)=>{ const mx=Math.max(...r.v.map(o=>o.e));
+    return `<tr><th class="gs-mx-c"><span class="gs-mx-dot" style="background:${gsCatColor(r.c)}"></span>${escapeHtml(r.c)}</th>${r.v.map((o,j)=>{ const q=mx>0?o.e/mx:0; const k=o.e<=0.004?0:q<.35?1:q<.6?2:q<.85?3:4; return `<td class="gs-mx-h${k}${o.e>0.004?' gs-mx-k':''}"${o.e>0.004?` tabindex="0" role="button" onclick="gsMxDet(${fi},${j})" onkeydown="if(event.key==='Enter'){gsMxDet(${fi},${j})}"`:''}>${M(gsMxCelda(o))}</td>`; }).join('')}<td class="gs-mx-t gs-mx-k" tabindex="0" role="button" onclick="gsMxDet(${fi},-1)" onkeydown="if(event.key==='Enter'){gsMxDet(${fi},-1)}">${M(gsMxCelda(r.t))}</td></tr>`; }).join('');
+  const foot=`<tr class="gs-mx-foot"><th class="gs-mx-c">Total</th>${D.tot.map((o,j)=>`<td${clk(o,-1,j)}>${M(gsMxCelda(o))}</td>`).join('')}<td class="gs-mx-t gs-mx-k" tabindex="0" role="button" onclick="gsMxDet(-1,-1)" onkeydown="if(event.key==='Enter'){gsMxDet(-1,-1)}">${M(gsMxCelda(D.total))}</td></tr>`;
+  const n=D.meses.length||1, prom=gsMix(D.total.p/n,D.total.u/n);
+  el.innerHTML=cab+`<div class="gs-mx-wrap"><table class="gs-mx"><thead><tr><th class="gs-mx-c">Categoría</th>${hdr}<th class="gs-mx-t">Total</th></tr></thead><tbody>${body}${foot}</tbody></table></div><div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">Cuentas y tarjetas juntas. Soles arriba y dólares debajo, sin convertir; el color de la celda usa el equivalente en soles al tipo de cambio actual. No incluye pagos de tarjeta ni transferencias entre tus cuentas. Promedio mensual del periodo: <b style="color:var(--text2)">${M(prom)}</b>. Toca un monto para ver sus movimientos o un mes para abrirlo.</div>`;
+}
+
+// Detalle de los movimientos que forman un monto de la tabla «Por categoría y mes»
+function gsMxCerrar(){ const m=document.getElementById('gs-mx-modal'); if(m) m.classList.remove('open'); document.removeEventListener('keydown',gsMxEsc); }
+function gsMxEsc(e){ if(e.key==='Escape') gsMxCerrar(); }
+function gsMxDet(fi,j){
+  const D=window._gsMxD; if(!D) return;
+  const fila=fi>=0?D.filas[fi]:null;
+  const mesesSel=j>=0?[j]:D.meses.map((_,k)=>k);
+  const multi=D.meses[0][0]!==D.meses[D.meses.length-1][0];
+  const por=new Map(); // clave de grupo -> {titulo, items}
+  let todos=[];
+  mesesSel.forEach(k=>{ const [yy,mm]=D.meses[k];
+    gsItems(yy,mm).forEach(i=>{ const c=i.cat||'Sin categoría'; if(fila&&c!==fila.c) return; todos.push(i);
+      const agrupaMes=(fi>=0&&j<0)||(fi<0&&j<0); const key=agrupaMes?(yy*100+mm):c; const tit=agrupaMes?(MONTHS[mm]+' '+yy):c;
+      if(!por.has(key)) por.set(key,{titulo:tit,items:[],orden:agrupaMes?-(yy*100+mm):0}); por.get(key).items.push(i); }); });
+  const grupos=[...por.values()].sort((a,b)=>a.orden-b.orden||(gsSum(b.items).pen+gsSum(b.items).usd*gsRate())-(gsSum(a.items).pen+gsSum(a.items).usd*gsRate()));
+  const mostrarTitulos=grupos.length>1;
+  const fdate=i=>{ const [,mo,d]=i.fecha.split('-'); return d+'-'+GS_MES[+mo-1]+(multi||j<0?' '+i.fecha.slice(2,4):'')+(i.hora?' · '+i.hora:''); };
+  const fila_=i=>{ const usd=i.cur==='USD';
+    return `<div class="gs-mxd-r"><div class="gs-mxd-d">${escapeHtml(fdate(i))}</div><div class="gs-mxd-m"><div class="gs-mxd-n">${escapeHtml(i.desc)}${ubicPinCatHtml(i.tipo==='tarjeta'?'tc':'mov',i.id,i.ub)}</div><div class="gs-mxd-s"><span class="gs-mxd-chip" style="color:${i.color}">${i.tipo==='tarjeta'?'💳':'🏦'} ${escapeHtml(i.origen)}</span>${i.cuota?` <span>cuota ${i.cuota}</span>`:''} <span style="color:${i.estado==='Pendiente'?'var(--amber)':'var(--green)'}">${i.estado}</span></div></div><div class="gs-mxd-a">${M(gsFmt(i.amount,i.cur))}${usd?`<span class="gs-mxd-e">≈ ${M(fmtS(i.pen))}</span>`:''}</div></div>`; };
+  const cuerpo=grupos.map(g=>{ g.items.sort((a,b)=>(b.fecha+(b.hora||'')).localeCompare(a.fecha+(a.hora||'')));
+    const t=gsSum(g.items);
+    return (mostrarTitulos?`<div class="gs-mxd-g"><span>${escapeHtml(g.titulo)} · ${g.items.length}</span><b>${M(gsMix(t.pen,t.usd))}</b></div>`:'')+g.items.map(fila_).join(''); }).join('');
+  const t=gsSum(todos);
+  const titulo=(fila?`<span class="gs-mx-dot" style="background:${gsCatColor(fila.c)}"></span>${escapeHtml(fila.c)}`:'Todas las categorías')+' · '+(j>=0?MONTHS[D.meses[j][1]]+' '+D.meses[j][0]:'periodo seleccionado');
+  let m=document.getElementById('gs-mx-modal');
+  if(!m){ m=document.createElement('div'); m.id='gs-mx-modal'; m.className='modal-overlay'; m.onclick=e=>{ if(e.target===m) gsMxCerrar(); }; document.body.appendChild(m); }
+  m.innerHTML=`<div class="modal gs-mxd" role="dialog" aria-modal="true" aria-label="Detalle de movimientos"><div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1"><div style="font-size:15px;font-weight:700">${titulo}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${todos.length} movimiento${todos.length===1?'':'s'} · total <b style="color:var(--text)">${M(gsMix(t.pen,t.usd))}</b></div></div><button class="btn" style="padding:4px 10px" onclick="gsMxCerrar()" aria-label="Cerrar">✕</button></div><div class="gs-mxd-l">${cuerpo||'<div class="empty">Sin movimientos.</div>'}</div></div>`;
+  m.classList.add('open'); document.addEventListener('keydown',gsMxEsc);
+}
+function gsMxExportar(){
+  const D=gsMxDatos(); if(!D.filas.length){ alert('No hay gastos en este periodo.'); return; }
+  const r2=v=>Math.round(v*100)/100;
+  const hoja=(k)=>{ const rows=D.filas.filter(r=>r.t[k]>0.004||k==='e').map(r=>{ const o={Categoría:r.c}; D.meses.forEach(([yy,mm],j)=>{ o[gsMxEtq(yy,mm,true)]=r2(r.v[j][k]); }); o.Total=r2(r.t[k]); return o; });
+    const o={Categoría:'Total'}; D.meses.forEach(([yy,mm],j)=>{ o[gsMxEtq(yy,mm,true)]=r2(D.tot[j][k]); }); o.Total=r2(D.total[k]); rows.push(o); return XLSX.utils.json_to_sheet(rows); };
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,hoja('p'),'Soles');
+  if(D.total.u>0.004) XLSX.utils.book_append_sheet(wb,hoja('u'),'Dólares');
+  XLSX.utils.book_append_sheet(wb,hoja('e'),'Todo en S-');
+  XLSX.writeFile(wb,'gastos_categoria_mes_'+GS.mx+'.xlsx');
+}
+
+// La lista de movimientos no pasa del alto de la columna derecha (en pantalla ancha); el resto se ve desplazando dentro de la lista
+function gsAjustarLista(){
+  const l=document.getElementById('gs-list'), o=document.getElementById('gs-origen'); if(!l||!o) return;
+  const col=o.parentElement;
+  if(window.innerWidth<=1000){ l.style.maxHeight=''; l.style.overflowY=''; return; }
+  const h=Math.max(420,Math.round(col.getBoundingClientRect().height));
+  l.style.maxHeight=h+'px'; l.style.overflowY='auto';
+  if(!window._gsRO&&window.ResizeObserver){ window._gsRO=new ResizeObserver(()=>gsAjustarLista()); window._gsRO.observe(col); window.addEventListener('resize',gsAjustarLista); }
+}
 function gsRefrescarLista(){
   const base=gsItems(GS.y,GS.m);
   // opciones de origen y categoría del mes
@@ -6338,6 +6473,7 @@ function gsRefrescarLista(){
   gsRenderLista(items);
   gsRenderLaterales(items);
   gsRenderIA(base);
+  gsAjustarLista();
 }
 function gsRenderKpis(items){
   const el=document.getElementById('gs-kpis'); if(!el) return;
@@ -26259,6 +26395,34 @@ function seedDemo(){
 // Al publicar una versión nueva: agregar una entrada AL INICIO de APP_CHANGELOG
 // y actualizar APP_VERSION / APP_VERSION_DATE (el aviso compara APP_VERSION_DATE).
 const APP_CHANGELOG = [
+ {
+  "v": "v1.86.0",
+  "fecha": "07/11/26",
+  "cambios": [
+   "Gastos: en la tabla «Por categoría y mes», al tocar un monto (celda, total de categoría o total del mes) se abre el detalle de los movimientos que lo forman."
+  ]
+ },
+ {
+  "v": "v1.85.0",
+  "fecha": "07/11/26",
+  "cambios": [
+   "Gastos: la tabla «Por categoría y mes» ahora muestra soles y dólares en la misma celda (sin convertir) y el Excel trae hojas separadas por moneda."
+  ]
+ },
+ {
+  "v": "v1.84.0",
+  "fecha": "07/11/26",
+  "cambios": [
+   "Gastos: la lista de movimientos ya no se alarga más que la columna derecha (hasta Análisis con IA); el resto se ve desplazando dentro de la lista."
+  ]
+ },
+ {
+  "v": "v1.83.0",
+  "fecha": "07/11/26",
+  "cambios": [
+   "Gastos: nueva tabla «Por categoría y mes» debajo de la sección, con filtro de periodo (este año, últimos 12/6/3 meses, año pasado, todo el historial) y exportación a Excel."
+  ]
+ },
  {
   "v": "v1.82.0",
   "fecha": "07/11/26",
