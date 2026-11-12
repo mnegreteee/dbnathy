@@ -2327,7 +2327,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <button class="btn btn-primary" style="font-size:11px;padding:5px 14px" onclick="openInvCompraModal()">+ Compra</button>
       <button class="btn" style="font-size:11px;padding:5px 14px" onclick="openInvVentaModal()">+ Venta</button>
       <button class="btn" style="font-size:11px;padding:5px 14px" onclick="openInvValorModal()">+ Valorización</button>
-      <button class="btn" style="font-size:11px;padding:5px 14px" onclick="openInvEfectivoModal()">+ Efectivo</button>
+      <button class="btn" style="font-size:11px;padding:5px 14px;border-color:var(--green);color:var(--green);font-weight:600" onclick="openInvEfectivoModal()" title="Registrar un dividendo que te pagaron en dinero">💵 + Dividendo</button>
       <button class="btn" style="font-size:11px;padding:5px 14px" onclick="exportInvExcel()">⬇️ Exportar</button>
     </div>
   </div>
@@ -2371,6 +2371,8 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <div style="font-size:10px;color:var(--text3);margin-top:2px">XIRR · considera el tiempo</div>
     </div>
   </div>
+
+  <div id="inv-div-strip"></div>
 
   <!-- Posiciones actuales -->
   <div class="card" style="padding:18px;margin-bottom:22px">
@@ -2448,7 +2450,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <div class="chart-tab" id="inv-tab-compras" onclick="setInvTab('compras')">Compras</div>
     <div class="chart-tab" id="inv-tab-ventas" onclick="setInvTab('ventas')">Ventas</div>
     <div class="chart-tab" id="inv-tab-valorizaciones" onclick="setInvTab('valorizaciones')">Valorizaciones</div>
-    <div class="chart-tab" id="inv-tab-efectivo" onclick="setInvTab('efectivo')">Efectivo (dividendos)</div>
+    <div class="chart-tab" id="inv-tab-efectivo" onclick="setInvTab('efectivo')">💵 Dividendos</div>
   </div>
 
   <div id="inv-subpage-historial" class="inv-subpage">
@@ -2485,15 +2487,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
   </div>
 
   <div id="inv-subpage-efectivo" class="inv-subpage" style="display:none">
-    <div class="card" style="padding:18px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Dividendos que te pagaron en dinero (no en más acciones/ETF) — suman al valorizado de su moneda.</div>
-      <div style="overflow-x:auto">
-      <table class="account-table">
-        <thead><tr><th>Fecha</th><th>Símbolo / Nota</th><th style="text-align:right">Monto</th><th></th></tr></thead>
-        <tbody id="inv-efectivo-tbody"></tbody>
-      </table>
-      </div>
-    </div>
+    <div id="inv-efectivo-panel"></div>
   </div>
 
 </div>
@@ -2601,6 +2595,39 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <div class="section-title" style="font-size:13px;margin-bottom:2px">Gratificación y CTS</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Calculadas con tu básica + el promedio de tu bono variable de cada semestre (D.S. 005-2002-TR).</div>
       <div id="sueldo-grat-cts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+    </div>
+
+    <div class="card" id="sueldo-vacaciones" style="padding:16px 20px;margin-bottom:16px">
+      <div class="section-header" style="margin-bottom:10px">
+        <div class="section-title" style="font-size:13px">🏖️ Vacaciones</div>
+        <div style="display:flex;gap:8px">
+          <button class="config-action-btn neutral" style="font-size:10px;padding:4px 9px" onclick="abrirVacAjustes()">⚙ Ajustes</button>
+          <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="abrirVacModal()">+ Agendar vacaciones</button>
+        </div>
+      </div>
+      <div id="vac-resumen"></div>
+      <div class="table-scroll" id="vac-tabla-wrap" style="margin-top:12px">
+        <table class="account-table" style="width:100%;min-width:520px">
+          <thead><tr><th>Desde</th><th>Hasta</th><th style="text-align:right">Días</th><th style="padding-left:16px">Estado</th><th>Nota</th><th></th></tr></thead>
+          <tbody id="vac-tbody"></tbody>
+        </table>
+      </div>
+      <details style="margin-top:12px;font-size:12px;color:var(--text2)">
+        <summary style="cursor:pointer;font-weight:600">📖 Reglas de las vacaciones en Perú (régimen general)</summary>
+        <ul style="margin:8px 0 0 18px;padding:0;line-height:1.6">
+          <li><b>30 días naturales</b> de descanso pagado por cada año completo de servicio (D. Leg. 713). Equivale a <b>2.5 días por mes</b>, que es lo que acumula esta sección.</li>
+          <li><b>Récord vacacional:</b> para ganar el derecho necesitas 260 días efectivos de trabajo al año (jornada de 6 días) o 210 (jornada de 5 días), con un máximo de 10 faltas injustificadas.</li>
+          <li><b>Cuándo gozarlas:</b> durante el año siguiente al que cumpliste el derecho, y la fecha se fija por acuerdo entre tú y tu empleador (si no hay acuerdo, decide el empleador según las necesidades de la empresa).</li>
+          <li><b>Fraccionamiento (D. Leg. 1405):</b> si lo pides por escrito y se acuerda, puedes dividirlas: un bloque de 15 días (seguidos, o 7 + 8) y el resto en periodos de 1 día o más.</li>
+          <li><b>Acumular:</b> por acuerdo escrito se pueden acumular hasta 2 descansos seguidos, gozando al menos 7 días cada año.</li>
+          <li><b>Adelanto:</b> se puede pedir antes de cumplir el año con acuerdo escrito. Si te vas antes, lo adelantado se descuenta de tus vacaciones truncas.</li>
+          <li><b>Reducir a 15 días:</b> con acuerdo escrito puedes gozar solo 15 y que te paguen los otros 15 (art. 19 D. Leg. 713).</li>
+          <li><b>Si no las gozas a tiempo:</b> te corresponde el <b>triple vacacional</b>: la remuneración del descanso, la remuneración por haber trabajado ese periodo y una indemnización equivalente a una remuneración (art. 23 D. Leg. 713).</li>
+          <li><b>Vacaciones truncas:</b> si cesas antes de cumplir el año, con al menos 1 mes completo, te las pagan proporcionalmente (2.5 días por mes).</li>
+          <li><b>Remuneración vacacional:</b> la remuneración habitual; si tienes variables (comisiones, bonos regulares) se promedia lo percibido.</li>
+          <li style="color:var(--text3)">Es una guía general, no asesoría legal: tu contrato, tu régimen (MYPE, etc.) o convenio pueden variar los plazos. Los días se cuentan como días naturales (incluyen sábados, domingos y feriados).</li>
+        </ul>
+      </details>
     </div>
 
     <div class="card" style="padding:16px 20px">
@@ -3025,6 +3052,30 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <button class="btn btn-secondary" onclick="cerrarConfigSueldo()">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarConfigSueldo()">💾 Guardar</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="vac-overlay" onclick="if(event.target===this)cerrarVacModal()">
+  <div class="modal" style="width:420px;max-height:85vh;overflow-y:auto">
+    <div class="modal-title"><span id="vac-modal-titulo">🏖️ Agendar vacaciones</span><button class="modal-close" onclick="cerrarVacModal()">✕</button></div>
+    <input type="hidden" id="vac-id">
+    <div class="field-row">
+      <div class="field"><label>Desde</label><input id="vac-desde" type="date" oninput="vacPreview()"></div>
+      <div class="field"><label>Hasta (último día)</label><input id="vac-hasta" type="date" oninput="vacPreview()"></div>
+    </div>
+    <div class="field"><label>Nota <small>(opcional)</small></label><input id="vac-nota" type="text" maxlength="80" placeholder="Ej. viaje a Cusco"></div>
+    <div id="vac-preview" style="font-size:12px;line-height:1.6;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:6px 0 12px;color:var(--text2)"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="cerrarVacModal()">Cancelar</button><button class="btn btn-primary" onclick="guardarVac()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="vac-ajustes-overlay" onclick="if(event.target===this)cerrarVacAjustes()">
+  <div class="modal" style="width:420px;max-height:85vh;overflow-y:auto">
+    <div class="modal-title"><span>⚙ Ajustes de vacaciones</span><button class="modal-close" onclick="cerrarVacAjustes()">✕</button></div>
+    <div class="field"><label>Días que ganas por mes trabajado</label><input id="vaj-dpm" type="number" step="0.01" min="0"><small style="color:var(--text3)">Régimen general: 2.5 (30 días al año). En MYPE son 15 días al año = 1.25.</small></div>
+    <div class="field"><label>Días ya gozados antes de usar esta sección</label><input id="vaj-previos" type="number" step="0.5" min="0"><small style="color:var(--text3)">Vacaciones que ya tomaste desde tu fecha de inicio (se restan del acumulado). Las futuras agéndalas con «+ Agendar vacaciones».</small></div>
+    <div class="field"><label>Fecha en que empezaste a trabajar</label><input id="vaj-inicio" type="date"><small style="color:var(--text3)">Desde aquí se cuentan los meses completos (2.5 días por cada mes cumplido). Si la dejas vacía se usa la fecha de «⚙ Configurar».</small></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="cerrarVacAjustes()">Cancelar</button><button class="btn btn-primary" onclick="guardarVacAjustes()">💾 Guardar</button></div>
   </div>
 </div>
 
@@ -4192,9 +4243,9 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  VERSIÓN DE LA APP — actualizar en cada cambio solicitado
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
-const APP_VERSION = 'v1.99.0';
-const APP_VERSION_DATE = '08/11/26 - 21:26'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Finanzas → Resumen anual: nuevo interruptor «Ver cambio en» (% / Monto / Ambos) para ver la variación contra el mes anterior también en soles o dólares. El título ahora muestra el año que estás viendo.'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
+const APP_VERSION = 'v1.102.2';
+const APP_VERSION_DATE = '12/11/26 - 14:34'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Pagos frecuentes: si editas el monto o la fecha del movimiento que salió de uno, el registro del frecuente (Recibido/Pagado y su historial) ahora se actualiza (y corrige los ya desfasados). Los semestrales (CTS, gratificación) muestran «Recibido este mes» o «Próximo: …» en vez de seguir pidiendo «Registrar».'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4673,7 +4724,7 @@ const ACTIVIDAD_ICONOS={movimiento:'💵',tc_consumo:'💳',transferencia:'🔄'
   acceso_rapido_editado:'⚡',acceso_rapido_eliminado:'⚡',
   trea:'📈',trea_eliminada:'📈',
   tc_empresa_nueva:'💱',tc_empresa_renombrada:'💱',tc_empresa_eliminada:'💱',
-  sueldo_config:'💼',sueldo_parametros:'💼',sueldo_boleta_nueva:'💼',sueldo_boleta_editada:'💼',sueldo_boleta_eliminada:'💼',
+  sueldo_config:'💼',sueldo_parametros:'💼',sueldo_boleta_nueva:'💼',sueldo_boleta_editada:'💼',sueldo_boleta_eliminada:'💼',vacaciones:'🏖️',
   mantenimiento_nuevo:'🔧',mantenimiento_editado:'🔧',mantenimiento_eliminado:'🔧',mantenimiento_registrado:'🔧'};
 function abrirActividadReciente(){
   renderActividadReciente();
@@ -10198,7 +10249,7 @@ function renderInvHistorial(){
   });
   (state.inversiones.efectivo||[]).forEach(e=>{
     items.push({ fecha:e.fecha, tipo:'efectivo', icon:'💵', label:'Dividendo en efectivo', color:'var(--purple)',
-      texto:e.nota||'—', monto:invFmt(e.monto,e.moneda||'USD') });
+      texto:[e.simbolo,e.nota].filter(Boolean).join(' · ')||'—', monto:invFmt(e.monto,e.moneda||'USD') });
   });
   if(!items.length){ cont.innerHTML='<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px">Sin movimientos registrados todavía.</div>'; return; }
   items.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
@@ -10824,23 +10875,82 @@ function deleteInvValor(id){
 }
 
 // ── CRUD: EFECTIVO (dividendos en dinero) ─────────────
-function renderInvEfectivoTable(){
-  const tb=document.getElementById('inv-efectivo-tbody');
-  if(!tb) return;
-  const rows=(state.inversiones.efectivo||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Sin dividendos en efectivo registrados.</td></tr>'; return; }
-  tb.innerHTML=rows.map(e=>{
-    const moneda=e.moneda||'USD';
-    return `<tr style="cursor:pointer" onclick="openInvEfectivoModal('${e.id}')">
-      <td>${fmtFechaCorta(e.fecha)}</td>
-      <td style="color:var(--text3)">${escapeHtml(e.nota)||'—'}</td>
-      <td style="text-align:right;font-family:var(--mono);font-weight:600">${M(invFmt(e.monto,moneda))}</td>
-      <td style="text-align:right;white-space:nowrap"><span onclick="event.stopPropagation();openInvEfectivoModal('${e.id}')" style="cursor:pointer;color:var(--text3);margin-right:8px">✏️</span><span onclick="event.stopPropagation();deleteInvEfectivo('${e.id}')" style="cursor:pointer;color:var(--text3)">🗑</span></td>
-    </tr>`;
+// ── 💵 Dividendos en efectivo: franja de resumen + pestaña con totales, ranking por símbolo y lista por año ──
+function invSimbolosConocidos(){
+  const set=new Set(); const inv=state.inversiones||{};
+  (inv.compras||[]).forEach(c=>c.simbolo&&set.add(String(c.simbolo).toUpperCase()));
+  (inv.ventas||[]).forEach(v=>v.simbolo&&set.add(String(v.simbolo).toUpperCase()));
+  return [...set].sort();
+}
+function invDivFilas(){
+  const conocidos=invSimbolosConocidos();
+  return (state.inversiones.efectivo||[]).map(e=>{
+    let sym=(e.simbolo||'').toString().toUpperCase().trim();
+    if(!sym){ const t=String(e.nota||'').toUpperCase().split(/[^A-Z0-9.]+/).find(w=>conocidos.includes(w)); if(t) sym=t; }
+    return {id:e.id,fecha:e.fecha,moneda:e.moneda==='PEN'?'PEN':'USD',monto:Number(e.monto)||0,sym,nota:e.nota||''};
+  }).sort((a,b)=>a.fecha<b.fecha?1:(a.fecha>b.fecha?-1:0));
+}
+function invDivSumar(rows){ const t={PEN:0,USD:0}; rows.forEach(r=>{ t[r.moneda]+=r.monto; }); return t; }
+function invDivTxt(t){ const p=[]; if(t.PEN>0.004) p.push(M(fmtS(t.PEN))); if(t.USD>0.004) p.push(M(fmtD(t.USD))); return p.length?p.join(' · '):M(fmtD(0)); }
+function invDivIrLista(){ setInvTab('efectivo'); const el=document.getElementById('inv-subpage-efectivo'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+function renderInvDividendos(){
+  const rows=invDivFilas(), hoy=todayLocalISO(), anio=hoy.slice(0,4);
+  const hace12=new Date(); hace12.setFullYear(hace12.getFullYear()-1); const f12=fechaLocalISO(hace12);
+  const tTot=invDivSumar(rows), tAnio=invDivSumar(rows.filter(r=>r.fecha.slice(0,4)===anio)), t12=invDivSumar(rows.filter(r=>r.fecha>=f12));
+  // ── franja arriba del todo ──
+  const strip=document.getElementById('inv-div-strip');
+  if(strip){
+    strip.innerHTML=`<div class="card" style="padding:14px 18px;margin-bottom:16px;border-left:3px solid var(--green);display:flex;align-items:center;gap:18px;flex-wrap:wrap;cursor:pointer" onclick="invDivIrLista()">
+      <div style="min-width:150px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">💵 Dividendos cobrados</div>
+        <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green)">${rows.length?invDivTxt(tTot):'—'}</div>
+        <div style="font-size:10px;color:var(--text3)">${rows.length?rows.length+' pago'+(rows.length===1?'':'s')+' · último '+fmtFechaCorta(rows[0].fecha):'aún no registras ninguno'}</div></div>
+      ${rows.length?`<div><div style="font-size:10px;color:var(--text3)">Este año</div><div style="font-family:var(--mono);font-size:14px;font-weight:600">${invDivTxt(tAnio)}</div></div>
+      <div><div style="font-size:10px;color:var(--text3)">Últimos 12 meses</div><div style="font-family:var(--mono);font-size:14px;font-weight:600">${invDivTxt(t12)}</div></div>`:''}
+      <div style="margin-left:auto;display:flex;gap:8px"><button class="btn" style="font-size:11px" onclick="event.stopPropagation();invDivIrLista()">Ver todos</button><button class="btn btn-primary" style="font-size:11px" onclick="event.stopPropagation();openInvEfectivoModal()">+ Registrar dividendo</button></div>
+    </div>`;
+  }
+  // ── pestaña ──
+  const panel=document.getElementById('inv-efectivo-panel'); if(!panel) return;
+  const cab=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--text3);max-width:520px">Dividendos que te pagaron en <b>dinero</b> (no en más acciones/ETF). Suman al valorizado de su moneda. Toca uno para editarlo.</div>
+      <button class="btn btn-primary" onclick="openInvEfectivoModal()">+ Registrar dividendo</button></div>`;
+  if(!rows.length){ panel.innerHTML=`<div class="card" style="padding:24px;text-align:center">${cab}<div style="color:var(--text3);font-size:13px;padding:14px 0">Aún no registras dividendos en efectivo.<br>Cuando te paguen uno, toca <b>«+ Registrar dividendo»</b>, elige el símbolo y el monto.</div></div>`; return; }
+  const stat=(l,v,sub)=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">${l}</div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green);margin-top:2px">${v}</div><div style="font-size:10px;color:var(--text3)">${sub||''}</div></div>`;
+  const stats=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">`
+    +stat('Total cobrado',invDivTxt(tTot),rows.length+' pago'+(rows.length===1?'':'s'))
+    +stat('Este año ('+anio+')',invDivTxt(tAnio),rows.filter(r=>r.fecha.slice(0,4)===anio).length+' pagos')
+    +stat('Últimos 12 meses',invDivTxt(t12),'desde '+fmtFechaCorta(f12))
+    +stat('Último pago',M(invFmt(rows[0].monto,rows[0].moneda)),fmtFechaCorta(rows[0].fecha)+(rows[0].sym?' · '+escapeHtml(rows[0].sym):''))
+    +`</div>`;
+  // ranking por símbolo (la barra usa el equivalente en soles solo para comparar el largo)
+  const por={}; rows.forEach(r=>{ const k=r.sym||'Sin símbolo'; (por[k]=por[k]||{PEN:0,USD:0,n:0}); por[k][r.moneda]+=r.monto; por[k].n++; });
+  const rate=(typeof gsRate==='function')?gsRate():3.45;
+  const lista=Object.entries(por).map(([k,v])=>({k,v,eq:v.PEN+v.USD*rate})).sort((a,b)=>b.eq-a.eq), maxEq=Math.max(...lista.map(x=>x.eq),1);
+  const ranking=`<div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Por símbolo</div><div style="margin-bottom:18px">`+lista.map(x=>{
+    const col=x.k==='Sin símbolo'?'var(--text3)':invColorFor(x.k);
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12px"><span style="width:78px;flex-shrink:0;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${col}"></span>${escapeHtml(x.k)}</span><span style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${Math.max(3,Math.round(x.eq/maxEq*100))}%;background:${col};opacity:.85"></span></span><span style="font-family:var(--mono);min-width:96px;text-align:right;color:var(--green)">${invDivTxt(x.v)}</span></div>`; }).join('')+`</div>`;
+  // lista por año
+  const anios=[...new Set(rows.map(r=>r.fecha.slice(0,4)))];
+  const lis=anios.map(a=>{
+    const rs=rows.filter(r=>r.fecha.slice(0,4)===a), t=invDivSumar(rs);
+    return `<div style="display:flex;align-items:baseline;justify-content:space-between;padding:8px 0 6px;margin-top:6px;border-bottom:1px solid var(--border2)"><span style="font-size:13px;font-weight:700">${a} <span style="font-size:10px;color:var(--text3);font-weight:400">· ${rs.length} pago${rs.length===1?'':'s'}</span></span><span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green)">${invDivTxt(t)}</span></div>`
+    +rs.map(r=>{ const col=r.sym?invColorFor(r.sym):'var(--text3)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);cursor:pointer" onclick="openInvEfectivoModal('${r.id}')">
+        <span style="font-size:11px;color:var(--text3);width:52px;flex-shrink:0">${fmtFechaCorta(r.fecha)}</span>
+        <span style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;overflow:hidden">${r.sym?`<span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:${col}"></span>${escapeHtml(r.sym)}</span>`:''}<span style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml((r.sym&&r.nota.toUpperCase().trim()==='DIVIDENDO '+r.sym)?'':r.nota)||(r.sym?'':'—')}</span></span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--green);white-space:nowrap">+${M(invFmt(r.monto,r.moneda))}</span>
+        <span style="white-space:nowrap"><span onclick="event.stopPropagation();openInvEfectivoModal('${r.id}')" style="cursor:pointer;color:var(--text3);margin:0 6px">✏️</span><span onclick="event.stopPropagation();deleteInvEfectivo('${r.id}')" style="cursor:pointer;color:var(--text3)">🗑</span></span></div>`; }).join('');
   }).join('');
+  panel.innerHTML=`<div class="card" style="padding:18px">${cab}${stats}${ranking}${lis}</div>`;
+}
+function renderInvEfectivoTable(){ renderInvDividendos(); }
+function onInvEfSimboloChange(){
+  const sy=(document.getElementById('ie-simbolo').value||'').toUpperCase().trim();
+  if(sy && invSimbolosConocidos().includes(sy)){ const c=(state.inversiones.compras||[]).find(x=>String(x.simbolo).toUpperCase()===sy); if(c) document.getElementById('ie-moneda').value=c.moneda||'USD'; }
 }
 function openInvEfectivoModal(id){
   editingInvEfectivoId=id||null;
+  const dl=document.getElementById('ie-simbolos-lista'); if(dl) dl.innerHTML=invSimbolosConocidos().map(x=>'<option value="'+escapeHtml(x)+'">').join('');
   const dBtn=document.getElementById('ie-delete-btn');
   if(id){
     const e=(state.inversiones.efectivo||[]).find(x=>x.id===id);
@@ -10850,6 +10960,7 @@ function openInvEfectivoModal(id){
     document.getElementById('ie-moneda').value=e.moneda||'USD';
     document.getElementById('ie-monto').value=e.monto;
     document.getElementById('ie-nota').value=e.nota||'';
+    document.getElementById('ie-simbolo').value=(invDivFilas().find(x=>x.id===id)||{}).sym||'';
     dBtn.style.display='inline-flex';
   } else {
     document.getElementById('inv-efectivo-modal-title').textContent='Nuevo Dividendo en Efectivo';
@@ -10857,6 +10968,7 @@ function openInvEfectivoModal(id){
     document.getElementById('ie-moneda').value='USD';
     document.getElementById('ie-monto').value='';
     document.getElementById('ie-nota').value='';
+    document.getElementById('ie-simbolo').value='';
     dBtn.style.display='none';
   }
   document.getElementById('inv-efectivo-modal-overlay').classList.add('open');
@@ -10867,19 +10979,20 @@ function saveInvEfectivo(){
   const moneda=document.getElementById('ie-moneda').value;
   const monto=parseFloat(document.getElementById('ie-monto').value)||0;
   const nota=(document.getElementById('ie-nota').value||'').trim();
+  const simbolo=(document.getElementById('ie-simbolo').value||'').toUpperCase().trim();
   if(!fecha||monto<=0){alert('Completa fecha y monto.');return;}
   if(!state.inversiones.efectivo) state.inversiones.efectivo=[];
   if(editingInvEfectivoId){
     const e=state.inversiones.efectivo.find(x=>x.id===editingInvEfectivoId);
     if(e){
       const antes={...e};
-      e.fecha=fecha;e.moneda=moneda;e.monto=monto;e.nota=nota;
-      logActividad('inversion_editada', `Efectivo editado: ${nota||fecha}`, {invKind:'efectivo', invId:e.id, snapshotAntes:antes});
+      e.fecha=fecha;e.moneda=moneda;e.monto=monto;e.nota=nota;e.simbolo=simbolo;
+      logActividad('inversion_editada', `Efectivo editado: ${simbolo||nota||fecha}`, {invKind:'efectivo', invId:e.id, snapshotAntes:antes});
     }
   } else {
-    const nuevoEfectivo={id:'ie'+Date.now(),fecha,moneda,monto,nota};
+    const nuevoEfectivo={id:'ie'+Date.now(),fecha,moneda,monto,nota,simbolo};
     state.inversiones.efectivo.push(nuevoEfectivo);
-    logActividad('inversion', `Efectivo: ${nota||fecha}`, {invKind:'efectivo', invId:nuevoEfectivo.id, valorizacionEraNueva:true, valorizacionPreciosAntes:null});
+    logActividad('inversion', `Dividendo en efectivo: ${simbolo||nota||fecha}`, {invKind:'efectivo', invId:nuevoEfectivo.id, valorizacionEraNueva:true, valorizacionPreciosAntes:null});
   }
   saveState(); closeInvEfectivoModal(); renderInversiones();
 }
@@ -11565,6 +11678,7 @@ function saveMovimiento(){
     const sym=currency==='USD'?'$':'S/';
     logActividad('movimiento', `${desc} — ${sym} ${numFmtSigned(amount,2)} (${account})`, {movId:mov.id});
   }
+  if(_old && (Number(_old.amount)!==amount || _old.date!==date)) pfSincronizarDesdeOrigen(mov.id,_old.desc,_old.date,Number(_old.amount),date,amount);
   saveState();closeModal();render();toast(esNuevoMov?'Movimiento guardado':'Movimiento actualizado');
 }
 
@@ -16554,6 +16668,7 @@ function saveTCMov(){
       const newMk=getBillingMonthKey(fecha, t);
       // Update the mov data
       foundMov.desc=desc; foundMov.fecha=fecha; foundMov.monto=monto; foundMov.pagado=pagado; foundMov.cat=cat; foundMov.currency=currency;
+      if(Number(antes.monto)!==monto || antes.fecha!==fecha) pfSincronizarDesdeOrigen(foundMov.id,antes.desc,antes.fecha,Number(antes.monto),fecha,monto);
       { const _ub=ubicLimpia(ubicTmp.tcm); if(_ub) foundMov.ubicacion=_ub; else delete foundMov.ubicacion; }
       actualizarDescuentoPorOrigenWeb(foundMov.id,monto);
       cambiarVinculosConsumoWeb('tc-m-descpf',desc,monto,foundMov.id,fecha,currency);
@@ -19540,9 +19655,44 @@ function pfDiaLabel(diaPago, diasEnMes){
   return diaPago==='ultimo' ? `el último día del mes (${diasEnMes})` : `el día ${diaPago}`;
 }
 
+// Si editas el monto/fecha de un movimiento (o consumo de tarjeta) que salió de un pago/ingreso frecuente, el registro del
+// frecuente («Recibido / Pagado» y su historial 📅) toma el valor nuevo. Se busca por el vínculo de la actividad y, si no,
+// por nombre + fecha + monto anteriores.
+function pfSincronizarDesdeOrigen(origenId, descAntes, fechaAntes, montoAntes, fechaNueva, montoNuevo){
+  try{
+    const pfs=state.pagosFrecuentes||[]; let hit=null;
+    const lg=(state.actividadLog||[]).find(a=>a&&a.ref&&a.ref.pfId&&(a.ref.movId===origenId||a.ref.consumoId===origenId));
+    const cand=lg?pfs.filter(p=>p.id===lg.ref.pfId):pfs.filter(p=>String(p.nombre||'').trim()===String(descAntes||'').trim());
+    cand.forEach(pf=>{
+      if(hit||!pf.pagosRegistrados) return;
+      let k=(lg&&lg.ref.periodoKey&&pf.pagosRegistrados[lg.ref.periodoKey])?lg.ref.periodoKey:null;
+      if(!k) k=Object.keys(pf.pagosRegistrados).find(x=>{ const r=pf.pagosRegistrados[x]; return r&&r.fecha===fechaAntes&&Math.abs((Number(r.monto)||0)-Number(montoAntes))<0.005; })||null;
+      if(k) hit={pf,k};
+    });
+    if(!hit) return false;
+    const r=hit.pf.pagosRegistrados[hit.k]; r.monto=Number(montoNuevo); r.fecha=fechaNueva; return true;
+  }catch(e){ return false; }
+}
+// Corrige registros que ya quedaron desfasados (editaste el movimiento antes de que existiera la sincronización):
+// si UN solo movimiento «pf-mov-…» con el nombre del frecuente y la fecha del registro tiene otro monto, se alinea.
+function pfReconciliarMontos(){
+  let cambio=false;
+  try{
+    const movs=state.movimientos||[];
+    (state.pagosFrecuentes||[]).forEach(pf=>{
+      Object.keys(pf.pagosRegistrados||{}).forEach(k=>{
+        const r=pf.pagosRegistrados[k]; if(!r||!r.fecha) return;
+        const m=movs.filter(x=>String(x.id||'').startsWith('pf-mov')&&String(x.desc||'').trim()===String(pf.nombre||'').trim()&&x.date===r.fecha&&(x.currency||'PEN')===(pf.currency||'PEN'));
+        if(m.length===1 && Math.abs(Number(m[0].amount)-(Number(r.monto)||0))>=0.005){ r.monto=Number(m[0].amount); cambio=true; }
+      });
+    });
+  }catch(e){}
+  if(cambio) saveState();
+}
 function renderPagosFrecuentes(){
   const el=document.getElementById('pagos-frecuentes-list');
   if(!el) return;
+  pfReconciliarMontos();
   const todos=state.pagosFrecuentes||[];
   const ocultosCount=todos.filter(p=>p.oculto).length;
   const btnOcultos=document.getElementById('pf-ocultos-btn');
@@ -19578,6 +19728,18 @@ function renderPagosFrecuentes(){
       periodoKey=mk;
     }
     const yaPagado=periodoKey && pf.pagosRegistrados && pf.pagosRegistrados[periodoKey];
+    // Semestral: «periodoKey» es el PRÓXIMO periodo sin registrar (p. ej. mayo 2027), así que nunca figuraba como hecho.
+    // Si este mes ya está registrado, se muestra «Recibido/Pagado este mes»; si todavía no toca, «Próximo: …» (sin botón principal).
+    let semBtn='';
+    if(esSemestral){
+      const mesNumS=parseInt(mk.split('-')[1],10);
+      const nomP=proximoSemestral?(MONTHS[proximoSemestral.m-1]+' '+proximoSemestral.y):'';
+      const btnSm=(t,tt)=>`<button onclick="registrarPagoFrecuente('${pf.id}')" title="${tt}" style="font-size:9px;padding:4px 7px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">${t}</button>`;
+      if((pf.meses||[]).includes(mesNumS) && pf.pagosRegistrados && pf.pagosRegistrados[mk])
+        semBtn=`<span style="font-size:10px;color:var(--green);white-space:nowrap">✅ ${esIngreso?'Recibido':'Pagado'} este mes</span> ${btnSm('+ Próximo ('+nomP+')','Registrar el siguiente periodo por adelantado')}`;
+      else if(proximoSemestral && proximoSemestral.m!==mesNumS)
+        semBtn=`<span style="font-size:10px;color:var(--text3);white-space:nowrap">⏳ Próximo: ${nomP}</span> ${btnSm('Registrar antes','Registrar este periodo por adelantado')}`;
+    }
     const hoyPF=new Date();
     const finalizado=!pfActivoEnMes(pf, hoyPF.getFullYear(), hoyPF.getMonth());
     const mesesFaltantes=finalizado?pfMesesSinRegistrar(pf):[];
@@ -19690,7 +19852,7 @@ function renderPagosFrecuentes(){
                   : `<span style="font-size:10px;color:var(--text3);white-space:nowrap;background:var(--bg3);padding:5px 8px;border-radius:6px">⏹ Finalizado</span>
                      <button onclick="ocultarPagoFrecuente('${pf.id}')" title="Ya no aparecerá en la lista principal (se puede volver a mostrar desde 'Ocultos')" style="font-size:9px;padding:4px 7px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">🙈 Ocultar</button>`
                 )
-              : (yaPagado
+              : (semBtn?semBtn:yaPagado
                   ? `<span style="font-size:10px;color:var(--green);white-space:nowrap">✅ ${esIngreso?'Recibido':'Pagado'}${esAnual?' este ciclo':' este mes'}</span>
                      ${!esAnual?`<button onclick="adelantarPagoFrecuente('${pf.id}')" title="Registrar un pago de un mes futuro por adelantado" style="font-size:9px;padding:4px 7px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">+ Adelantar</button>`:''}`
                   : `<button class="btn btn-primary" style="font-size:10px;padding:5px 10px;white-space:nowrap" onclick="registrarPagoFrecuente('${pf.id}')">Registrar ${esIngreso?'ingreso':'pago'}</button>`
@@ -20170,13 +20332,17 @@ function renderDeudas(){
   const deudasMeDeben = deudas.filter(d=>d.direccion!=='yo_debo');
   const pendientes = deudasMeDeben.filter(d=>d.status==='pendiente');
   const pagados    = deudasMeDeben.filter(d=>d.status==='pagado');
-  const sumPend    = pendientes.reduce((s,d)=>s+toSoles(d),0);
-  const sumPagado  = pagados.reduce((s,d)=>s+toSoles(d),0);
-  const sumTotal   = deudasMeDeben.reduce((s,d)=>s+toSoles(d),0);
-
-  const sp=document.getElementById('d-sum-pendiente'); if(sp) sp.textContent=M(fmtS(sumPend));
-  const sg=document.getElementById('d-sum-pagado');    if(sg) sg.textContent=M(fmtS(sumPagado));
-  const st=document.getElementById('d-sum-total');     if(st) st.textContent=M(fmtS(sumTotal));
+  // Los totales se muestran POR MONEDA (S/ y $ sin convertir ni mezclar); solo aparece la moneda que tenga monto.
+  const sumMon=(arr,cu)=>arr.filter(d=>(d.currency==='USD'?'USD':'PEN')===cu).reduce((s,d)=>s+(Number(d.monto)||0),0);
+  const dualHtml=(arr)=>{
+    const pen=sumMon(arr,'PEN'), usd=sumMon(arr,'USD'), p=[];
+    if(pen>0.004||usd<=0.004) p.push(`<div>${M(fmtS(pen))}</div>`);
+    if(usd>0.004) p.push(`<div${p.length?' style="font-size:.8em;margin-top:2px"':''}>${M(fmtD(usd))}</div>`);
+    return p.join('');
+  };
+  const sp=document.getElementById('d-sum-pendiente'); if(sp) sp.innerHTML=dualHtml(pendientes);
+  const sg=document.getElementById('d-sum-pagado');    if(sg) sg.innerHTML=dualHtml(pagados);
+  const st=document.getElementById('d-sum-total');     if(st) st.innerHTML=dualHtml(deudasMeDeben);
 
   // ── Filter ────────────────────────────────────────
   ['all','pendiente','pagado'].forEach(f=>{
@@ -24849,6 +25015,129 @@ function sueldoDetalleCTS(c){
    +sueldoFila('Meses computables',c.mesesCompletos+(c.dias?' + '+c.dias+' días':''))
    +sueldoFila('CTS a depositar',`RC ÷ 12 × ${c.mesesCompletos}${c.dias?' + RC ÷ 360 × '+c.dias:''} = ${fmtS(c.cts)}`,true);
 }
+// ══════════════════════════════════════════════════════
+//  🏖️ VACACIONES (Sueldos) — acumulado 2.5 días por mes trabajado (30 días naturales por año, D. Leg. 713).
+//  Se guarda en state.vacaciones = { diasPorMes, previos, planes:[{id,desde,hasta,nota}] }. Los días se cuentan como
+//  días naturales (inclusive). Agendar descuenta del acumulado; no toca movimientos ni dinero.
+// ══════════════════════════════════════════════════════
+function vacLeer(){ const v=state.vacaciones||{}; return {diasPorMes:v.diasPorMes>0?Number(v.diasPorMes):2.5, previos:v.previos>0?Number(v.previos):0, planes:Array.isArray(v.planes)?v.planes:[], fechaInicio:/^\d{4}-\d{2}-\d{2}$/.test(v.fechaInicio||'')?v.fechaInicio:''}; }
+// Fecha desde la que se acumula: la propia de Vacaciones (⚙ Ajustes) o, si no hay, la de «⚙ Configurar» del sueldo.
+function vacIni(){ const v=vacLeer(); return v.fechaInicio||((state.sueldoConfig||{}).fechaInicio)||''; }
+function vacEscribir(v){ state.vacaciones={diasPorMes:v.diasPorMes, previos:v.previos, planes:v.planes, fechaInicio:v.fechaInicio||''}; }
+function vacF(f){ const p=String(f||'').split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:''; }
+function vacD(f){ return new Date(f+'T12:00:00'); }
+function vacDias(desde,hasta){ return Math.round((vacD(hasta)-vacD(desde))/864e5)+1; }
+function vacN(n){ return (Math.round(n*100)/100).toString().replace(/\.0+$/,''); }
+function vacSumarMeses(ini,n){ const a=vacD(ini), d=new Date(a.getFullYear(),a.getMonth()+n,1,12); const dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); d.setDate(Math.min(a.getDate(),dim)); return d; }
+function vacMeses(ini,al){ const a=vacD(ini); let m=(al.getFullYear()-a.getFullYear())*12+(al.getMonth()-a.getMonth()); while(m>0 && vacSumarMeses(ini,m)>al) m--; return Math.max(0,m); }
+function vacEstadoPlan(p,hoyISO){ return p.hasta<hoyISO?'gozada':(p.desde<=hoyISO?'encurso':'agendada'); }
+// excluirId: para editar un plan sin contarlo dos veces
+function vacResumen(excluirId, extra){
+  const v=vacLeer(), ini=vacIni();
+  if(!ini) return {sinFecha:true,v};
+  const hoy=new Date(); hoy.setHours(12,0,0,0); const hoyISO=fechaLocalISO(hoy);
+  const meses=vacMeses(ini,hoy), dpm=v.diasPorMes, acum=meses*dpm;
+  let planes=v.planes.filter(p=>p.id!==excluirId).map(p=>({...p}));
+  if(extra) planes.push({...extra});
+  planes.sort((a,b)=>a.desde<b.desde?-1:(a.desde>b.desde?1:0));
+  let gozados=v.previos, agend=0, cum=v.previos;
+  planes.forEach(p=>{
+    p.n=vacDias(p.desde,p.hasta); p.estado=vacEstadoPlan(p,hoyISO);
+    if(p.estado==='gozada') gozados+=p.n; else agend+=p.n;
+    cum+=p.n;
+    const acumAl=vacMeses(ini,vacD(p.desde))*dpm;
+    p.adelanto=Math.max(0,cum-acumAl); // días que usa por encima de lo acumulado hasta su fecha de inicio
+  });
+  const usado=gozados+agend, saldo=acum-usado;
+  const B=dpm*12, k=Math.floor(meses/12);
+  const vencido=k>=2?Math.max(0,B*(k-1)-usado):0; // de periodos cuyo año de plazo ya pasó
+  const j0=Math.floor(usado/B)+1;
+  let plazo=null; if(vencido<0.001 && k>=1 && j0<=k){ const falta=B*j0-usado; if(falta>0.001) plazo={n:j0,falta,limite:vacSumarMeses(ini,12*(j0+1))}; }
+  return {v,meses,acum,gozados,agend,usado,saldo,planes,vencido,plazo,proximo:vacSumarMeses(ini,meses+1),proxAniv:vacSumarMeses(ini,12*(k+1)),k,hoyISO,ini};
+}
+function renderVacaciones(){
+  const box=document.getElementById('vac-resumen'); if(!box) return;
+  const r=vacResumen(), tb=document.getElementById('vac-tbody'), wrap=document.getElementById('vac-tabla-wrap');
+  if(r.sinFecha){ box.innerHTML='<div class="dash-empty" style="padding:10px 0">Para acumular vacaciones necesito la <b>fecha en que empezaste</b> a trabajar. Agrégala en <a href="#" onclick="abrirVacAjustes();return false">⚙ Ajustes</a>.</div>'; wrap.style.display='none'; return; }
+  wrap.style.display='';
+  const cell=(l,v,c,s)=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">${l}</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${c}">${v}</div><div style="font-size:10px;color:var(--text3)">${s||''}</div></div>`;
+  const col=r.saldo<-0.001?'var(--red)':(r.saldo<0.001?'var(--text2)':'var(--green)');
+  let h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">'
+   +cell('Acumulado',vacN(r.acum)+' d','var(--accent)',r.meses+' mes'+(r.meses===1?'':'es')+' completo'+(r.meses===1?'':'s')+' × '+vacN(r.v.diasPorMes))
+   +cell('Gozados',vacN(r.gozados)+' d','var(--text)','incluye '+vacN(r.v.previos)+' d previos')
+   +cell('Agendados',vacN(r.agend)+' d','var(--amber)','por tomar o en curso')
+   +cell('Saldo disponible',vacN(r.saldo)+' d',col,r.saldo<-0.001?'estás en adelanto':'sin agendar')
+   +cell('Próximo +'+vacN(r.v.diasPorMes),vacF(fechaLocalISO(r.proximo)),'var(--text2)','cuando cumples el mes')
+   +'</div>';
+  h+='<div style="margin-top:8px;font-size:11px;color:var(--text3)">Empezaste el <b>'+vacF(r.ini)+'</b>. Ganas '+vacN(r.v.diasPorMes)+' días solo al <b>completar cada mes</b> de trabajo (cada día '+vacD(r.ini).getDate()+'). <a href="#" onclick="abrirVacAjustes();return false" style="color:var(--accent)">Cambiar fecha</a></div>';
+  const av=(c,t)=>`<div style="margin-top:10px;font-size:12px;color:${c}">${t}</div>`;
+  if(r.vencido>0.001) h+=av('var(--red)','🚨 Tienes <b>'+vacN(r.vencido)+' días</b> de periodos cuyo plazo de goce ya venció: podría corresponderte el triple vacacional. Conversa con tu empleador.');
+  else if(r.plazo) h+=av('var(--text2)','⏳ Del periodo que cumpliste (año '+r.plazo.n+') te faltan <b>'+vacN(r.plazo.falta)+' días</b> por agendar antes del <b>'+vacF(fechaLocalISO(r.plazo.limite))+'</b>; pasada esa fecha sin gozarlos aplica el triple vacacional.');
+  else if(r.k===0) h+=av('var(--text3)','Aún no cumples tu primer año: el <b>'+vacF(fechaLocalISO(r.proxAniv))+'</b> completas 12 meses (derecho a '+vacN(r.v.diasPorMes*12)+' días).');
+  if(r.planes.some(p=>p.adelanto>0.001)) h+=av('var(--amber)','⚠ Hay vacaciones agendadas por encima de lo acumulado a su fecha de inicio: se consideran <b>adelanto</b> y requieren acuerdo escrito con tu empleador.');
+  box.innerHTML=h;
+  const est={gozada:'<span style="color:var(--green)">✅ Gozada</span>',encurso:'<span style="color:var(--accent)">🏖️ En curso</span>',agendada:'<span style="color:var(--amber)">📅 Agendada</span>'};
+  tb.innerHTML=r.planes.length?r.planes.slice().reverse().map(p=>`<tr><td>${vacF(p.desde)}</td><td>${vacF(p.hasta)}</td><td style="text-align:right;font-family:var(--mono)">${p.n}</td><td style="padding-left:16px">${est[p.estado]}${p.adelanto>0.001?' <span title="Usa '+vacN(p.adelanto)+' d por encima de lo acumulado a esa fecha" style="color:var(--amber)">⚠ adelanto</span>':''}</td><td style="color:var(--text3)">${escapeHtml(p.nota||'')}</td><td style="text-align:right;white-space:nowrap"><button class="config-action-btn neutral" style="font-size:10px;padding:3px 8px" onclick="abrirVacModal('${p.id}')">✏</button> <button class="config-action-btn" style="font-size:10px;padding:3px 8px;color:var(--red)" onclick="eliminarVac('${p.id}')">🗑</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:14px">Aún no agendas vacaciones. Toca «+ Agendar vacaciones».</td></tr>';
+}
+function abrirVacModal(id){
+  const p=id?vacLeer().planes.find(x=>x.id===id):null;
+  document.getElementById('vac-id').value=p?p.id:'';
+  document.getElementById('vac-modal-titulo').textContent=p?'✏ Editar vacaciones':'🏖️ Agendar vacaciones';
+  document.getElementById('vac-desde').value=p?p.desde:'';
+  document.getElementById('vac-hasta').value=p?p.hasta:'';
+  document.getElementById('vac-nota').value=p?(p.nota||''):'';
+  document.getElementById('vac-overlay').classList.add('open');
+  vacPreview();
+}
+function cerrarVacModal(){ document.getElementById('vac-overlay').classList.remove('open'); }
+function vacValidar(){
+  const id=document.getElementById('vac-id').value, desde=document.getElementById('vac-desde').value, hasta=document.getElementById('vac-hasta').value;
+  if(!desde||!hasta) return {msg:'Elige las fechas de inicio y fin.'};
+  if(hasta<desde) return {msg:'La fecha final no puede ser anterior a la inicial.'};
+  const choca=vacLeer().planes.find(p=>p.id!==id && p.desde<=hasta && p.hasta>=desde);
+  if(choca) return {msg:'Se cruza con otras vacaciones ('+vacF(choca.desde)+' – '+vacF(choca.hasta)+').'};
+  return {id,desde,hasta};
+}
+function vacPreview(){
+  const el=document.getElementById('vac-preview'); if(!el) return;
+  const v=vacValidar();
+  if(v.msg){ el.innerHTML='<span style="color:var(--text3)">'+v.msg+'</span>'; return; }
+  const r=vacResumen(v.id||undefined,{id:'__nuevo',desde:v.desde,hasta:v.hasta});
+  if(r.sinFecha){ el.innerHTML='<span style="color:var(--amber)">Primero agrega tu fecha de inicio en «⚙ Configurar».</span>'; return; }
+  const n=vacDias(v.desde,v.hasta), me=r.planes.find(p=>p.id==='__nuevo');
+  el.innerHTML='Son <b>'+n+' día'+(n===1?'':'s')+' naturales</b>. Saldo después de agendarlas: <b style="color:'+(r.saldo<-0.001?'var(--red)':'var(--green)')+'">'+vacN(r.saldo)+' días</b>.'
+    +(me&&me.adelanto>0.001?'<br><span style="color:var(--amber)">⚠ Usarías '+vacN(me.adelanto)+' d más de lo acumulado a esa fecha: es un adelanto y requiere acuerdo escrito con tu empleador.</span>':'')
+    +(n<7?'<br><span style="color:var(--text3)">Recuerda: el fraccionamiento exige un bloque de 15 días (o 7 + 8); el resto puede ser de 1 día o más.</span>':'');
+}
+function guardarVac(){
+  const v=vacValidar(); if(v.msg){ toast(v.msg); return; }
+  const nota=document.getElementById('vac-nota').value.trim(), base=vacLeer(), n=vacDias(v.desde,v.hasta);
+  if(v.id){ const i=base.planes.findIndex(p=>p.id===v.id); if(i>=0) base.planes[i]={id:v.id,desde:v.desde,hasta:v.hasta,nota}; }
+  else base.planes.push({id:'vac-'+Date.now(),desde:v.desde,hasta:v.hasta,nota});
+  vacEscribir(base);
+  logActividad('vacaciones',(v.id?'Vacaciones editadas: ':'Vacaciones agendadas: ')+vacF(v.desde)+' – '+vacF(v.hasta)+' ('+n+' d)',{});
+  cerrarVacModal(); saveState(); renderVacaciones(); toast('Vacaciones guardadas');
+}
+function eliminarVac(id){
+  const base=vacLeer(), p=base.planes.find(x=>x.id===id); if(!p) return;
+  if(!confirm('¿Eliminar las vacaciones del '+vacF(p.desde)+' al '+vacF(p.hasta)+'? Los días vuelven a tu saldo.')) return;
+  base.planes=base.planes.filter(x=>x.id!==id); vacEscribir(base);
+  logActividad('vacaciones','Vacaciones eliminadas: '+vacF(p.desde)+' – '+vacF(p.hasta),{});
+  saveState(); renderVacaciones();
+}
+function abrirVacAjustes(){ const v=vacLeer(); document.getElementById('vaj-dpm').value=v.diasPorMes; document.getElementById('vaj-previos').value=v.previos; document.getElementById('vaj-inicio').value=vacIni(); document.getElementById('vac-ajustes-overlay').classList.add('open'); }
+function cerrarVacAjustes(){ document.getElementById('vac-ajustes-overlay').classList.remove('open'); }
+function guardarVacAjustes(){
+  const dpm=parseFloat(document.getElementById('vaj-dpm').value), pre=parseFloat(document.getElementById('vaj-previos').value)||0;
+  if(!(dpm>0)||dpm>10){ toast('Pon los días por mes (ej. 2.5)'); return; }
+  if(pre<0){ toast('Los días previos no pueden ser negativos'); return; }
+  const ini=document.getElementById('vaj-inicio').value||'';
+  if(ini && ini>fechaLocalISO(new Date())){ toast('La fecha de inicio no puede ser futura'); return; }
+  const base=vacLeer(); base.diasPorMes=dpm; base.previos=pre; base.fechaInicio=ini; vacEscribir(base);
+  logActividad('vacaciones','Ajustes de vacaciones: '+vacN(dpm)+' d/mes, '+vacN(pre)+' d previos'+(ini?', inicio '+vacF(ini):''),{});
+  cerrarVacAjustes(); saveState(); renderVacaciones();
+}
+
 function renderSueldos(){
   const cfg=state.sueldoConfig;
   const sinConfig=document.getElementById('sueldo-sin-config');
@@ -24860,6 +25149,7 @@ function renderSueldos(){
   }
   sinConfig.style.display='none';
   contenido.style.display='block';
+  try{ renderVacaciones(); }catch(e){ console.warn('Vacaciones omitidas por error:', e&&e.message); }
 
   const hoy=new Date();
   const anioActual=sueldoAnioVista(); // año que se está viendo (‹ ›)
@@ -27342,6 +27632,48 @@ function seedDemo(){
 // y actualizar APP_VERSION / APP_VERSION_DATE (el aviso compara APP_VERSION_DATE).
 const APP_CHANGELOG = [
  {
+  "v": "v1.102.2",
+  "fecha": "12/11/26",
+  "cambios": [
+   "Pagos frecuentes: si editas el monto o la fecha del movimiento que salió de uno, el registro del frecuente (Recibido/Pagado y su historial) ahora se actualiza (y corrige los ya desfasados). Los semestrales (CTS, gratificación) muestran «Recibido este mes» o «Próximo: …» en vez de seguir pidiendo «Registrar»."
+  ]
+ },
+ {
+  "v": "v1.102.1",
+  "fecha": "12/11/26",
+  "cambios": [
+   "Deudas: los totales (pendiente, cobrado y prestado) ahora se muestran por moneda, en soles y en dólares por separado, sin convertir."
+  ]
+ },
+ {
+  "v": "v1.102.0",
+  "fecha": "11/11/26",
+  "cambios": [
+   "Inversiones → Dividendos en efectivo rediseñado: botón verde «💵 + Dividendo», franja de resumen arriba (total, este año, 12 meses), pestaña con totales, ranking por símbolo y lista por año, y el cuadro pide el símbolo (con sugerencias de tus posiciones)."
+  ]
+ },
+ {
+  "v": "v1.101.1",
+  "fecha": "10/11/26",
+  "cambios": [
+   "Vacaciones: ahora puedes poner la fecha en que empezaste a trabajar en ⚙ Ajustes (si no, usa la de Configurar) y se aclara que los 2.5 días se ganan solo al completar cada mes."
+  ]
+ },
+ {
+  "v": "v1.101.0",
+  "fecha": "10/11/26",
+  "cambios": [
+   "Sueldos → nueva sección «🏖️ Vacaciones»: acumulas 2.5 días por mes trabajado (desde tu fecha de inicio), puedes agendar vacaciones que se restan del saldo, ves adelantos y el plazo para gozarlas, y una guía de las reglas en Perú."
+  ]
+ },
+ {
+  "v": "v1.100.0",
+  "fecha": "09/11/26",
+  "cambios": [
+   "Aviso flotante «Hay cambios nuevos · Actualizar» cuando el bot u otro dispositivo guardó algo que esta pestaña todavía no muestra (por ejemplo, si estuvo horas en segundo plano). Solo lee de Firebase, no escribe."
+  ]
+ },
+ {
   "v": "v1.99.0",
   "fecha": "08/11/26",
   "cambios": [
@@ -28080,6 +28412,8 @@ function iniciarListenerTiempoReal(){
         state[k] = remoteValue;
         _lastSyncedMeta[k] = remoteValue;
         huboCambiosAjenos = true;
+      } else if(cambioEnLaNube && remoteStr!==localStr){
+        mostrarAvisoCambiosNuevos(); // cambió en la nube y acá hay ediciones propias: no se pisa, pero se avisa
       }
     });
     if(huboCambiosAjenos){
@@ -28161,6 +28495,44 @@ function _verificarMovQuitadoDeVentana(id){
 document.addEventListener('visibilitychange',()=>{
   if(!document.hidden && _movsUnsubscribeListener && _movsListenerDesde && _ventanaMovsDesde()!==_movsListenerDesde) _iniciarListenerMovs();
 });
+// ── Aviso flotante «Hay cambios nuevos»: algo cambió en la nube (bot, otro dispositivo) y esta pestaña todavía no lo muestra ──
+// Pasa, por ejemplo, si la PC se durmió o la pestaña estuvo horas en segundo plano. Solo LEE (una consulta por revisión, que trae
+// únicamente lo posterior a lo ya leído) y nunca escribe ni pisa lo que estás editando.
+let _avisoCambiosEl=null, _avisoCambiosOculto=0, _avisoCambiosBusy=false;
+function mostrarAvisoCambiosNuevos(){
+  if(_avisoCambiosEl) return;
+  try{
+    const el=document.createElement('div');
+    el.id='aviso-cambios-nuevos';
+    el.style.cssText='position:fixed;left:16px;right:16px;margin:0 auto;width:fit-content;max-width:calc(100vw - 32px);bottom:84px;z-index:99999;display:flex;align-items:center;gap:10px;background:var(--bg3);color:var(--text);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:13px';
+    el.innerHTML='<span>🔄 Hay cambios nuevos. Actualiza para verlos.</span><button style="background:var(--accent);color:#fff;border:0;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="location.reload()">Actualizar</button><button aria-label="Cerrar" style="background:none;border:0;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px" onclick="cerrarAvisoCambiosNuevos()">✕</button>';
+    document.body.appendChild(el); _avisoCambiosEl=el;
+  }catch(e){}
+}
+function cerrarAvisoCambiosNuevos(){ try{ if(_avisoCambiosEl) _avisoCambiosEl.remove(); }catch(e){} _avisoCambiosEl=null; _avisoCambiosOculto=Date.now(); }
+async function chequearCambiosNuevos(){
+  if(_avisoCambiosBusy||_avisoCambiosEl||!DOC_REF||demoMode||!_lastSyncedMeta) return;
+  _avisoCambiosBusy=true;
+  try{
+    let q=_seccionesColl(); if(_seccMaxSavedAt) q=q.where('savedAt','>',_seccMaxSavedAt);
+    const snap=await q.get();
+    _lec.secc+=snap.size;
+    let hay=false;
+    snap.forEach(doc=>{
+      if(hay||doc.metadata.hasPendingWrites||TC_KEYS_LOCALES_NO_SYNC.has(doc.id)) return;
+      let rs; try{ rs=JSON.stringify(JSON.parse(doc.data().value)); }catch(e){ return; }
+      if(rs!==JSON.stringify(_lastSyncedMeta[doc.id]) && rs!==JSON.stringify(state[doc.id])) hay=true;
+    });
+    if(hay) mostrarAvisoCambiosNuevos();
+  }catch(e){ console.warn('No se pudo revisar si hay cambios nuevos:', e&&e.message); }
+  _avisoCambiosBusy=false;
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ _avisoCambiosOculto=Date.now(); return; }
+  if(_avisoCambiosOculto && Date.now()-_avisoCambiosOculto>=3*60*1000) chequearCambiosNuevos();
+});
+window.addEventListener('online',()=>{ chequearCambiosNuevos(); });
+setInterval(()=>{ if(!document.hidden) chequearCambiosNuevos(); }, 10*60*1000);
 function detenerListenerTiempoReal(){
   if(_tcUnsubscribeListener){ _tcUnsubscribeListener(); _tcUnsubscribeListener=null; }
   if(_movsUnsubscribeListener){ _movsUnsubscribeListener(); _movsUnsubscribeListener=null; }
@@ -29708,8 +30080,9 @@ if(state.projGoals){
       <div class="field"><label>Fecha</label><input id="ie-fecha" type="date"></div>
       <div class="field"><label>Moneda</label><select id="ie-moneda"><option value="USD">Dólares ($)</option><option value="PEN">Soles (S/)</option></select></div>
     </div>
-    <div class="field"><label>Monto</label><input id="ie-monto" type="number" step="0.01" placeholder="0.00"></div>
-    <div class="field"><label>Símbolo / Nota <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input id="ie-nota" type="text" placeholder="Ej. Dividendo NUGT"></div>
+    <div class="field"><label>Símbolo <span style="font-size:10px;color:var(--text3)">(el que pagó el dividendo)</span></label><input id="ie-simbolo" type="text" list="ie-simbolos-lista" autocomplete="off" placeholder="Ej. NUGT" style="text-transform:uppercase" oninput="onInvEfSimboloChange()"><datalist id="ie-simbolos-lista"></datalist></div>
+    <div class="field"><label>Monto cobrado</label><input id="ie-monto" type="number" step="0.01" placeholder="0.00" style="font-size:16px;font-weight:600"></div>
+    <div class="field"><label>Nota <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input id="ie-nota" type="text" placeholder="Ej. dividendo trimestral"></div>
     <div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px">
       <button class="config-action-btn danger" id="ie-delete-btn" style="display:none" onclick="deleteInvEfectivo()">🗑 Eliminar</button>
       <div style="display:flex;gap:8px;margin-left:auto">
