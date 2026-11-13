@@ -42,6 +42,7 @@
   --card-shadow:0 1px 4px rgba(0,0,0,.08);
 }
 :root{
+  --tap-fs-m:12px;--tap-py-m:6px;--tap-px-m:12px;--tap-fs-sm-m:10px;
   --accent:#5b8def;--accent2:#3d6fd4;
   --green:#3ec96e;--green-bg:rgba(62,201,110,0.12);
   --red:#f05c5c;--red-bg:rgba(240,92,92,0.12);
@@ -743,6 +744,27 @@ select.ct-otras{background-color:var(--bg4);color:var(--text3);}
   .nav-center::-webkit-scrollbar{display:none;}
   .nav-tab{padding:4px 8px;font-size:10px;white-space:nowrap;flex-shrink:0;}
   .container{padding:12px;}
+  /* Evita que una fila de botones más ancha que la pantalla empuje todo
+     el body y deje una franja vacía al desplazarse a la derecha (ej.
+     Tarjetas de crédito: +Agregar tarjeta / +Nuevo consumo / 📦 Mis Cuotas). */
+  .month-nav{flex-wrap:wrap;row-gap:8px;}
+  /* Mismo riesgo en Comparativo Mensual: 2 selects + el botón «📅 Este mes
+     vs. año pasado» quedaban justo al límite del ancho de pantalla (sin
+     margen) y en Safari real se pasaban, partiendo el texto del botón y
+     empujando todo el body hacia la derecha. */
+  .compare-selectors{flex-wrap:wrap;row-gap:8px;}
+  .compare-selectors select{flex:1 1 140px;}
+  .compare-selectors button{flex:1 1 100%;}
+  /* Filas de pestañas internas (Auto, Hogar, selector de auto): en vez de
+     partirse en 2 líneas, se deslizan en horizontal como el menú principal. */
+  .auto-tabs,.hg-tabs,.auto-vsel-row{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+  .auto-tabs::-webkit-scrollbar,.hg-tabs::-webkit-scrollbar,.auto-vsel-row::-webkit-scrollbar{display:none;}
+  .auto-tab,.hg-tab{white-space:nowrap;flex-shrink:0;}
+  /* Mismo trato para las pestañas de gráficos (Movimientos: 8 pestañas;
+     Inversiones: 5; también sirven las de 2-3, no cambia nada ahí). */
+  .chart-tabs,.fuel-chart-tabs{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+  .chart-tabs::-webkit-scrollbar,.fuel-chart-tabs::-webkit-scrollbar{display:none;}
+  .chart-tab,.fuel-chart-tab{white-space:nowrap;flex-shrink:0;}
   /* Dashboard */
   .dash-kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
   #relojes-mundiales{flex-wrap:wrap;justify-content:flex-start!important;gap:10px!important;}
@@ -1435,6 +1457,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
     <button class="eye-btn" id="demo-btn" onclick="toggleDemoMode()" title="Modo demo (números aleatorios)" style="font-size:15px">🎭</button>
     <button class="eye-btn" id="lock-btn" onclick="lockApp()" title="Bloquear y cerrar sesión" style="font-size:15px">🔒</button>
     <button class="eye-btn" id="eye-btn" onclick="toggleHide()" title="Ocultar / mostrar cifras">👁</button>
+    <button class="eye-btn" id="revision-btn" onclick="abrirRevisionDatosCompleta()" title="Revisar datos de toda la app (movimientos y consumos repetidos, deudas sin su pago, cuentas huérfanas, etc.)" style="font-size:15px;position:relative">🚨<span id="revision-badge" class="nav-badge" style="display:none">0</span></button>
     <div class="last-updated" id="last-updated-wrap">
       <div class="last-updated-label">Última actualización</div>
       <div class="last-updated-val" id="last-updated-val">—</div>
@@ -4277,9 +4300,9 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  VERSIÓN DE LA APP — actualizar en cada cambio solicitado
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
-const APP_VERSION = 'v1.114.0';
-const APP_VERSION_DATE = '13/11/26 - 02:10'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Mover recargas, km, mantenimientos y repuestos entre autos (uno por uno o todo); Deudas muestra a qué auto u Hogar pertenece cada préstamo.'; // anterior v1.57.0: 'Firebase: nuevo contador de movimientos y lecturas en Configuración → Datos, y el listener en tiempo real ahora solo escucha el mes actual y el anterior (menos lecturas).';
+const APP_VERSION = 'v1.124.0';
+const APP_VERSION_DATE = '13/11/26 - 02:21'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'El 🚨 ahora también revisa Tarjetas de crédito (duplicados, fechas y montos inválidos) además de todo lo demás. Y en cada aviso de «Revisar datos» (🚨 y Gestión de Cuentas) puedes tocar el detalle para ir directo al movimiento/consumo/deuda exacto, sin buscarlo manualmente.';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -4737,11 +4760,17 @@ function tiempoRelativo(ts){
   const d=new Date(ts);
   return d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit'});
 }
-const ACTIVIDAD_ICONOS={movimiento:'💵',tc_consumo:'💳',transferencia:'🔄',deuda:'🤝',deuda_compensacion:'⚖️',deuda_item:'🧾',tc_operacion:'💱',pago_frecuente:'💡',combustible_gasto:'⛽',categoria:'🏷️',pago_frecuente_nuevo:'💡',descuento_pendiente:'💸',evento:'📅',inversion:'📈',servicio:'🧾',servicio_pago:'✅',servicio_pago_info:'↩️',combustible_registro:'⛽',km_manual:'🚗',km_manual_editado:'✏️',km_manual_eliminado:'🗑️',
+const ACTIVIDAD_ICONOS={movimiento:'💵',tc_consumo:'💳',transferencia:'🔄',deuda:'🤝',deuda_compensacion:'⚖️',deuda_item:'🧾',tc_operacion:'💱',pago_frecuente:'💡',combustible_gasto:'⛽',categoria:'🏷️',pago_frecuente_nuevo:'💡',descuento_pendiente:'💸',evento:'📅',inversion:'📈',servicio:'🧾',servicio_pago:'✅',servicio_pago_info:'↩️',combustible_registro:'⛽',km_manual:'🚗',km_manual_editado:'✏️',km_manual_eliminado:'🗑️',cuenta_fusionada:'🏦',cuenta_tipo_cambiado:'🏦',cuenta_banco_cambiado:'🏦',banco_renombrado:'🏦',cuenta_renombrada:'🏦',cuenta_oculta_manual:'🙈',cuenta_forzada_visible:'👁️',pago_frecuente_oculto:'🙈',pago_frecuente_visible:'👁️',tc_consumo_reparado:'🛠️',tc_cuotas_renombradas:'✏️',hogar_prestamo_editado:'🏡',hogar_bolsa_nueva:'🛍️',hogar_bolsa_editada:'🛍️',hogar_bolsa_eliminada:'🛍️',hogar_compra_eliminada:'🛒',hogar_registro_editado:'🏡',hogar_registro_eliminado:'🏡',auto_prestamo_editado:'🚗',auto_repuesto_nuevo:'🔧',auto_repuesto_editado:'🔧',auto_repuesto_eliminado:'🔧',mantenimiento_registro_eliminado:'🧰',deuda_mayor_pf_vinculado:'🔗',deuda_mayor_cuota_fecha:'📅',deuda_mayor_monto_real:'💰',compra_marcada_comprado:'🛒',
   tarjeta_nueva:'💳',tarjeta_editada:'💳',tarjeta_eliminada:'💳',
   meta_nueva:'🎯',meta_editada:'🎯',meta_eliminada:'🎯',
   inversion_editada:'📈',inversion_eliminada:'📈',
   deuda_mayor_nueva:'🏦',deuda_mayor_eliminada:'🏦',
+  auto_veh_nuevo:'🚗',auto_veh_editado:'🚗',auto_veh_eliminado:'🚗',
+  auto_prestamo_vinculado:'🏦',auto_prestamo_desvinculado:'🏦',
+  hogar_prestamo_vinculado:'🏡',hogar_prestamo_desvinculado:'🏡',
+  hogar_concepto_nuevo:'🏡',hogar_concepto_editado:'🏡',hogar_concepto_eliminado:'🏡',
+  combustible_recarga_nueva:'⛽',combustible_recarga_editada:'⛽',
+  auto_registro_movido:'🔀',menu_orden_editado:'🧭',
   servicio_nuevo:'🧾',servicio_editado:'🧾',servicio_eliminado:'🧾',
   evento_editado:'📅',evento_eliminado:'📅',
   afp_aporte:'🪙',afp_aporte_eliminado:'🪙',afp_saldo_nuevo:'🪙',afp_saldo_editado:'🪙',afp_saldo_eliminado:'🪙',
@@ -5261,6 +5290,180 @@ function eliminarActividad(logId){
         if(!state.mantenimientos) state.mantenimientos=[];
         state.mantenimientos.push(ref.mantSnapshot);
       }
+    } else if(entry.tipo==='auto_veh_nuevo'){
+      autoEnsure().vehiculos=autoVehs().filter(v=>v.id!==ref.vehId);
+    } else if(entry.tipo==='auto_veh_editado'){
+      if(ref.snapshotAntes){
+        const v=autoVehs().find(x=>x.id===ref.vehId);
+        if(v) Object.assign(v,ref.snapshotAntes);
+      }
+    } else if(entry.tipo==='auto_veh_eliminado'){
+      if(ref.vehSnapshot){
+        autoEnsure().vehiculos.push(ref.vehSnapshot);
+        (ref.afectados||[]).forEach(a=>{
+          const arr=a.arr==='prestamos'?autoEnsure().prestamos:(state[a.arr]||[]);
+          const it=arr.find(x=>x.id===a.id);
+          if(it) it.vid=ref.vehSnapshot.id;
+        });
+      }
+    } else if(entry.tipo==='auto_prestamo_vinculado'){
+      const A=autoEnsure(); A.prestamos=A.prestamos.filter(p=>p.id!==ref.prestamoId);
+    } else if(entry.tipo==='auto_prestamo_desvinculado'){
+      if(ref.prestamoSnapshot) autoEnsure().prestamos.push(ref.prestamoSnapshot);
+    } else if(entry.tipo==='hogar_prestamo_vinculado'){
+      const h=hgEnsure(); h.prestamos=h.prestamos.filter(p=>p.id!==ref.prestamoId);
+    } else if(entry.tipo==='hogar_prestamo_desvinculado'){
+      if(ref.prestamoSnapshot) hgEnsure().prestamos.push(ref.prestamoSnapshot);
+    } else if(entry.tipo==='hogar_concepto_nuevo'){
+      const h=hgEnsure(); h.conceptos=h.conceptos.filter(c=>c.id!==ref.conceptoId);
+    } else if(entry.tipo==='hogar_concepto_editado'){
+      if(ref.snapshotAntes){
+        const h=hgEnsure(), idx=h.conceptos.findIndex(c=>c.id===ref.conceptoId);
+        if(idx>=0) h.conceptos[idx]=ref.snapshotAntes;
+      }
+    } else if(entry.tipo==='hogar_concepto_eliminado'){
+      if(ref.conceptoSnapshot){
+        const h=hgEnsure();
+        h.conceptos.push(ref.conceptoSnapshot);
+        h.registros=(h.registros||[]).concat(ref.registrosSnapshot||[]);
+      }
+    } else if(entry.tipo==='menu_orden_editado'){
+      if(ref.snapshotAntes) state.menuOrden=ref.snapshotAntes; else delete state.menuOrden;
+      window._menuSig=null; try{ aplicarOrdenMenu(); }catch(e){}
+    } else if(entry.tipo==='auto_registro_movido'){
+      if(ref.masivo){
+        (ref.movs||[]).forEach(m=>{
+          const arr=m.k==='fuel'?[].concat(state.combustibleGlp||[],state.combustibleGas||[]):m.k==='km'?(state.kmManual||[]):m.k==='mant'?(state.mantenimientos||[]):m.k==='rep'?(state.repuestos||[]):(autoEnsure().prestamos||[]);
+          const it=arr.find(x=>x.id===m.id);
+          if(it) it.vid=m.vidAntes;
+        });
+      } else {
+        const arr=_autoMovLista(ref.kind,ref.fuelTipo);
+        const it=arr.find(x=>x.id===ref.regId);
+        if(it) it.vid=ref.vidAntes;
+      }
+    } else if(entry.tipo==='combustible_recarga_nueva'){
+      if(ref.fuelTipo){
+        const key=fuelStateKey(ref.fuelTipo);
+        state[key]=(state[key]||[]).filter(r=>r.id!==ref.filaId);
+      }
+    } else if(entry.tipo==='combustible_recarga_editada'){
+      if(ref.fuelTipo&&ref.snapshotAntes){
+        const key=fuelStateKey(ref.fuelTipo);
+        const idx=(state[key]||[]).findIndex(r=>r.id===ref.filaId);
+        if(idx>=0) state[key][idx]=ref.snapshotAntes;
+      }
+    } else if(entry.tipo==='cuenta_fusionada'){
+      if(!state.bancoDeCuenta) state.bancoDeCuenta={};
+      Object.entries(ref.bancoAntes||{}).forEach(([k,v])=>{ if(v) state.bancoDeCuenta[k]=v; else delete state.bancoDeCuenta[k]; });
+    } else if(entry.tipo==='cuenta_tipo_cambiado'){
+      const cTC=(state.customCuentas||{})[ref.cuentaKey]; if(cTC) cTC.type=ref.tipoAntes;
+      clearSaldoCache();
+    } else if(entry.tipo==='cuenta_banco_cambiado'){
+      if(!state.bancoDeCuenta) state.bancoDeCuenta={};
+      if(ref.bancoAntes) state.bancoDeCuenta[ref.cuentaKey]=ref.bancoAntes; else delete state.bancoDeCuenta[ref.cuentaKey];
+    } else if(entry.tipo==='banco_renombrado'){
+      if(!state.bancoDeCuenta) state.bancoDeCuenta={};
+      (ref.keys||[]).forEach(k=>{ state.bancoDeCuenta[k]=ref.bancoAntes; });
+    } else if(entry.tipo==='cuenta_renombrada'){
+      if(typeof renombrarCuentaGlobal==='function') renombrarCuentaGlobal(ref.nombreNuevo, ref.nombreAntes);
+    } else if(entry.tipo==='cuenta_oculta_manual' || entry.tipo==='cuenta_forzada_visible'){
+      if(!state.cuentaOcultaManual) state.cuentaOcultaManual={};
+      if(!state.cuentaForzarVisible) state.cuentaForzarVisible={};
+      const estA=ref.estadoAntes||{};
+      if(estA.oculta) state.cuentaOcultaManual[ref.nombre]=true; else delete state.cuentaOcultaManual[ref.nombre];
+      if(estA.forzada) state.cuentaForzarVisible[ref.nombre]=true; else delete state.cuentaForzarVisible[ref.nombre];
+    } else if(entry.tipo==='pago_frecuente_oculto' || entry.tipo==='pago_frecuente_visible'){
+      const pfR=(state.pagosFrecuentes||[]).find(p=>p.id===ref.pfId);
+      if(pfR) pfR.oculto = entry.tipo!=='pago_frecuente_oculto';
+    } else if(entry.tipo==='tc_consumo_reparado'){
+      const tR=(state.tarjetas||[]).find(x=>x.id===ref.tarjetaId);
+      if(tR&&tR.movs&&tR.movs[ref.monthKeyNuevo]){
+        const idxR=tR.movs[ref.monthKeyNuevo].findIndex(c=>c.id===ref.consumoId);
+        if(idxR>=0){
+          const [consR]=tR.movs[ref.monthKeyNuevo].splice(idxR,1);
+          if(tR.movs[ref.monthKeyNuevo].length===0) delete tR.movs[ref.monthKeyNuevo];
+          consR.fecha=ref.fechaAntes;
+          if(!tR.movs[ref.monthKeyViejo]) tR.movs[ref.monthKeyViejo]=[];
+          tR.movs[ref.monthKeyViejo].push(consR);
+        }
+      }
+    } else if(entry.tipo==='tc_consumo_eliminado_reparacion'){
+      const tR2=(state.tarjetas||[]).find(x=>x.id===ref.tarjetaId);
+      if(tR2){
+        if(!tR2.movs) tR2.movs={};
+        if(!tR2.movs[ref.monthKeyViejo]) tR2.movs[ref.monthKeyViejo]=[];
+        if(ref.consumoSnapshot && !tR2.movs[ref.monthKeyViejo].some(c=>c.id===ref.consumoSnapshot.id)) tR2.movs[ref.monthKeyViejo].push(ref.consumoSnapshot);
+      }
+    } else if(entry.tipo==='tc_cuotas_renombradas'){
+      const tR3=(state.tarjetas||[]).find(x=>x.id===ref.tarjetaId);
+      if(tR3) Object.values(tR3.movs||{}).forEach(movs=>movs.forEach(m=>{
+        if(m.grupoCuotaId===ref.grupoCuotaId) m.desc=`${ref.nombreAntes} — Cuota ${m.cuotaNumero}/${m.cuotaTotal}`;
+      }));
+    } else if(entry.tipo==='hogar_prestamo_editado'){
+      const pHP=(hgEnsure().prestamos||[]).find(x=>x.id===ref.prestamoId);
+      if(pHP) pHP.nombre=ref.nombreAntes;
+    } else if(entry.tipo==='hogar_bolsa_nueva'){
+      const hBN=hgEnsure(); hBN.bolsas=(hBN.bolsas||[]).filter(x=>x.id!==ref.bolsaId);
+    } else if(entry.tipo==='hogar_bolsa_editada'){
+      const hBE=hgEnsure(), idxBE=(hBE.bolsas||[]).findIndex(x=>x.id===ref.bolsaId);
+      if(idxBE>=0 && ref.snapshotAntes) hBE.bolsas[idxBE]=ref.snapshotAntes;
+    } else if(entry.tipo==='hogar_bolsa_eliminada'){
+      const hBB=hgEnsure();
+      if(!hBB.bolsas) hBB.bolsas=[]; if(!hBB.compras) hBB.compras=[];
+      if(ref.bolsaSnapshot && !hBB.bolsas.some(x=>x.id===ref.bolsaSnapshot.id)) hBB.bolsas.push(ref.bolsaSnapshot);
+      (ref.comprasSnapshot||[]).forEach(c=>{ if(!hBB.compras.some(x=>x.id===c.id)) hBB.compras.push(c); });
+    } else if(entry.tipo==='hogar_compra_eliminada'){
+      const hCE=hgEnsure(); if(!hCE.compras) hCE.compras=[];
+      if(ref.compraSnapshot && !hCE.compras.some(x=>x.id===ref.compraSnapshot.id)) hCE.compras.push(ref.compraSnapshot);
+      if(ref.movSnapshot && !state.movimientos.some(x=>x.id===ref.movSnapshot.id)){
+        state.movimientos.push(ref.movSnapshot); clearSaldoCache();
+      }
+    } else if(entry.tipo==='hogar_registro_editado'){
+      const hRE=hgEnsure();
+      if(ref.esNuevo){ hRE.registros=(hRE.registros||[]).filter(r=>r.id!==ref.registroId); }
+      else if(ref.snapshotAntes){ const idxRE=(hRE.registros||[]).findIndex(r=>r.id===ref.registroId); if(idxRE>=0) hRE.registros[idxRE]=ref.snapshotAntes; }
+      if(ref.movAntes){ const mvRE=(state.movimientos||[]).find(z=>z.id===ref.movAntes.id); if(mvRE) mvRE.amount=ref.movAntes.amount; clearSaldoCache(); }
+    } else if(entry.tipo==='hogar_registro_eliminado'){
+      const hRR=hgEnsure(); if(!hRR.registros) hRR.registros=[];
+      if(ref.registroSnapshot && !hRR.registros.some(r=>r.id===ref.registroSnapshot.id)) hRR.registros.push(ref.registroSnapshot);
+    } else if(entry.tipo==='auto_prestamo_editado'){
+      const idxAP=(autoEnsure().prestamos||[]).findIndex(x=>x.id===ref.prestamoId);
+      if(idxAP>=0 && ref.snapshotAntes) autoEnsure().prestamos[idxAP]=ref.snapshotAntes;
+    } else if(entry.tipo==='auto_repuesto_nuevo'){
+      state.repuestos=(state.repuestos||[]).filter(x=>x.id!==ref.repId);
+    } else if(entry.tipo==='auto_repuesto_editado'){
+      const idxRP=(state.repuestos||[]).findIndex(x=>x.id===ref.repId);
+      if(idxRP>=0 && ref.snapshotAntes) state.repuestos[idxRP]=ref.snapshotAntes;
+    } else if(entry.tipo==='auto_repuesto_eliminado'){
+      if(!Array.isArray(state.repuestos)) state.repuestos=[];
+      if(ref.repSnapshot && !state.repuestos.some(x=>x.id===ref.repSnapshot.id)) state.repuestos.push(ref.repSnapshot);
+    } else if(entry.tipo==='mantenimiento_registro_eliminado'){
+      const itemMR=(state.mantenimientos||[]).find(x=>x.id===ref.mantId);
+      if(itemMR){
+        if(!itemMR.historial) itemMR.historial=[];
+        if(ref.registroSnapshot && !itemMR.historial.some(h=>h.id===ref.registroSnapshot.id)) itemMR.historial.push(ref.registroSnapshot);
+        if(ref.estadoAntes){ itemMR.kmUltimo=ref.estadoAntes.kmUltimo; if(ref.estadoAntes.fechaUltimo) itemMR.fechaUltimo=ref.estadoAntes.fechaUltimo; else delete itemMR.fechaUltimo; itemMR.proximosPlanificados=ref.estadoAntes.proximosPlanificados; }
+      }
+    } else if(entry.tipo==='deuda_mayor_pf_vinculado'){
+      const dDM=(state.deudasMayores||[]).find(x=>x.id===ref.dmId);
+      if(dDM){ if(ref.pfIdAntes) dDM.pfId=ref.pfIdAntes; else delete dDM.pfId; }
+    } else if(entry.tipo==='deuda_mayor_cuota_fecha'){
+      const dDF=(state.deudasMayores||[]).find(x=>x.id===ref.dmId);
+      const cDF=dDF&&dDF.cuotas.find(x=>x.numero==ref.numero);
+      if(cDF) cDF.fecha=ref.fechaAntes;
+    } else if(entry.tipo==='deuda_mayor_monto_real'){
+      const dDR=(state.deudasMayores||[]).find(x=>x.id===ref.dmId);
+      const cDR=dDR&&dDR.cuotas.find(x=>x.numero==ref.numero);
+      if(cDR){ if(ref.montoRealAntes===null||ref.montoRealAntes===undefined) delete cDR.montoReal; else cDR.montoReal=ref.montoRealAntes; }
+    } else if(entry.tipo==='compra_marcada_comprado'){
+      const itC=(state.listaCompras||[]).find(x=>x.id===ref.itemId);
+      if(itC){
+        itC.estado='deseado'; delete itC.fechaComprado; delete itC.fechaLlegada; delete itC.montoComprado; delete itC.catComprado; delete itC.metodoPagoComprado; delete itC.destinoComprado;
+        if(ref.historialPush && itC.historialPrecio && itC.historialPrecio.length) itC.historialPrecio.pop();
+      }
+      if(ref.movId){ state.movimientos=(state.movimientos||[]).filter(m=>m.id!==ref.movId); clearSaldoCache(); }
+      if(ref.tc){ const tCM=(state.tarjetas||[]).find(x=>x.id===ref.tc.tarjetaId); if(tCM&&tCM.movs&&tCM.movs[ref.tc.monthKey]) tCM.movs[ref.tc.monthKey]=tCM.movs[ref.tc.monthKey].filter(c=>c.id!==ref.tc.consumoId); }
     } else if(entry.tipo==='mantenimiento_registrado'){
       const item=(state.mantenimientos||[]).find(x=>x.id===ref.mantId);
       if(item){
@@ -5550,8 +5753,10 @@ function detectarCuentasUnibles(){
 }
 function unirCuentasEnBanco(banco, keys){
   if(!state.bancoDeCuenta) state.bancoDeCuenta={};
+  const bancoAntes={}; keys.forEach(k=>{ bancoAntes[k]=state.bancoDeCuenta[k]||null; });
   keys.forEach(k=>{ state.bancoDeCuenta[k]=banco; });
   saveState(); renderCuentasList(); render();
+  logActividad('cuenta_fusionada', `Cuentas unidas bajo "${banco}" (${keys.length})`, {bancoAntes});
   toast(`Unidas bajo "${banco}"`);
 }
 function trMoneda(){ return document.getElementById('tr-currency').value==='USD'?'USD':'PEN'; }
@@ -8213,6 +8418,7 @@ function ocultarPagoFrecuente(id){
   if(!pf) return;
   pf.oculto=true;
   saveState();
+  logActividad('pago_frecuente_oculto', `Pago frecuente ocultado: ${pf.nombre||''}`, {pfId:id});
   renderPagosFrecuentes();
 }
 function mostrarPagoFrecuente(id){
@@ -8220,6 +8426,7 @@ function mostrarPagoFrecuente(id){
   if(!pf) return;
   pf.oculto=false;
   saveState();
+  logActividad('pago_frecuente_visible', `Pago frecuente mostrado: ${pf.nombre||''}`, {pfId:id});
   renderPagosFrecuentes();
 }
 let pfMostrandoOcultos=false;
@@ -8314,6 +8521,7 @@ function isPageActive(name){ const e=document.getElementById('page-'+name); retu
 
 function render(){
   try{ aplicarOrdenMenu(); }catch(e){ console.warn('Orden del menú omitido:', e&&e.message); }
+  updateRevisionBadge();
   updateTitles();
   renderPaisConfigBtn();
   aplicarChatIAIcono(); // sincroniza el ícono del botón flotante del chat con lo elegido en Config → Apariencia
@@ -8730,10 +8938,12 @@ function guardarFechaReparada(tarjetaId, monthKeyViejo, consumoId, inputId){
   // Recién acá, con la clave nueva ya calculada y segura, se mueve el consumo.
   const [consumo]=t.movs[monthKeyViejo].splice(idx,1);
   if(t.movs[monthKeyViejo].length===0) delete t.movs[monthKeyViejo]; // limpia la clave corrupta si quedó vacía
+  const fechaAntesGFR=consumo.fecha;
   consumo.fecha=nuevaFecha;
   if(!t.movs[nuevoMonthKey]) t.movs[nuevoMonthKey]=[];
   t.movs[nuevoMonthKey].push(consumo);
   saveState();
+  logActividad('tc_consumo_reparado', `Fecha corregida: ${consumo.desc||''} (${monthKeyViejo} → ${nuevoMonthKey})`, {tarjetaId, consumoId, monthKeyViejo, monthKeyNuevo:nuevoMonthKey, fechaAntes:fechaAntesGFR});
   toast('Fecha corregida — el consumo ya aparece en su período correcto');
   renderListaReparacion();
   actualizarBannerDatosDanados();
@@ -8744,6 +8954,7 @@ function eliminarConsumoDanado(tarjetaId, monthKeyViejo, consumoId){
   const res=_sacarConsumoDeMonthKeyViejo(tarjetaId, monthKeyViejo, consumoId);
   if(res){
     saveState();
+    logActividad('tc_consumo_eliminado_reparacion', `Consumo dañado eliminado: ${res.consumo.desc||''}`, {tarjetaId, monthKeyViejo, consumoSnapshot:res.consumo});
     toast('Consumo eliminado','info');
   }
   renderListaReparacion();
@@ -9621,7 +9832,7 @@ function renderMovimientos(){
     const clickHandler=movBulkMode?`onclick="if(this.dataset.blockClick)return;const cb=this.querySelector('input[type=checkbox]');cb.checked=!cb.checked;onMovCheckToggle('${m.id}',cb.checked)"`:`onclick="if(this.dataset.blockClick)return;editMovimiento('${m.id}')"`;
     return `<div class="swipe-wrap">
       <div class="swipe-delete-bg" onclick="deleteMovimiento('${m.id}',event)">🗑 Eliminar</div>
-      <div class="mov-item ${cls} swipe-target" ${clickHandler} ontouchstart="swipeStart(event,this)" ontouchmove="swipeMove(event,this)" ontouchend="swipeEnd(event,this,'${m.id}')">
+      <div class="mov-item ${cls} swipe-target" id="mov-row-${m.id}" ${clickHandler} ontouchstart="swipeStart(event,this)" ontouchmove="swipeMove(event,this)" ontouchend="swipeEnd(event,this,'${m.id}')">
       <div class="mov-left">${checkbox}<div class="mov-dot ${cls}">${ic}</div>
         <div><div class="mov-name">${escapeHtml(m.desc)}${catHtml}${ubicPinCatHtml('mov',m.id,m.ubicacion)}</div><div class="mov-meta">${dateStr} · ${escapeHtml(m.account)}${paisHtml}${m.mesServicio?` · <span style="color:var(--yellow,#d9a441);font-weight:600">⏩ Adelanto de ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m.mesServicio.slice(5,7),10)-1]} ${m.mesServicio.slice(0,4)}</span>`:''}</div>${noteHtml}</div>
       </div>
@@ -14260,17 +14471,21 @@ function cuentaAhorroVisible(nombre, saldo){
 // que ahora aparece en todas las filas de Cuentas y Ahorros.
 function ocultarCuentaManual(nombre){
   if(!state.cuentaOcultaManual) state.cuentaOcultaManual={};
+  const estadoAntesOCM={oculta:!!state.cuentaOcultaManual[nombre], forzada:!!(state.cuentaForzarVisible&&state.cuentaForzarVisible[nombre])};
   state.cuentaOcultaManual[nombre]=true;
   if(state.cuentaForzarVisible) delete state.cuentaForzarVisible[nombre];
   saveState();
+  logActividad('cuenta_oculta_manual', `Cuenta ocultada: ${nombre}`, {nombre, estadoAntes:estadoAntesOCM});
   renderAccountsTables();
   if(typeof renderAhorrosIntereses==='function' && document.getElementById('page-ahorros-intereses')) renderAhorrosIntereses();
 }
 function mostrarCuentaForzada(nombre){
+  const estadoAntesMCF={oculta:!!(state.cuentaOcultaManual&&state.cuentaOcultaManual[nombre]), forzada:!!(state.cuentaForzarVisible&&state.cuentaForzarVisible[nombre])};
   if(state.cuentaOcultaManual) delete state.cuentaOcultaManual[nombre];
   if(!state.cuentaForzarVisible) state.cuentaForzarVisible={};
   state.cuentaForzarVisible[nombre]=true;
   saveState();
+  logActividad('cuenta_forzada_visible', `Cuenta mostrada: ${nombre}`, {nombre, estadoAntes:estadoAntesMCF});
   renderAccountsTables();
   if(typeof renderAhorrosIntereses==='function' && document.getElementById('page-ahorros-intereses')) renderAhorrosIntereses();
 }
@@ -14345,8 +14560,9 @@ function confirmarReconciliacion(){
   const diff=saldoReal-saldoApp;
   if(Math.abs(diff)<0.01) return;
   if(!state.movimientos) state.movimientos=[];
+  const idRecon='recon-'+Date.now();
   pushMovimiento({
-    id:'recon-'+Date.now(),
+    id:idRecon,
     type: diff>0?'income':'expense',
     desc:'Corrección de saldo (reconciliación)',
     amount: Math.abs(diff),
@@ -14354,6 +14570,7 @@ function confirmarReconciliacion(){
     date: todayISO(),
     currency,
   });
+  logActividad('movimiento', `Corrección de saldo (reconciliación): ${reconCuentaKey} — ${currency==='USD'?'$':'S/'} ${numFmtSigned(diff,2)}`, {movId:idRecon});
   saveState();
   closeReconciliarModal();
   render();
@@ -14478,8 +14695,10 @@ function asignarBancoUI(key){
   if(r===null) return;
   const nuevo=r.trim();
   if(!state.bancoDeCuenta) state.bancoDeCuenta={};
+  const bancoAntes=state.bancoDeCuenta[key]||null;
   if(!nuevo || nuevo===key) delete state.bancoDeCuenta[key]; else state.bancoDeCuenta[key]=nuevo;
   saveState(); renderCuentasList(); render();
+  logActividad('cuenta_banco_cambiado', `"${key}" ahora es parte de: ${getBanco(key)}`, {cuentaKey:key, bancoAntes});
   toast(`"${key}" ahora es parte de: ${getBanco(key)}`);
 }
 // Cambia una cuenta entre Disponible / Ahorro / Otras (no suma). Solo cambia dónde se muestra y cómo
@@ -14502,6 +14721,7 @@ function cambiarTipoCuenta(k,nuevo){
   c.type=nuevo;
   saveState(); clearSaldoCache();
   renderCuentasList(); render();
+  logActividad('cuenta_tipo_cambiado', `"${accLabel(k)}" cambió de tipo: ${actual} → ${nuevo}`, {cuentaKey:k, tipoAntes:actual});
   const txt={operativa:'Disponible',ahorro:'Ahorro',otras:'Otras (no suma)'}[nuevo];
   toast(`"${accLabel(k)}" ahora es cuenta de ${txt}`);
 }
@@ -14511,8 +14731,10 @@ function renombrarBancoUI(banco){
   const nuevo=r.trim();
   if(!nuevo || nuevo===banco) return;
   if(!state.bancoDeCuenta) state.bancoDeCuenta={};
-  getAllAccountKeys().filter(k=>getBanco(k)===banco).forEach(k=>{ state.bancoDeCuenta[k]=nuevo; });
+  const afectadasRB=getAllAccountKeys().filter(k=>getBanco(k)===banco);
+  afectadasRB.forEach(k=>{ state.bancoDeCuenta[k]=nuevo; });
   saveState(); renderCuentasList(); render();
+  logActividad('banco_renombrado', `Banco renombrado: "${banco}" → "${nuevo}"`, {bancoAntes:banco, keys:afectadasRB});
   toast(`Banco renombrado a "${nuevo}"`);
 }
 function updateCuentaColor(key,color){
@@ -14538,8 +14760,9 @@ function editCuenta(key){
   const diff=val-saldoActual;
   if(Math.abs(diff)<0.005) return; // sin cambio real, no crea un movimiento de 0
   const currency=(state.customCuentas&&state.customCuentas[key]&&state.customCuentas[key].currency) || (key==='Ahorro Dólares'?'USD':'PEN');
+  const idEditBal='editbal-'+Date.now();
   pushMovimiento({
-    id:'editbal-'+Date.now(),
+    id:idEditBal,
     type: diff>0?'income':'expense',
     desc:'Corrección de saldo (editar cuenta)',
     amount: Math.abs(diff),
@@ -14547,6 +14770,7 @@ function editCuenta(key){
     date: todayISO(),
     currency,
   });
+  logActividad('movimiento', `Corrección de saldo (editar cuenta): ${key} — ${currency==='USD'?'$':'S/'} ${numFmtSigned(diff,2)}`, {movId:idEditBal});
   saveState(); renderCuentasList(); render();
 }
 
@@ -14685,34 +14909,62 @@ function escanearHuerfanos(){
     Object.keys(state[k]||{}).forEach(n=>{ if(!valid.has(n)) restos.push({campo:k,nombre:n,etiqueta:et}); });
   });
   (Array.isArray(state.ordenCuentas)?state.ordenCuentas:[]).forEach(n=>{ if(!valid.has(n)) restos.push({campo:'ordenCuentas',nombre:n,etiqueta:'orden'}); });
-  // Avisos generales (solo informan; no cambian nada)
+  // Avisos generales (solo informan; no cambian nada). Cada uno lleva un
+  // "id" estable para poder marcarlo como "ya lo revisé" (state.revisionIgnorados)
+  // sin tener que ocultar avisos futuros distintos que caigan en la misma categoría,
+  // y (cuando aplica) un "detalle" con ítems clicables que llevan directo al
+  // movimiento/consumo/registro exacto, para no tener que buscarlo a mano mes por mes.
   const avisos=[];
   try{
     const hoyIso=todayISO(), lejos=(new Date().getFullYear()+1)+hoyIso.slice(4);
-    const movs=state.movimientos||[], vistos=new Map(); let dup=0, sinCat=0, fechaMala=0, montoMalo=0;
+    const movs=state.movimientos||[], vistos=new Map(), dupDetalle=[], dupKeys=[]; let dup=0, sinCat=0, fechaMala=0, montoMalo=0;
+    const sinCatItems=[], fechaMalaItems=[], montoMaloItems=[];
     movs.forEach(m=>{
       const f=String(m.date||'');
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(f)||f<'2000-01-01'||f>lejos) fechaMala++;
-      const a=Number(m.amount); if(!(a>0)) montoMalo++;
-      if(m.type==='expense' && !m.cat && !esTransferenciaInterna(m) && !esCambioMoneda(m)) sinCat++;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(f)||f<'2000-01-01'||f>lejos){ fechaMala++; if(fechaMalaItems.length<5) fechaMalaItems.push(m); }
+      const a=Number(m.amount); if(!(a>0)){ montoMalo++; if(montoMaloItems.length<5) montoMaloItems.push(m); }
+      if(m.type==='expense' && !m.cat && !esTransferenciaInterna(m) && !esCambioMoneda(m)){ sinCat++; if(sinCatItems.length<5) sinCatItems.push(m); }
       const k=[f,(m.desc||'').trim().toLowerCase(),a,m.account,m.type].join('|');
-      if(vistos.has(k)) dup++; else vistos.set(k,1);
+      if(vistos.has(k)){ dup++; dupKeys.push(k); if(dupDetalle.length<5) dupDetalle.push(m); } else vistos.set(k,1);
     });
-    if(dup) avisos.push({ic:'🧾',txt:dup+' movimiento'+(dup===1?'':'s')+' parece'+(dup===1?'':'n')+' repetido'+(dup===1?'':'s')+' (misma fecha, concepto, monto y cuenta). Revísalos en Finanzas por si registraste algo dos veces.'});
-    if(fechaMala) avisos.push({ic:'📅',txt:fechaMala+' movimiento'+(fechaMala===1?'':'s')+' con fecha vacía, inválida o a más de un año en el futuro.'});
-    if(montoMalo) avisos.push({ic:'💲',txt:montoMalo+' movimiento'+(montoMalo===1?'':'s')+' con monto cero o inválido.'});
-    if(sinCat) avisos.push({ic:'🏷️',txt:sinCat+' gasto'+(sinCat===1?'':'s')+' sin categoría: no aparecen bien en Presupuesto ni en los esenciales.'});
-    (((state.auto||{}).prestamos)||[]).filter(p=>!(state.deudasMayores||[]).some(d=>d.id===p.dmId)).forEach(p=>avisos.push({ic:'🚗',txt:'El préstamo vinculado en Auto («'+(p.vehiculo||'sin nombre')+'») apunta a una deuda mayor que ya no existe.'}));
+    const simbMov=c=>c==='USD'?'$':'S/';
+    const irAMov=m=>()=>irAMovimiento(m.id,m.date);
+    const labelMov=m=>fmtFechaCorta(m.date)+' — "'+(m.desc||'(sin descripción)')+'" — '+simbMov(m.currency)+' '+numFmtSigned(Number(m.amount),2)+' ('+accLabel(m.account)+')';
+    if(dup){
+      avisos.push({ic:'🧾',id:'dup:'+_revHash(dupKeys.slice().sort().join('·')),
+        txt:dup+' movimiento'+(dup===1?'':'s')+' parece'+(dup===1?'':'n')+' repetido'+(dup===1?'':'s')+' (misma fecha, concepto, monto y cuenta). Revísalos en Finanzas por si registraste algo dos veces:',
+        detalle:dupDetalle.map(m=>({label:labelMov(m),accion:irAMov(m)})),
+        masInfo:dup>dupDetalle.length?('… y '+(dup-dupDetalle.length)+' más.'):null});
+    }
+    if(fechaMala) avisos.push({ic:'📅',id:'fechaMala:'+fechaMala,
+      txt:fechaMala+' movimiento'+(fechaMala===1?'':'s')+' con fecha vacía, inválida o a más de un año en el futuro:',
+      detalle:fechaMalaItems.map(m=>({label:(m.desc||'(sin descripción)')+' ('+accLabel(m.account)+')',accion:irAMov(m)})),
+      masInfo:fechaMala>fechaMalaItems.length?('… y '+(fechaMala-fechaMalaItems.length)+' más.'):null});
+    if(montoMalo) avisos.push({ic:'💲',id:'montoMalo:'+montoMalo,
+      txt:montoMalo+' movimiento'+(montoMalo===1?'':'s')+' con monto cero o inválido:',
+      detalle:montoMaloItems.map(m=>({label:labelMov(m),accion:irAMov(m)})),
+      masInfo:montoMalo>montoMaloItems.length?('… y '+(montoMalo-montoMaloItems.length)+' más.'):null});
+    if(sinCat) avisos.push({ic:'🏷️',id:'sinCat:'+sinCat,
+      txt:sinCat+' gasto'+(sinCat===1?'':'s')+' sin categoría: no aparecen bien en Presupuesto ni en los esenciales.'+(sinCatItems.length?' Algunos ejemplos:':''),
+      detalle:sinCatItems.map(m=>({label:labelMov(m),accion:irAMov(m)})),
+      masInfo:sinCat>sinCatItems.length?('… y '+(sinCat-sinCatItems.length)+' más.'):null});
+    (((state.auto||{}).prestamos)||[]).filter(p=>!(state.deudasMayores||[]).some(d=>d.id===p.dmId)).forEach(p=>avisos.push({ic:'🚗',id:'autoPrestamoRoto:'+p.id,
+      txt:'El préstamo vinculado en Auto («'+(p.vehiculo||'sin nombre')+'») apunta a una deuda mayor que ya no existe.',
+      detalle:[{label:'Ver préstamo en Auto',accion:()=>{ showPage('combustible'); try{ if(p.vid) autoSelVeh(p.vid); }catch(e){} autoTab('prestamo'); }}]}));
     const h=state.hogar;
     if(h&&Array.isArray(h.conceptos)){
-      h.conceptos.filter(c=>c.pfId&&!(state.pagosFrecuentes||[]).some(p=>p.id===c.pfId)).forEach(c=>avisos.push({ic:'🏡',txt:'El concepto de Hogar «'+c.nombre+'» apunta a un Pago frecuente que ya no existe.'}));
+      h.conceptos.filter(c=>c.pfId&&!(state.pagosFrecuentes||[]).some(p=>p.id===c.pfId)).forEach(c=>avisos.push({ic:'🏡',id:'hogarConceptoRoto:'+c.id,
+        txt:'El concepto de Hogar «'+c.nombre+'» apunta a un Pago frecuente que ya no existe.',
+        detalle:[{label:'Ver concepto en Hogar',accion:()=>{ showPage('hogar'); HG.tab='conceptos'; renderHogar(); }}]}));
       const ids=new Set(h.conceptos.map(c=>c.id)); const sueltos=(h.registros||[]).filter(r=>!ids.has(r.cid)).length;
-      if(sueltos) avisos.push({ic:'🏡',txt:sueltos+' registro'+(sueltos===1?'':'s')+' de Hogar sin su concepto.'});
+      if(sueltos) avisos.push({ic:'🏡',id:'hogarRegSueltos:'+sueltos,txt:sueltos+' registro'+(sueltos===1?'':'s')+' de Hogar sin su concepto.'});
       const bids=new Set((h.bolsas||[]).map(b=>b.id)), kSueltas=(h.compras||[]).filter(k=>!bids.has(k.bid)).length;
-      if(kSueltas) avisos.push({ic:'🛒',txt:kSueltas+' compra'+(kSueltas===1?'':'s')+' de Hogar sin su presupuesto.'});
+      if(kSueltas) avisos.push({ic:'🛒',id:'hogarComprasSueltas:'+kSueltas,txt:kSueltas+' compra'+(kSueltas===1?'':'s')+' de Hogar sin su presupuesto.'});
       const dMin=(window._movDesdeIso||'').slice(0,7), idsM=new Set((state.movimientos||[]).map(m=>m.id));
       const sinGasto=(h.compras||[]).filter(k=>k.movId&&!idsM.has(k.movId)&&!(dMin&&String(k.fecha).slice(0,7)<dMin)).length;
-      if(sinGasto) avisos.push({ic:'🛒',txt:sinGasto+' compra'+(sinGasto===1?'':'s')+' de Hogar cuyo gasto ya no está en Finanzas (se sigue contando en el presupuesto). Ábrela y elimínala si fue un error.'});
+      if(sinGasto) avisos.push({ic:'🛒',id:'hogarCompraSinGasto:'+sinGasto,
+        txt:sinGasto+' compra'+(sinGasto===1?'':'s')+' de Hogar cuyo gasto ya no está en Finanzas (se sigue contando en el presupuesto). Ábrela y elimínala si fue un error.',
+        detalle:[{label:'Ver Lista de compras del hogar',accion:()=>{ showPage('hogar'); HG.vista='lista'; HG.tab='conceptos'; renderHogar(); }}]});
     }
   }catch(e){ console.warn('Avisos omitidos:', e&&e.message); }
   const enlaces=[];
@@ -14733,17 +14985,130 @@ function escanearHuerfanos(){
       if(desde && d.fechaPago.slice(0,7)<desde) return;
       const yd=d.direccion==='yo_debo', desc=(yd?'Pago deuda — ':'Cobro préstamo — ')+d.nombre;
       const hay=d.movPagoId ? ids.has(d.movPagoId) : movs.some(m=>m.desc===desc&&m.date===d.fechaPago);
-      if(!hay) avisos.push({ic:'🤝',txt:'La deuda «'+d.nombre+'» figura como '+(yd?'pagada':'cobrada')+' pero no encuentro su movimiento en Finanzas: el saldo de la cuenta no se movió. Revierte el pago y vuelve a registrarlo.'});
+      if(!hay){
+        const detalleDeuda='\nBusqué un movimiento con descripción exacta "'+desc+'" en la fecha '+fmtFechaCorta(d.fechaPago)+(d.cuentaPago?' en la cuenta "'+accLabel(d.cuentaPago)+'"':'')+(d.movPagoId?' (con el id guardado "'+d.movPagoId+'")':' (no tiene un id de movimiento guardado, así que busqué por texto y fecha exactos)')+'. Si tu movimiento tiene otra fecha, otra cuenta o la descripción editada, por eso no lo encuentro — aunque tú SÍ lo veas en la lista.';
+        avisos.push({ic:'🤝',id:'deudaSinMov:'+d.id,txt:'La deuda «'+d.nombre+'» figura como '+(yd?'pagada':'cobrada')+' pero no encuentro su movimiento en Finanzas: el saldo de la cuenta no se movió. Revierte el pago y vuelve a registrarlo.'+detalleDeuda,
+          detalle:[{label:'Ver deuda «'+d.nombre+'»',accion:()=>{ deudaFilter='all'; showPage('deudas'); resaltarElemento('deuda-card-'+d.id); }}]});
+      }
     });
     const dIds=new Set((state.deudas||[]).map(d=>d.movPagoId).filter(Boolean));
   }catch(e){ console.warn('Enlaces omitidos:', e&&e.message); }
-  return {huerfanas:out,restos,avisos,enlaces};
+  const ignorados=state.revisionIgnorados||{};
+  const avisosOcultos=avisos.filter(a=>a.id&&ignorados[a.id]);
+  const avisosVisibles=avisos.filter(a=>!(a.id&&ignorados[a.id]));
+  return {huerfanas:out,restos,avisos:avisosVisibles,avisosOcultos,enlaces};
 }
-function abrirRevisionDatos(){ renderRevisionDatos(); }
-function renderRevisionDatos(){
-  const {huerfanas,restos,avisos,enlaces}=escanearHuerfanos();
+function _revHash(s){ let h=0; s=String(s); for(let i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
+// Navegación directa desde "Revisar datos": llevan al movimiento/consumo exacto
+// (en vez de obligar a buscarlo a mano mes por mes) y lo resaltan un momento.
+function irAMovimiento(movId, fechaStr){
+  try{
+    const fecha=new Date(fechaStr+'T12:00:00');
+    state.currentYear=fecha.getFullYear(); state.currentMonth=fecha.getMonth();
+    state.currentTab='todos'; selectedAccounts.clear(); movQuickFilter=null;
+    const cf=document.getElementById('cat-filter'); if(cf) cf.value='';
+    const sb=document.getElementById('mov-search'); if(sb) sb.value='';
+    showPage('finanzas');
+    resaltarElemento('mov-row-'+movId);
+  }catch(e){ console.warn('No se pudo ir al movimiento:', e&&e.message); }
+}
+function irAConsumoTC(tarjetaId, monthKey, consumoId){
+  try{
+    tcSearchQuery='';
+    showPage('tarjetas');
+    openTCDetail(tarjetaId, monthKey);
+    resaltarElemento('tc-row-'+consumoId);
+  }catch(e){ console.warn('No se pudo ir al consumo:', e&&e.message); }
+}
+// ── Revisión de TODA la app (solo para el acceso rápido 🚨) — además de lo
+// que ya revisa escanearHuerfanos() (cuentas, restos, avisos generales,
+// enlaces de Servicios), suma problemas de Tarjetas de crédito. El botón
+// "🔍 Revisar datos" de Gestionar Cuentas sigue usando SOLO escanearHuerfanos(),
+// sin este agregado, a propósito.
+function escanearTarjetasProblemas(){
+  const avisos=[];
+  try{
+    const hoyIso=todayISO(), lejos=(new Date().getFullYear()+1)+hoyIso.slice(4);
+    const vistos=new Map(), dupDetalle=[], dupKeys=[], fechaMalaItems=[], montoMaloItems=[]; let dup=0, fechaMala=0, montoMalo=0;
+    (state.tarjetas||[]).forEach(t=>{
+      Object.entries(t.movs||{}).forEach(([mk,movs])=>{
+        (movs||[]).forEach(m=>{
+          const f=String(m.fecha||'');
+          if(!/^\d{4}-\d{2}-\d{2}$/.test(f)||f<'2000-01-01'||f>lejos){ fechaMala++; if(fechaMalaItems.length<5) fechaMalaItems.push({t,mk,m}); }
+          const a=Number(m.monto); if(!(a>0)){ montoMalo++; if(montoMaloItems.length<5) montoMaloItems.push({t,mk,m}); }
+          const k=[t.id,f,(m.desc||'').trim().toLowerCase(),a,m.currency||t.currency].join('|');
+          if(vistos.has(k)){ dup++; dupKeys.push(k); if(dupDetalle.length<5) dupDetalle.push({t,mk,m}); } else vistos.set(k,1);
+        });
+      });
+    });
+    const simb=c=>c==='USD'?'$':'S/';
+    const nomT=t=>t.banco+(t.cat?' '+t.cat:'');
+    const irACons=(t,mk,m)=>()=>irAConsumoTC(t.id,mk,m.id);
+    const labelCons=({t,mk,m})=>fmtFechaCorta(m.fecha)+' — "'+(m.desc||'(sin descripción)')+'" — '+simb(m.currency||t.currency)+' '+numFmtSigned(Number(m.monto),2)+' ('+nomT(t)+')';
+    if(dup){
+      avisos.push({ic:'💳',id:'tcDup:'+_revHash(dupKeys.slice().sort().join('·')),
+        txt:dup+' consumo'+(dup===1?'':'s')+' de tarjeta parece'+(dup===1?'':'n')+' repetido'+(dup===1?'':'s')+' (misma fecha, concepto, monto y tarjeta). Revísalos por si se cargó un consumo dos veces:',
+        detalle:dupDetalle.map(x=>({label:labelCons(x),accion:irACons(x.t,x.mk,x.m)})),
+        masInfo:dup>dupDetalle.length?('… y '+(dup-dupDetalle.length)+' más.'):null});
+    }
+    if(fechaMala) avisos.push({ic:'📅',id:'tcFechaMala:'+fechaMala,
+      txt:fechaMala+' consumo'+(fechaMala===1?'':'s')+' de tarjeta con fecha vacía, inválida o a más de un año en el futuro:',
+      detalle:fechaMalaItems.map(x=>({label:(x.m.desc||'(sin descripción)')+' ('+nomT(x.t)+')',accion:irACons(x.t,x.mk,x.m)})),
+      masInfo:fechaMala>fechaMalaItems.length?('… y '+(fechaMala-fechaMalaItems.length)+' más.'):null});
+    if(montoMalo) avisos.push({ic:'💲',id:'tcMontoMalo:'+montoMalo,
+      txt:montoMalo+' consumo'+(montoMalo===1?'':'s')+' de tarjeta con monto cero o inválido:',
+      detalle:montoMaloItems.map(x=>({label:labelCons(x),accion:irACons(x.t,x.mk,x.m)})),
+      masInfo:montoMalo>montoMaloItems.length?('… y '+(montoMalo-montoMaloItems.length)+' más.'):null});
+  }catch(e){ console.warn('Avisos de tarjetas omitidos:', e&&e.message); }
+  return {avisos};
+}
+function escanearTodoApp(){
+  const base=escanearHuerfanos();
+  const tc=escanearTarjetasProblemas();
+  const ignorados=state.revisionIgnorados||{};
+  const tcVisibles=tc.avisos.filter(a=>!(a.id&&ignorados[a.id]));
+  const tcOcultos=tc.avisos.filter(a=>a.id&&ignorados[a.id]);
+  return {...base, avisos:base.avisos.concat(tcVisibles), avisosOcultos:base.avisosOcultos.concat(tcOcultos)};
+}
+function revIgnorarAviso(id){
+  if(!id) return;
+  if(!state.revisionIgnorados) state.revisionIgnorados={};
+  state.revisionIgnorados[id]=true;
+  saveState();
+  renderRevisionDatos();
+  toast('Marcado como revisado — no se mostrará de nuevo mientras no cambie');
+}
+function revMostrarAvisoOculto(id){
+  if(state.revisionIgnorados) delete state.revisionIgnorados[id];
+  saveState();
+  renderRevisionDatos();
+}
+function revMostrarTodosOcultos(){
+  state.revisionIgnorados={};
+  saveState();
+  renderRevisionDatos();
+  toast('Todos los avisos ocultados vuelven a mostrarse');
+}
+function abrirRevisionDatos(){ renderRevisionDatos(false); }
+function abrirRevisionDatosCompleta(){ renderRevisionDatos(true); }
+function updateRevisionBadge(){
+  const badge=document.getElementById('revision-badge');
+  if(!badge) return;
+  try{
+    const {huerfanas,restos,avisos,enlaces}=escanearTodoApp();
+    const n=Object.keys(huerfanas).length + (restos?restos.length:0) + (avisos?avisos.length:0) + (enlaces?enlaces.length:0);
+    badge.style.display = n ? 'block' : 'none';
+    badge.textContent = n>9 ? '9+' : String(n);
+  }catch(e){ console.warn('Badge de Revisar datos omitido:', e&&e.message); }
+}
+function renderRevisionDatos(modoCompleto){
+  window._revisionModoCompleto=modoCompleto;
+  window._revisionAcciones=[];
+  const {huerfanas,restos,avisos,avisosOcultos,enlaces}=modoCompleto?escanearTodoApp():escanearHuerfanos();
   _revNombres=Object.keys(huerfanas); _revEnl=enlaces||[];
-  let h='<div class="modal-title"><span>🔍 Revisar datos</span><button class="modal-close" onclick="_cerrarModalDin(\'revision-overlay\')">✕</button></div>';
+  { const badge=document.getElementById('revision-badge'); if(badge){ const n=_revNombres.length+(restos?restos.length:0)+(avisos?avisos.length:0)+_revEnl.length; badge.style.display=n?'block':'none'; badge.textContent=n>9?'9+':String(n); } }
+  let h='<div class="modal-title"><span>🔍 Revisar datos'+(modoCompleto?' — toda la app':'')+'</span><button class="modal-close" onclick="_cerrarModalDin(\'revision-overlay\')">✕</button></div>';
+  if(modoCompleto) h+='<div style="font-size:11px;color:var(--text3);margin-bottom:10px">Incluye cuentas, tarjetas de crédito y el resto de la app.</div>';
   if(!_revNombres.length && !restos.length && !avisos.length && !_revEnl.length){
     h+='<div style="text-align:center;padding:22px 8px"><div style="font-size:34px">✅</div><div style="font-size:14px;font-weight:600;margin:6px 0">Todo en orden</div><div style="font-size:12px;color:var(--text3);line-height:1.5">Ningún movimiento, pago frecuente, meta, deuda ni servicio apunta a una cuenta que no exista.</div></div>';
   } else {
@@ -14774,7 +15139,17 @@ function renderRevisionDatos(){
     });
     h+='</div>';
   }
-  if(avisos.length) h+='<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:10px"><div style="font-weight:600;font-size:13px;margin-bottom:6px">Para revisar</div>'+avisos.map(a=>'<div style="font-size:12px;line-height:1.5;color:var(--text2);padding:3px 0">'+a.ic+' '+escapeHtml(a.txt)+'</div>').join('')+'</div>';
+  if(avisos.length) h+='<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:10px"><div style="font-weight:600;font-size:13px;margin-bottom:6px">Para revisar</div>'+avisos.map(a=>{
+    const detalleHtml=(a.detalle||[]).map(d=>{
+      const idx=window._revisionAcciones.length; window._revisionAcciones.push(d.accion);
+      return '<div style="font-size:11.5px;color:var(--accent);cursor:pointer;padding:3px 0 3px 20px" onclick="_cerrarModalDin(\'revision-overlay\');window._revisionAcciones['+idx+']()">→ '+escapeHtml(d.label)+'</div>';
+    }).join('');
+    const masHtml=a.masInfo?'<div style="font-size:11px;color:var(--text3);padding-left:20px">'+escapeHtml(a.masInfo)+'</div>':'';
+    return '<div style="padding:6px 0;border-top:1px solid var(--border2)"><div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between"><div style="font-size:12px;line-height:1.5;color:var(--text2);white-space:pre-line;flex:1">'+a.ic+' '+escapeHtml(a.txt)+'</div>'+(a.id?'<button class="config-action-btn neutral" style="flex-shrink:0;font-size:11px;padding:4px 8px" onclick="revIgnorarAviso(\''+a.id+'\')" title="Ya lo revisé y está bien — no mostrar de nuevo mientras no cambie">✓ Ya lo revisé</button>':'')+'</div>'+detalleHtml+masHtml+'</div>';
+  }).join('')+'</div>';
+  if(avisosOcultos&&avisosOcultos.length){
+    h+='<div style="font-size:11px;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>🙈 '+avisosOcultos.length+' aviso'+(avisosOcultos.length===1?'':'s')+' marcado'+(avisosOcultos.length===1?'':'s')+' como "ya lo revisé" ('+avisosOcultos.map(a=>'<a href="javascript:revMostrarAvisoOculto(\''+a.id+'\')" style="color:var(--accent)">mostrar</a>').join(', ')+')</span><button class="btn" style="font-size:11px;padding:4px 8px" onclick="revMostrarTodosOcultos()">Mostrar todos</button></div>';
+  }
   _abrirModalDin('revision-overlay',h,560);
 }
 function revReasignar(i){
@@ -14996,6 +15371,7 @@ function renombrarCuentaUI(key){
   const ok=renombrarCuentaGlobal(key, trimmed);
   if(!ok) return;
   saveState();
+  logActividad('cuenta_renombrada', `Cuenta renombrada: "${key}" → "${trimmed}"`, {nombreAntes:key, nombreNuevo:trimmed});
   if(typeof ahiCuentaActual!=='undefined' && ahiCuentaActual===key) ahiCuentaActual=trimmed;
   renderCuentasList();
   render();
@@ -17125,6 +17501,7 @@ function editarNombreGrupoCuotas(t, grupoCuotaId, nombreActual){
     }
   }));
   saveState(); renderTCDetail();
+  logActividad('tc_cuotas_renombradas', `Compra a cuotas renombrada: "${nombreActual}" → "${limpio}" (${cambiados} cuotas)`, {tarjetaId:t.id, grupoCuotaId, nombreAntes:nombreActual});
   toast(`${cambiados} cuotas renombradas`);
 }
 
@@ -18989,6 +19366,14 @@ const HG_FREC_ETQ={1:'Mensual',2:'Cada 2 meses',3:'Cada 3 meses',4:'Cada 4 meses
   .hg-bar-in>div{height:12px;border-radius:6px}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media (pointer:coarse){.btn,.config-action-btn,.month-btn{min-height:44px}}
+  @media (pointer:coarse) and (max-width:480px){
+    .btn,.config-action-btn,.hg-tab,.auto-tab,.fuel-type-tab,.av-chip,.ar-chip,.nav-dropdown-item{min-height:0!important;padding:var(--tap-py-m) var(--tap-px-m)!important;font-size:var(--tap-fs-m)!important;white-space:nowrap;flex-shrink:0}
+    .month-btn{min-height:0}
+    .btn-icon{width:30px;height:30px}
+    .fuel-chart-tab{padding:3px 9px;font-size:var(--tap-fs-sm-m)}
+    .fuel-chart-rango .fuel-chart-tab{padding:2px 7px;font-size:9px}
+    .dm-tipo-badge{padding:2px 7px;font-size:8px}
+  }
   @media (max-width:640px){.hg-kpis{grid-template-columns:1fr 1fr}.hg-kpi .v{font-size:17px}.hg-chart{gap:4px}.hg-tbl{font-size:12px}.hg-tbl th,.hg-tbl td{padding:6px 4px}}
   `;
   document.head.appendChild(st);
@@ -19156,14 +19541,18 @@ function hgHtmlPrestamo(){
 }
 function hgVincularPrestamo(){
   const id=(document.getElementById('hg-sel-dm')||{}).value; const d=(state.deudasMayores||[]).find(x=>x.id===id); if(!d) return;
-  hgEnsure().prestamos.push({id:'hp-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dmId:id,nombre:''});
+  const nuevo={id:'hp-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dmId:id,nombre:''};
+  hgEnsure().prestamos.push(nuevo);
   saveState(); renderHogar(); toast('Préstamo vinculado al Hogar');
+  logActividad('hogar_prestamo_vinculado', `Préstamo vinculado al Hogar: ${d.nombre}`, {prestamoId:nuevo.id});
 }
-function hgDesvincularPrestamo(pid){ const h=hgEnsure(); h.prestamos=h.prestamos.filter(p=>p.id!==pid); saveState(); renderHogar(); toast('Vínculo quitado (la deuda no se borra)'); }
+function hgDesvincularPrestamo(pid){ const h=hgEnsure(); const antes=h.prestamos.find(p=>p.id===pid); h.prestamos=h.prestamos.filter(p=>p.id!==pid); saveState(); renderHogar(); toast('Vínculo quitado (la deuda no se borra)'); if(antes) logActividad('hogar_prestamo_desvinculado', `Vínculo de préstamo del Hogar quitado`, {prestamoSnapshot:antes}); }
 function hgEditarPrestamo(pid){
   const p=hgEnsure().prestamos.find(x=>x.id===pid); if(!p) return;
   const n=prompt('Nombre del préstamo del hogar',p.nombre||''); if(n===null) return;
+  const nombreAntesHEP=p.nombre;
   p.nombre=n.trim(); saveState(); renderHogar();
+  if(nombreAntesHEP!==p.nombre) logActividad('hogar_prestamo_editado', `Préstamo del hogar renombrado: "${nombreAntesHEP}" → "${p.nombre}"`, {prestamoId:pid, nombreAntes:nombreAntesHEP});
 }
 function hgHtmlCabecera(){
   const hayPFSinEnlace=hgPFDisponibles().length>0;
@@ -19363,16 +19752,21 @@ function hgGuardarConcepto(id){
     o.moneda=pf.currency||'PEN'; o.dia=pf.diaPago&&pf.diaPago!=='ultimo'?pf.diaPago:''; o.pagarCon='';
     if(!o.montoRef&&pf.montoFijo) o.montoRef=Number(pf.montoFijo)||0;
   }
-  if(id){ const c=h.conceptos.find(x=>x.id===id); if(c) Object.assign(c,o); }
-  else h.conceptos.push({id:'hg-'+Date.now(),creado:todayISO(),archivado:false,...o});
+  let antes=null, idFinal=id;
+  if(id){ const c=h.conceptos.find(x=>x.id===id); if(c){ antes=JSON.parse(JSON.stringify(c)); Object.assign(c,o); } }
+  else { const nuevo={id:'hg-'+Date.now(),creado:todayISO(),archivado:false,...o}; h.conceptos.push(nuevo); idFinal=nuevo.id; }
   saveState(); _cerrarModalDin('hg-concepto-ov'); renderHogar(); toast(id?'Concepto actualizado':'Concepto agregado');
+  if(id) logActividad('hogar_concepto_editado', `Concepto del Hogar editado: ${o.nombre}`, {conceptoId:idFinal, snapshotAntes:antes});
+  else logActividad('hogar_concepto_nuevo', `Concepto del Hogar nuevo: ${o.nombre}`, {conceptoId:idFinal});
 }
 function hgEliminarConcepto(id){
   const h=hgEnsure(), c=h.conceptos.find(x=>x.id===id); if(!c) return;
   if(!confirm('¿Eliminar «'+c.nombre+'» y su historial del hogar?\n\nLos gastos ya registrados en Movimientos y el Pago frecuente enlazado NO se borran.')) return;
+  const registrosBorrados=h.registros.filter(r=>r.cid===id);
   h.conceptos=h.conceptos.filter(x=>x.id!==id);
   h.registros=h.registros.filter(r=>r.cid!==id);
   saveState(); _cerrarModalDin('hg-concepto-ov'); HG.vista='lista'; renderHogar(); toast('Concepto eliminado');
+  logActividad('hogar_concepto_eliminado', `Concepto del Hogar eliminado: ${c.nombre}`, {conceptoSnapshot:c, registrosSnapshot:registrosBorrados});
 }
 function hgModalImportar(){
   const pfs=hgPFDisponibles();
@@ -19491,18 +19885,28 @@ function hgGuardarEdicionReg(cid,mk){
   const x=hgHist(c)[mk]; if(!x) return;
   const pf=hgPF(c), viaPF=!!(pf&&x.viaPF);
   const consRaw=parseFloat((document.getElementById('hge-cons')||{}).value), nota=(document.getElementById('hge-nota')||{}).value||'';
+  const esNuevoHGE=!r;
   if(!r){ r={id:'hr-'+Date.now(),cid,mk,monto:x.monto,consumo:null,fecha:x.fecha,movId:null,nota:''}; h.registros.push(r); }
+  const antesHGE=esNuevoHGE?null:JSON.parse(JSON.stringify(r));
+  let movAntesHGE=null;
   r.consumo=(c.unidad&&consRaw>0)?consRaw:null; r.nota=nota;
   if(!viaPF){
     const m=parseFloat((document.getElementById('hge-monto')||{}).value);
-    if(m>0){ r.monto=m; if(r.movId){ const mv=(state.movimientos||[]).find(z=>z.id===r.movId); if(mv) mv.amount=m; clearSaldoCache(); } }
+    if(m>0){ r.monto=m; if(r.movId){ const mv=(state.movimientos||[]).find(z=>z.id===r.movId); if(mv){ movAntesHGE={id:mv.id,amount:mv.amount}; mv.amount=m; } clearSaldoCache(); } }
   }
-  saveState(); _cerrarModalDin('hg-edit-ov'); render(); renderHogar(); toast('Registro actualizado');
+  saveState(); _cerrarModalDin('hg-edit-ov'); render(); renderHogar();
+  logActividad('hogar_registro_editado', `Registro del hogar: ${c.nombre||''} (${mk})`, {registroId:r.id, esNuevo:esNuevoHGE, snapshotAntes:antesHGE, movAntes:movAntesHGE});
+  toast('Registro actualizado');
 }
 function hgBorrarReg(cid,mk){
   if(!confirm('¿Eliminar este registro del historial del hogar?\n\nEl gasto en Movimientos NO se borra; si quieres quitarlo, bórralo allí.')) return;
-  const h=hgEnsure(); h.registros=h.registros.filter(r=>!(r.cid===cid&&r.mk===mk));
-  saveState(); _cerrarModalDin('hg-edit-ov'); renderHogar(); toast('Registro eliminado');
+  const h=hgEnsure();
+  const rSnapshotHBR=(h.registros||[]).find(x=>x.cid===cid&&x.mk===mk);
+  const rSnapshotHBRCopy=rSnapshotHBR?JSON.parse(JSON.stringify(rSnapshotHBR)):null;
+  h.registros=h.registros.filter(r=>!(r.cid===cid&&r.mk===mk));
+  saveState(); _cerrarModalDin('hg-edit-ov'); renderHogar();
+  if(rSnapshotHBRCopy) logActividad('hogar_registro_eliminado', `Registro del hogar eliminado (${mk})`, {registroSnapshot:rSnapshotHBRCopy});
+  toast('Registro eliminado');
 }
 
 // ══════════════════════════════════════════════════════
@@ -19748,16 +20152,24 @@ function hgGuardarBolsa(id){
   const nombre=(g('hgb-nombre')||'').trim(); if(!nombre){ alert('Escribe un nombre.'); return; }
   const pres=parseFloat(g('hgb-pres')); if(!(pres>0)){ alert('Escribe el presupuesto mensual.'); return; }
   let b=id?h.bolsas.find(x=>x.id===id):null;
+  const esNuevoHGB=!b;
+  const antesHGB=b?JSON.parse(JSON.stringify(b)):null;
   if(!b){ b={id:'hb-'+Date.now()}; h.bolsas.push(b); }
   Object.assign(b,{nombre,presupuestoMes:pres,moneda:g('hgb-mon')==='USD'?'USD':'PEN',pagarCon:g('hgb-pagar')||'',cat:g('hgb-cat')||''});
-  saveState(); _cerrarModalDin('hg-bolsa-ov'); render(); renderHogar(); toast('Presupuesto guardado');
+  saveState(); _cerrarModalDin('hg-bolsa-ov'); render(); renderHogar();
+  logActividad(esNuevoHGB?'hogar_bolsa_nueva':'hogar_bolsa_editada', `Presupuesto del hogar: ${nombre}`, esNuevoHGB?{bolsaId:b.id}:{bolsaId:b.id, snapshotAntes:antesHGB});
+  toast('Presupuesto guardado');
 }
 function hgEliminarBolsa(id){
   const h=hgEnsure(), b=h.bolsas.find(x=>x.id===id); if(!b) return;
   const n=h.compras.filter(x=>x.bid===id).length;
   if(!confirm('¿Eliminar «'+b.nombre+'»?'+(n?'\n\nSe quitan sus '+n+' compras de esta sección. Los gastos en Movimientos NO se borran.':''))) return;
+  const bolsaSnapshotHEB=JSON.parse(JSON.stringify(b));
+  const comprasSnapshotHEB=h.compras.filter(x=>x.bid===id).map(x=>JSON.parse(JSON.stringify(x)));
   h.bolsas=h.bolsas.filter(x=>x.id!==id); h.compras=h.compras.filter(x=>x.bid!==id);
-  saveState(); _cerrarModalDin('hg-bolsa-ov'); HG.vista='lista'; render(); renderHogar(); toast('Presupuesto eliminado');
+  saveState(); _cerrarModalDin('hg-bolsa-ov'); HG.vista='lista'; render(); renderHogar();
+  logActividad('hogar_bolsa_eliminada', `Presupuesto eliminado: ${b.nombre}`, {bolsaSnapshot:bolsaSnapshotHEB, comprasSnapshot:comprasSnapshotHEB});
+  toast('Presupuesto eliminado');
 }
 function hgModalCompra(bid,cid){
   const h=hgEnsure(), bs=hgBolsas();
@@ -19817,10 +20229,14 @@ function hgBorrarCompra(cid){
   const h=hgEnsure(), k=h.compras.find(x=>x.id===cid); if(!k) return;
   const tiene=!!(k.movId||k.consumoId);
   if(!confirm('¿Eliminar esta compra?'+(tiene?'\n\nTambién se borra su gasto en Movimientos.':''))) return;
-  if(k.movId){ _movimientosBorradosExplicitamente.push(k.movId); state.movimientos=(state.movimientos||[]).filter(m=>m.id!==k.movId); clearSaldoCache(); }
+  const compraSnapshotHBC=JSON.parse(JSON.stringify(k));
+  let movSnapshotHBC=null;
+  if(k.movId){ movSnapshotHBC=(state.movimientos||[]).find(m=>m.id===k.movId)||null; _movimientosBorradosExplicitamente.push(k.movId); state.movimientos=(state.movimientos||[]).filter(m=>m.id!==k.movId); clearSaldoCache(); }
   if(k.consumoId){ const t=getTarjeta(k.tid); if(t) Object.keys(t.movs||{}).forEach(bk=>{ t.movs[bk]=t.movs[bk].filter(c=>c.id!==k.consumoId); }); }
   h.compras=h.compras.filter(x=>x.id!==cid);
-  saveState(); _cerrarModalDin('hg-compra-ov'); render(); renderHogar(); toast('Compra eliminada');
+  saveState(); _cerrarModalDin('hg-compra-ov'); render(); renderHogar();
+  logActividad('hogar_compra_eliminada', `Compra del hogar eliminada: ${k.nota||k.monto}`, {compraSnapshot:compraSnapshotHBC, movSnapshot:movSnapshotHBC});
+  toast('Compra eliminada');
 }
 
 // ══════════════════════════════════════════════════════
@@ -19966,13 +20382,17 @@ function mnBorrarGrupo(g){
   _mnRender();
 }
 function mnGuardar(){
+  const antes=state.menuOrden?JSON.parse(JSON.stringify(state.menuOrden)):null;
   const gN={}; Object.keys(_mnDraft.nombres).forEach(g=>{ const c=_mnDraft.custom.some(x=>x.id===g); if(c||_mnDraft.nombres[g]!==(_menuDef.gEtq[g])) gN[g]=_mnDraft.nombres[g]; });
   state.menuOrden={top:_mnDraft.top.slice(),grupos:JSON.parse(JSON.stringify(_mnDraft.grupos)),custom:_mnDraft.custom.map(c=>({id:c.id,nombre:_mnDraft.nombres[c.id]||c.nombre})),gNombres:gN};
   window._menuSig=null; aplicarOrdenMenu(); saveState(); _cerrarModalDin('menu-orden-overlay'); toast('Orden del menú guardado');
+  if(JSON.stringify(antes)!==JSON.stringify(state.menuOrden)) logActividad('menu_orden_editado', 'Orden del menú modificado', {snapshotAntes:antes});
 }
 function mnRestablecer(){
   if(!confirm('¿Volver al orden original del menú? También se quitarán los grupos que creaste y los nombres que cambiaste.')) return;
+  const antesMNR=state.menuOrden?JSON.parse(JSON.stringify(state.menuOrden)):null;
   delete state.menuOrden; window._menuSig=null; aplicarOrdenMenu(); saveState(); _cerrarModalDin('menu-orden-overlay'); toast('Menú restablecido');
+  if(antesMNR) logActividad('menu_orden_editado', 'Menú restablecido a su orden original', {snapshotAntes:antesMNR});
 }
 
 // ══════════════════════════════════════════════════════
@@ -20075,7 +20495,7 @@ function autoAplicarTab(){
 }
 function autoSelector(wrap){
   let vs=document.getElementById('auto-vsel');
-  if(!vs){ vs=document.createElement('div'); vs.id='auto-vsel'; wrap.parentNode.insertBefore(vs,wrap.nextSibling); }
+  if(!vs){ vs=document.createElement('div'); vs.id='auto-vsel'; vs.className='auto-vsel-row'; wrap.parentNode.insertBefore(vs,wrap.nextSibling); }
   const V=autoVehs();
   if(V.length<2){ vs.innerHTML=''; vs.style.display='none'; return; }
   const res=AUTO.tab==='resumen', act=autoVidAct(), todos=autoVistaTodos();
@@ -20321,12 +20741,16 @@ function autoModalVeh(id){
 function autoGuardarVeh(id){
   const V=autoVehs(); let v=id?V.find(x=>x.id===id):null;
   autoSellar();
+  const esNuevo=!v;
+  const antes=v?JSON.parse(JSON.stringify(v)):null;
   if(!v){ v={id:'av-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}; V.push(v); }
   const g=i=>(document.getElementById(i)||{}).value||'';
   v.nombre=g('av-nom').trim()||'Mi auto'; v.icono=g('av-ico')||'🚗'; v.placa=g('av-placa').trim().toUpperCase(); v.anio=g('av-anio').trim(); v.combustible=g('av-comb');
   v.soatVence=g('av-soat'); v.revVence=g('av-rev'); v.seguroVence=g('av-seg'); v.notas=g('av-notas').trim();
   const c=document.getElementById('av-pr'); if(c&&c.checked){ V.forEach(x=>x.principal=false); v.principal=true; }
   saveState(); _cerrarModalDin('auto-veh-ov'); autoRender(); try{ fuelAplicarEtiquetas(); renderFuelSection('glp'); renderFuelSection('gas'); }catch(e){} toast('Auto guardado');
+  if(esNuevo) logActividad('auto_veh_nuevo', `Auto nuevo: ${v.icono||'🚗'} ${v.nombre}`, {vehId:v.id});
+  else logActividad('auto_veh_editado', `Auto editado: ${v.icono||'🚗'} ${v.nombre}`, {vehId:v.id, snapshotAntes:antes});
 }
 // ── 🔀 Mover registros entre autos (uno por uno, o todo el historial desde «Editar auto») ──
 function autoMoverBtn(kind,id,ref){ const b=document.getElementById('mov-'+kind); if(!b) return; b.style.display=(autoVehs().length>=2&&id)?'inline-flex':'none'; b.dataset.id=id||''; b.dataset.t=ref||''; }
@@ -20343,11 +20767,13 @@ function autoMoverAbrir(kind,id,t){
 }
 function autoMoverReg(kind,id,t,dest){
   const r=_autoMovLista(kind,t).find(x=>x.id===id); if(!r) return;
+  const origen=autoDeVid(r);
   r.vid=dest; saveState(); _cerrarModalDin('auto-mov-ov');
   ['fre-overlay','km-editar-overlay','mant-config-overlay','rep-overlay'].forEach(i=>{ const e=document.getElementById(i); if(e) e.classList.remove('open'); });
   try{ freCtx=null; }catch(e){} try{ editingMantId=null; }catch(e){} try{ editingRepId=null; }catch(e){} try{ editandoKmManualId=null; }catch(e){}
   renderCombustible();
   const v=autoVehs().find(x=>x.id===dest); toast('Movido a '+(v?v.nombre:'otro auto'));
+  logActividad('auto_registro_movido', `Registro movido a ${v?v.nombre:'otro auto'}`, {kind,regId:id,fuelTipo:t,vidAntes:origen,vidDespues:dest});
 }
 function _autoMovConteos(fromId){
   const de=(arr)=>(arr||[]).filter(x=>autoDeVid(x)===fromId);
@@ -20375,13 +20801,21 @@ function autoMoverTodo(fromId){
   const nom={fuel:'recarga',km:'lectura de km',mant:'mantenimiento',rep:'repuesto',pres:'préstamo'};
   const det=sel.filter(x=>x.items.length).map(x=>x.items.length+' '+nom[x.k]+(x.items.length===1?'':(x.k==='km'?'s':'s'))).join(', ');
   if(!confirm('¿Mover '+det+' de «'+(a?a.nombre:'este auto')+'» a «'+(b?b.nombre:'otro auto')+'»?\n\nLos km y promedios de ambos autos se recalculan con lo que quede en cada uno.')) return;
-  sel.forEach(x=>x.items.forEach(r=>{ r.vid=dest; }));
+  const mov=[];
+  sel.forEach(x=>x.items.forEach(r=>{ mov.push({k:x.k,id:r.id,vidAntes:fromId}); r.vid=dest; }));
   saveState(); _cerrarModalDin('auto-veh-ov'); try{ autoRender(); }catch(e){} try{ renderCombustible(); }catch(e){}
   toast(total+' registro'+(total===1?'':'s')+' movido'+(total===1?'':'s')+' a '+(b?b.nombre:'otro auto'));
+  logActividad('auto_registro_movido', `${total} registro${total===1?'':'s'} movido${total===1?'':'s'} de ${a?a.nombre:'un auto'} a ${b?b.nombre:'otro auto'}`, {movs:mov,vidDespues:dest,masivo:true});
 }
 function autoBorrarVeh(id){
-  const A=autoEnsure(); A.vehiculos=autoVehs().filter(x=>x.id!==id); A.prestamos.forEach(p=>{ if(p.vid===id) p.vid=''; }); ['combustibleGlp','combustibleGas','kmManual','mantenimientos','repuestos'].forEach(k=>(state[k]||[]).forEach(r=>{ if(r.vid===id) delete r.vid; })); if(AUTO.vid===id){ AUTO.vid=''; try{ localStorage.removeItem('auto_vid'); }catch(e){} }
+  const A=autoEnsure(); const vBorrado=autoVehs().find(x=>x.id===id);
+  const afectados=[];
+  A.prestamos.forEach(p=>{ if(p.vid===id){ afectados.push({arr:'prestamos',id:p.id}); p.vid=''; } });
+  ['combustibleGlp','combustibleGas','kmManual','mantenimientos','repuestos'].forEach(k=>(state[k]||[]).forEach(r=>{ if(r.vid===id){ afectados.push({arr:k,id:r.id}); delete r.vid; } }));
+  A.vehiculos=autoVehs().filter(x=>x.id!==id);
+  if(AUTO.vid===id){ AUTO.vid=''; try{ localStorage.removeItem('auto_vid'); }catch(e){} }
   saveState(); _cerrarModalDin('auto-veh-ov'); autoRender(); toast('Auto quitado');
+  if(vBorrado) logActividad('auto_veh_eliminado', `Auto eliminado: ${vBorrado.icono||'🚗'} ${vBorrado.nombre}`, {vehSnapshot:vBorrado, afectados});
 }
 // ── Detalle de préstamo reutilizable (Auto y Hogar): saldo, avance, Pago frecuente y cronograma completo ──
 function dmUsadosSecciones(){
@@ -20458,13 +20892,17 @@ function autoRenderPrestamo(){
 function autoVincular(){
   const id=(document.getElementById('auto-sel-dm')||{}).value; if(!id) return;
   const d=(state.deudasMayores||[]).find(x=>x.id===id); if(!d) return;
-  autoEnsure().prestamos.push(autoStamp({id:'ap-'+Date.now(),dmId:id,vehiculo:'',valor:''}));
+  const nuevo=autoStamp({id:'ap-'+Date.now(),dmId:id,vehiculo:'',valor:''});
+  autoEnsure().prestamos.push(nuevo);
   saveState(); autoRender(); toast('Préstamo vinculado al Auto');
   if(!dmPFDe(d)) toast('Tip: enlázalo a un Pago frecuente desde «Abrir en Deudas»','info');
+  logActividad('auto_prestamo_vinculado', `Préstamo vinculado al Auto: ${d.nombre}`, {prestamoId:nuevo.id});
 }
 function autoDesvincular(pid){
-  const A=autoEnsure(); A.prestamos=A.prestamos.filter(p=>p.id!==pid);
+  const A=autoEnsure(); const antes=A.prestamos.find(p=>p.id===pid);
+  A.prestamos=A.prestamos.filter(p=>p.id!==pid);
   saveState(); _cerrarModalDin('auto-edit-ov'); autoRender(); toast('Vínculo quitado (la deuda no se borra)');
+  if(antes) logActividad('auto_prestamo_desvinculado', `Vínculo de préstamo del Auto quitado`, {prestamoSnapshot:antes});
 }
 function autoAbrirDeuda(dmId){ showPage('deudas'); try{ openDMDetail(dmId); }catch(e){} }
 function autoModalEditar(pid){
@@ -20478,8 +20916,11 @@ function autoModalEditar(pid){
 }
 function autoGuardarEdicion(pid){
   const p=autoEnsure().prestamos.find(x=>x.id===pid); if(!p) return;
+  const antesAGE=JSON.parse(JSON.stringify(p));
   p.vehiculo=(document.getElementById('aut-veh').value||'').trim(); p.vid=(document.getElementById('aut-vid')||{}).value||''; const v=parseFloat(document.getElementById('aut-valor').value); p.valor=v>0?v:'';
-  saveState(); _cerrarModalDin('auto-edit-ov'); autoRender(); toast('Guardado');
+  saveState(); _cerrarModalDin('auto-edit-ov'); autoRender();
+  logActividad('auto_prestamo_editado', `Préstamo del auto editado: ${p.vehiculo||''}`, {prestamoId:pid, snapshotAntes:antesAGE});
+  toast('Guardado');
 }
 
 function renderWidgetsExtra(){
@@ -23794,9 +24235,13 @@ function eliminarRegistroMantenimiento(){
   const r=item&&(item.historial||[]).find(h=>h.id===editandoRegId);
   if(!r) return;
   if(!confirm('¿Eliminar este registro del '+fmtFechaCorta(r.fecha)+'? El próximo mantenimiento se contará desde el registro anterior.')) return;
+  const registroSnapshotERM=JSON.parse(JSON.stringify(r));
+  const estadoAntesERM={kmUltimo:item.kmUltimo, fechaUltimo:item.fechaUltimo, proximosPlanificados:item.proximosPlanificados};
   item.historial=item.historial.filter(h=>h.id!==editandoRegId);
   mantSincronizarUltimo(item);
-  saveState(); cerrarRegistrarMantenimiento(); renderMantenimiento(); toast('Registro eliminado');
+  saveState(); cerrarRegistrarMantenimiento(); renderMantenimiento();
+  logActividad('mantenimiento_registro_eliminado', `Registro de mantenimiento eliminado: ${item.nombre||''}`, {mantId:item.id, registroSnapshot:registroSnapshotERM, estadoAntes:estadoAntesERM});
+  toast('Registro eliminado');
 }
 function mantToggleDetalle(regId){ if(mantDetalleAbierto.has(regId)) mantDetalleAbierto.delete(regId); else mantDetalleAbierto.add(regId); renderMantenimiento(); }
 function mantToggleVerTodo(itemId){ if(mantVerTodoHist.has(itemId)) mantVerTodoHist.delete(itemId); else mantVerTodoHist.add(itemId); renderMantenimiento(); }
@@ -25111,6 +25556,7 @@ function dmPintarVinculo(d){
 }
 function dmVincularPF(pfId){
   const d=(state.deudasMayores||[]).find(x=>x.id===currentDMId); if(!d) return;
+  const pfIdAntesDVP=d.pfId||null;
   if(pfId){
     const otra=dmDelPF(pfId);
     if(otra&&otra.id!==d.id){ if(!confirm('«'+otra.nombre+'» ya usa ese pago frecuente. ¿Pasarlo a «'+d.nombre+'»?')){ dmPintarVinculo(d); return; } delete otra.pfId; }
@@ -25122,6 +25568,7 @@ function dmVincularPF(pfId){
     toast('🔗 Vinculado con «'+((pf&&pf.nombre)||'pago frecuente')+'»');
   } else { delete d.pfId; toast('Vínculo quitado'); }
   saveState(); renderDMDetail(); try{ renderPagosFrecuentes(); }catch(e){}
+  logActividad('deuda_mayor_pf_vinculado', pfId?'Deuda vinculada a un pago frecuente':'Vínculo con pago frecuente quitado', {dmId:d.id, pfIdAntes:pfIdAntesDVP});
 }
 function dmCrearPF(){
   const d=(state.deudasMayores||[]).find(x=>x.id===currentDMId); if(!d) return;
@@ -25160,7 +25607,7 @@ function updateDMCuotaFecha(numero, value){
   const d = (state.deudasMayores||[]).find(x=>x.id===currentDMId);
   if(!d) return;
   const c = d.cuotas.find(x=>x.numero==numero);
-  if(c){ c.fecha=value; saveState(); renderDMDetail(); }
+  if(c){ const fechaAntesUDC=c.fecha; c.fecha=value; saveState(); renderDMDetail(); if(fechaAntesUDC!==value) logActividad('deuda_mayor_cuota_fecha', `Fecha de cuota #${numero} corregida`, {dmId:d.id, numero, fechaAntes:fechaAntesUDC}); }
 }
 
 
@@ -25351,11 +25798,13 @@ function dmAplicarAdelanto(){
 function dmMontoReal(numero){
   const d=(state.deudasMayores||[]).find(x=>x.id===currentDMId); if(!d) return;
   const c=d.cuotas.find(x=>x.numero==numero); if(!c) return;
+  const montoRealAntesDMR=(c.montoReal===undefined)?null:c.montoReal;
   const v=prompt('Monto REAL que cobró el banco por la cuota #'+numero+' (cuota del cronograma: '+dmFmt(c.monto,d.currency)+').\nDéjalo vacío para quitarlo.', c.montoReal!==undefined?c.montoReal:'');
   if(v===null) return;
   const n=parseFloat(String(v).replace(',','.'));
   if(String(v).trim()===''||isNaN(n)||n<=0) delete c.montoReal; else c.montoReal=dmR2(n);
   saveState(); renderDMDetail();
+  logActividad('deuda_mayor_monto_real', `Monto real de cuota #${numero} actualizado`, {dmId:d.id, numero, montoRealAntes:montoRealAntesDMR});
 }
 
 // ── PANEL DE DATOS, SIMULADOR, GRÁFICO E HISTORIAL ────
@@ -26480,16 +26929,22 @@ function guardarRepuesto(){
   const precio=parseFloat(document.getElementById('rep-precio').value);
   const datos={nombre, codigo, desc, tienda:v('rep-tienda'), precio:isNaN(precio)||precio<=0?0:precio, mantId:document.getElementById('rep-mant').value||'', nota:v('rep-nota')};
   if(!Array.isArray(state.repuestos)) state.repuestos=[];
-  if(editingRepId){ const r=state.repuestos.find(x=>x.id===editingRepId); if(r) Object.assign(r,datos); }
-  else state.repuestos.push(autoStamp({id:'rep-'+Date.now()+Math.random().toString(36).slice(2,6), ...datos}));
+  const esNuevoGR=!editingRepId;
+  let ridGR=null, antesGR=null;
+  if(editingRepId){ const r=state.repuestos.find(x=>x.id===editingRepId); if(r){ antesGR=JSON.parse(JSON.stringify(r)); Object.assign(r,datos); ridGR=r.id; } }
+  else { const nuevoGR=autoStamp({id:'rep-'+Date.now()+Math.random().toString(36).slice(2,6), ...datos}); state.repuestos.push(nuevoGR); ridGR=nuevoGR.id; }
   saveState(); cerrarRepuesto(); renderRepuestos();
+  if(ridGR) logActividad(esNuevoGR?'auto_repuesto_nuevo':'auto_repuesto_editado', `Repuesto: ${nombre}`, esNuevoGR?{repId:ridGR}:{repId:ridGR, snapshotAntes:antesGR});
   toast(editingRepId?'Repuesto actualizado':'Repuesto agregado');
 }
 function eliminarRepuesto(){
   const r=(state.repuestos||[]).find(x=>x.id===editingRepId); if(!r) return;
   if(!confirm('¿Eliminar "'+(r.nombre||'este repuesto')+'"?')) return;
+  const repSnapshotER=JSON.parse(JSON.stringify(r));
   state.repuestos=state.repuestos.filter(x=>x.id!==editingRepId);
-  saveState(); cerrarRepuesto(); renderRepuestos(); toast('Repuesto eliminado');
+  saveState(); cerrarRepuesto(); renderRepuestos();
+  logActividad('auto_repuesto_eliminado', `Repuesto eliminado: ${r.nombre||''}`, {repSnapshot:repSnapshotER});
+  toast('Repuesto eliminado');
 }
 
 // ── RENDER CALENDARIO ──────────────────────────────────
@@ -28003,13 +28458,16 @@ function confirmarMarcarComprado(){
   const fecha=document.getElementById('cpc-fecha').value||todayLocalISO();
   const cat=document.getElementById('cpc-cat').value||undefined;
   if(isNaN(monto)||monto<=0){ alert('Ingresa el monto final de la compra.'); return; }
+  let creadoCMC={};
   if(metodo==='cuenta'){
     const cuenta=document.getElementById('cpc-cuenta').value;
     if(!cuenta){ alert('Selecciona una cuenta.'); return; }
+    const idCMCMov='cp-mov-'+Date.now();
     pushMovimiento({
-      id:'cp-mov-'+Date.now(), type:'expense', desc:item.nombre, amount:monto,
+      id:idCMCMov, type:'expense', desc:item.nombre, amount:monto,
       account:cuenta, date:fecha, currency, cat,
     });
+    creadoCMC.movId=idCMCMov;
     item.metodoPagoComprado='cuenta'; item.destinoComprado=cuenta;
   } else {
     const tarjetaId=document.getElementById('cpc-tarjeta').value;
@@ -28018,9 +28476,11 @@ function confirmarMarcarComprado(){
     const monthKey=getBillingMonthKey(fecha, t);
     if(!t.movs) t.movs={};
     if(!t.movs[monthKey]) t.movs[monthKey]=[];
+    const idCMCTC='cp-tcm-'+Date.now();
     t.movs[monthKey].push({
-      id:'cp-tcm-'+Date.now(), desc:item.nombre, fecha, monto, pagado:false, cat, currency,
+      id:idCMCTC, desc:item.nombre, fecha, monto, pagado:false, cat, currency,
     });
+    creadoCMC.tc={tarjetaId, monthKey, consumoId:idCMCTC};
     item.metodoPagoComprado='tarjeta'; item.destinoComprado=tarjetaId;
   }
   item.estado='comprado';
@@ -28032,8 +28492,10 @@ function confirmarMarcarComprado(){
   // Se registra también como último punto del historial de precio, para
   // que el historial refleje el precio real que terminó pagando.
   if(!item.historialPrecio) item.historialPrecio=[];
-  if(getUltimoPrecio(item)!==monto) item.historialPrecio.push({precio:monto, fecha});
+  let historialPushCMC=false;
+  if(getUltimoPrecio(item)!==monto){ item.historialPrecio.push({precio:monto, fecha}); historialPushCMC=true; }
   saveState();
+  logActividad('compra_marcada_comprado', `Compra marcada: ${item.nombre||''}`, {itemId:item.id, movId:creadoCMC.movId||null, tc:creadoCMC.tc||null, historialPush:historialPushCMC});
   cerrarMarcarCompradoModal();
   renderListaCompras();
 }
@@ -29642,6 +30104,81 @@ function seedDemo(){
 // Al publicar una versión nueva: agregar una entrada AL INICIO de APP_CHANGELOG
 // y actualizar APP_VERSION / APP_VERSION_DATE (el aviso compara APP_VERSION_DATE).
 const APP_CHANGELOG = [
+ {
+  "v": "v1.124.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "El acceso rápido 🚨 «Revisar datos» ahora también analiza Tarjetas de crédito: consumos repetidos, fechas inválidas y montos inválidos en cualquier mes de cualquier tarjeta (antes solo revisaba cuentas, movimientos, deudas, etc.). El «🔍 Revisar datos» de Gestión de Cuentas se mantiene igual que antes, sin tarjetas, tal como se pidió.",
+   "En «Revisar datos» (🚨 y Gestión de Cuentas), cada aviso con un detalle (movimiento repetido, consumo repetido, deuda sin su pago, etc.) ahora es clicleable: te lleva directo a ese registro exacto — al mes/movimiento en Finanzas, al consumo exacto dentro de la tarjeta, o a la deuda/préstamo/concepto correspondiente — en vez de tener que buscarlo mes por mes."
+  ]
+ },
+ {
+  "v": "v1.123.0 / v1.122.0 / v1.121.1 / v1.121.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "«Revisar datos»: cada aviso informativo ahora tiene un botón «✓ Ya lo revisé» para marcarlo como visto (se puede deshacer); el numerito del 🚨 solo cuenta lo pendiente, y si la situación cambia el aviso vuelve a aparecer.",
+   "Nuevo acceso rápido 🚨 con numerito tipo notificación que muestra directo el panel de «Revisar datos».",
+   "«Revisar datos» ahora detalla exactamente qué movimiento parece repetido y de qué deuda falta el pago, en vez de solo mostrar un número.",
+   "Auditoría completa de «Ver y deshacer últimas acciones»: se agregaron ~29 tipos de acción que antes no quedaban registrados en el historial ni se podían deshacer."
+  ]
+ },
+ {
+  "v": "v1.120.1",
+  "fecha": "13/11/26",
+  "cambios": [
+   "Comparativo Mensual (en Análisis): el botón «📅 Este mes vs. año pasado» quedaba justo al límite del ancho de pantalla junto a los 2 selectores de mes, y en algunos celulares se pasaba del borde empujando toda la página hacia la derecha — mismo tipo de problema que «Mis Cuotas» en Tarjetas. Ahora el botón baja a su propia línea con ancho completo."
+  ]
+ },
+ {
+  "v": "v1.120.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "Mismo deslizamiento horizontal ahora también en las pestañas de gráficos de Movimientos (8: Ing/Gas, Ahorro S/, Ahorro $, Saldo, Total Soles, Categorías, Tendencia, Patrimonio Neto) e Inversiones (Historial/Compras/Ventas/Valorizaciones/💵 Dividendos), que antes se apilaban en 2-3 líneas."
+  ]
+ },
+ {
+  "v": "v1.119.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "En celular, las pestañas internas de Auto y Hogar (Resumen/Combustible/Mantenimiento/Préstamo, el selector de autos, Conceptos/Proyección/Préstamo) ya no se parten en 2 líneas: ahora se deslizan en horizontal con el dedo, igual que el menú principal.",
+   "Corrige que en Tarjetas de crédito (y cualquier fila de botones de encabezado similar) los botones pudieran salirse del ancho de la pantalla y dejar una franja vacía al desplazarse hacia la derecha; ahora esa fila se acomoda en 2 líneas si no cabe en una."
+  ]
+ },
+ {
+  "v": "v1.118.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "«Ver y deshacer últimas acciones» ahora también registra (y permite deshacer) lo nuevo de esta sesión: crear/editar/quitar un auto, vincular o quitar un préstamo del Auto u Hogar, crear/editar/eliminar un concepto del Hogar, mover registros entre autos (uno por uno o en bloque) y los cambios al orden del menú. Antes esas acciones no quedaban en el registro de actividad ni se podían deshacer desde ahí."
+  ]
+ },
+ {
+  "v": "v1.117.1",
+  "fecha": "13/11/26",
+  "cambios": [
+   "Corrige botones que, en celular, se partían en 2 líneas (ej. «+ Nueva deuda» en Deudas): ahora el texto siempre queda en una sola línea."
+  ]
+ },
+ {
+  "v": "v1.117.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "En celular, todos los botones, pestañas y chips (Editar, Abrir, Hogar/Auto, GLP/Gasolina, combustible del auto, etc.) usan exactamente el tamaño del botón ⚙ Config: 12px, sin el min-height que los inflaba."
+  ]
+ },
+ {
+  "v": "v1.116.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "Tamaño táctil estandarizado: en celular, todos los botones, pestañas y chips (incluidos GLP/Gasolina, gráfico de combustible, combustible del auto, vencimientos y Cuota Fija/Amortizado) usan la misma escala, en vez de cada uno su propio tamaño."
+  ]
+ },
+ {
+  "v": "v1.115.0",
+  "fecha": "13/11/26",
+  "cambios": [
+   "Botones y pestañas más compactos en el celular: en pantallas chicas con dedo ya no se inflan a 44px de alto (quedan en ~32-34px), se ven más proporcionados al tamaño real del teléfono."
+  ]
+ },
  {
   "v": "v1.114.0",
   "fecha": "13/11/26",
