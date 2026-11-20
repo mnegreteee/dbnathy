@@ -3413,6 +3413,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 
   <div class="month-nav" style="margin-bottom:6px">
     <h1>🚗 Auto</h1>
+    <button class="config-action-btn neutral" style="font-size:11px;padding:5px 12px" onclick="abrirCostoAnualAuto()" title="Combustible + mantenimiento + cuota + SOAT/seguro, sumado por año">📊 Costo real anual</button>
   </div>
 
   <div class="auto-tabs" id="auto-tabs"></div>
@@ -3740,6 +3741,7 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
       <button class="btn btn-primary" style="font-size:11px;padding:5px 12px;margin-left:12px" onclick="openTCConfigModal()">+ Agregar tarjeta</button>
       <button class="btn" style="font-size:11px;padding:5px 12px" onclick="openAddMovTCFromList()">+ Nuevo consumo</button>
       <button class="btn" style="font-size:11px;padding:5px 12px" onclick="abrirMisCuotasActivas()">📦 Mis Cuotas</button>
+      <button class="btn" style="font-size:11px;padding:5px 12px" onclick="abrirReporteAnualTC()">📊 Reporte anual</button>
     </div>
 
     <!-- Cards grid -->
@@ -4309,9 +4311,9 @@ body.compact-mode .fecha-imp-grid{grid-template-columns:repeat(3,1fr)!important;
 //  VERSIÓN DE LA APP — actualizar en cada cambio solicitado
 //  Formato: vMAYOR.MENOR.PARCHE — fecha del último cambio
 // ══════════════════════════════════════════════════════
-const APP_VERSION = 'v1.131.0';
-const APP_VERSION_DATE = '20/11/26 - 12:48'; // hora de Lima, Peru (UTC-5)
-const APP_VERSION_NOTE = 'Tarjetas: tira de puntos de consumo mensual (exoneración de membresía) en cada tarjeta de la lista.';
+const APP_VERSION = 'v1.136.0';
+const APP_VERSION_DATE = '20/11/26 - 15:26'; // hora de Lima, Peru (UTC-5)
+const APP_VERSION_NOTE = 'Auto: nuevo Costo real anual (combustible + mantenimiento + cuota + SOAT/seguro).';
 
 // ══════════════════════════════════════════════════════
 //  CONSTANTS & STATE
@@ -16043,41 +16045,78 @@ function tcCicloMembresia(t){
   const cicloIdx=Math.floor(monthsSince/12);
   const cicloStartTotal=anchorTotal+cicloIdx*12;
 
-  const mesesConConsumo=new Set();
-  getAllTCMovs(t.id).forEach(m=>{
-    if(m && m.fecha && (parseFloat(m.monto)||0)>0){
-      mesesConConsumo.add(m.fecha.slice(0,7));
-    }
-  });
+  // Dos criterios posibles, según la tarjeta:
+  //  - Sin "monto mínimo" configurado (la mayoría): basta con que haya
+  //    habido ALGÚN consumo en el mes — se mira por el mes CALENDARIO real
+  //    de la compra (m.fecha), igual que antes.
+  //  - Con "monto mínimo" configurado (algunos bancos piden un mínimo/
+  //    promedio de compras en el mes de CORTE/facturación, no cualquier
+  //    consumo): se suma el total facturado en cada mes de corte (el mismo
+  //    bucket t.movs[mk] que ya usa la app para todo lo demás) y se compara
+  //    contra ese mínimo. Solo se suman los consumos en la MISMA moneda de
+  //    la tarjeta (consistente con sumTCByCurrency).
+  const minimo=parseFloat(t.membresiaMinMensual)||0;
+  const usaMinimo=minimo>0;
+  let mesesConConsumo=null, totalPorMk=null;
+  if(usaMinimo){
+    totalPorMk={};
+    Object.entries(t.movs||{}).forEach(([mk,arr])=>{
+      (arr||[]).forEach(m=>{
+        const monto=parseFloat(m.monto)||0;
+        if(monto<=0) return;
+        const cur=m.currency||t.currency||'PEN';
+        if(cur!==(t.currency||'PEN')) return;
+        totalPorMk[mk]=(totalPorMk[mk]||0)+monto;
+      });
+    });
+  } else {
+    mesesConConsumo=new Set();
+    getAllTCMovs(t.id).forEach(m=>{
+      if(m && m.fecha && (parseFloat(m.monto)||0)>0){
+        mesesConConsumo.add(m.fecha.slice(0,7));
+      }
+    });
+  }
 
   const meses=[];
   for(let i=0;i<12;i++){
     const totalIdx=cicloStartTotal+i;
     const y=Math.floor(totalIdx/12), mIdx=((totalIdx%12)+12)%12;
     const mk=y+'-'+String(mIdx+1).padStart(2,'0');
-    const estado = totalIdx>hoyTotal ? null : mesesConConsumo.has(mk);
-    meses.push({mk, label:nombresMes[mIdx], anio:y, estado});
+    let estado=null, montoMes=null;
+    if(totalIdx<=hoyTotal){
+      if(usaMinimo){ montoMes=totalPorMk[mk]||0; estado=montoMes>=minimo; }
+      else estado=mesesConConsumo.has(mk);
+    }
+    meses.push({mk, label:nombresMes[mIdx], anio:y, estado, montoMes});
   }
   const pasados=meses.filter(m=>m.estado!==null);
   const faltanteIdx=meses.findIndex(m=>m.estado===false);
   const vaBien=faltanteIdx===-1;
   const cicloLabel=meses[0].label+' '+String(meses[0].anio).slice(-2)+' – '+meses[11].label+' '+String(meses[11].anio).slice(-2);
-  return {meses, pasados, faltanteIdx, vaBien, cicloLabel};
+  return {meses, pasados, faltanteIdx, vaBien, cicloLabel, usaMinimo, minimo};
 }
 function tcMembresiaCicloHtml(t){
   const c=tcCicloMembresia(t);
   if(!c) return '';
+  const sym=t.currency==='USD'?'$':'S/';
   const estadoTexto=c.vaBien ? ('✅ '+c.pasados.length+'/12') : ('⚠️ Falta '+c.meses[c.faltanteIdx].label);
   const estadoStyle=c.vaBien ? 'background:var(--green-bg);color:var(--green)' : 'background:var(--red-bg);color:var(--red)';
+  const minLabel=c.usaMinimo ? (' · mín. '+sym+' '+numFmtSigned(c.minimo,2)+'/mes') : '';
   const dotsHtml=c.meses.map(m=>{
     let color='var(--bg4)', title=m.label+' — mes que aún no llega';
-    if(m.estado===true){ color='var(--green)'; title=m.label+' — ✅ sí hubo consumo'; }
-    else if(m.estado===false){ color='var(--red)'; title=m.label+' — ❌ sin consumo'; }
+    if(m.estado===true){
+      color='var(--green)';
+      title=c.usaMinimo ? (m.label+' — ✅ cumpliste el mínimo ('+sym+' '+numFmtSigned(m.montoMes,2)+' de '+sym+' '+numFmtSigned(c.minimo,2)+')') : (m.label+' — ✅ sí hubo consumo');
+    } else if(m.estado===false){
+      color='var(--red)';
+      title=c.usaMinimo ? (m.label+' — ❌ no llegaste al mínimo ('+sym+' '+numFmtSigned(m.montoMes,2)+' de '+sym+' '+numFmtSigned(c.minimo,2)+')') : (m.label+' — ❌ sin consumo');
+    }
     return `<span title="${escapeHtml(title)}" style="width:11px;height:11px;border-radius:50%;background:${color};flex:none;display:inline-block"></span>`;
   }).join('');
   return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-top:8px" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap">
-      <span style="font-size:10.5px;font-weight:700;color:var(--text)">🎫 Membresía <span style="color:var(--text3);font-weight:400">· ciclo ${escapeHtml(c.cicloLabel)}</span></span>
+      <span style="font-size:10.5px;font-weight:700;color:var(--text)">🎫 Membresía <span style="color:var(--text3);font-weight:400">· ciclo ${escapeHtml(c.cicloLabel)}${escapeHtml(minLabel)}</span></span>
       <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;${estadoStyle}">${estadoTexto}</span>
     </div>
     <div style="display:flex;gap:4px;flex-wrap:wrap">${dotsHtml}</div>
@@ -17198,6 +17237,96 @@ function abrirMisCuotasActivas(){
   document.getElementById('mis-cuotas-overlay').classList.add('open');
 }
 function cerrarMisCuotasActivas(){ document.getElementById('mis-cuotas-overlay').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════
+//  REPORTE ANUAL POR TARJETA — intereses de cuotas + costo de membresía
+// ══════════════════════════════════════════════════════
+// Recorre TODAS las compras a cuotas CON intereses de una tarjeta y
+// reconstruye, cuota por cuota, cuánto de cada pago fue interés y cuánto
+// capital (misma lógica del sistema francés que ya usa
+// reconstruirMontoOriginalCuotaFrances/calcularSaldoPendienteEstimado, solo
+// que acá se recorre el cronograma completo en vez de cortarlo a mitad).
+// Se agrupa por el AÑO de la fecha real de cada cuota (no el mes de
+// facturación) — así una cuota de diciembre que se factura/paga en enero
+// del año siguiente cuenta en el año en que realmente cae, igual criterio
+// que ya usa el resto de la app (tira de membresía, reposición de cuotas).
+function tcInteresesPorAnio(t){
+  const porAnio={};
+  const grupos={};
+  Object.values(t.movs||{}).forEach(arr=>(arr||[]).forEach(m=>{
+    if(!m.grupoCuotaId || !m.conIntereses) return;
+    (grupos[m.grupoCuotaId]=grupos[m.grupoCuotaId]||[]).push(m);
+  }));
+  Object.values(grupos).forEach(cuotas=>{
+    cuotas.sort((a,b)=>(a.cuotaNumero||0)-(b.cuotaNumero||0));
+    const primera=cuotas[0];
+    const tea=parseFloat(primera.tea)||0;
+    const numCuotas=primera.cuotaTotal||cuotas.length;
+    const cuotaFija=Number(primera.monto)||0;
+    if(tea<=0 || cuotaFija<=0) return;
+    const principal=reconstruirMontoOriginalCuotaFrances(cuotaFija,tea,numCuotas);
+    const tem=Math.pow(1+tea/100,1/12)-1;
+    let saldo=principal;
+    cuotas.forEach(c=>{
+      const interesC=tem>0?saldo*tem:0;
+      const capitalC=Number(c.monto)-interesC;
+      saldo=Math.max(0,saldo-capitalC);
+      const anio=parseInt(String(c.fecha).slice(0,4))||0;
+      if(!anio) return;
+      porAnio[anio]=(porAnio[anio]||0)+interesC;
+    });
+  });
+  return porAnio;
+}
+// Años a ofrecer en el selector: todos los que tengan al menos una cuota
+// con intereses en alguna tarjeta, más el año actual (por si una tarjeta
+// nueva con membresía todavía no tiene ninguna cuota que mostrar).
+function tcAniosDisponiblesReporte(){
+  const anios=new Set([new Date().getFullYear()]);
+  (state.tarjetas||[]).forEach(t=>{
+    Object.keys(tcInteresesPorAnio(t)).forEach(a=>anios.add(parseInt(a)));
+  });
+  return [...anios].sort((a,b)=>b-a);
+}
+function abrirReporteAnualTC(){
+  const sel=document.getElementById('tc-ra-anio');
+  const anios=tcAniosDisponiblesReporte();
+  const actual=sel.value||String(new Date().getFullYear());
+  sel.innerHTML=anios.map(a=>`<option value="${a}">${a}</option>`).join('');
+  sel.value=anios.includes(parseInt(actual))?actual:String(new Date().getFullYear());
+  renderReporteAnualTC();
+  document.getElementById('tc-reporte-anual-overlay').classList.add('open');
+}
+function cerrarReporteAnualTC(){ document.getElementById('tc-reporte-anual-overlay').classList.remove('open'); }
+function renderReporteAnualTC(){
+  const cont=document.getElementById('tc-ra-contenido');
+  const anio=parseInt(document.getElementById('tc-ra-anio').value)||new Date().getFullYear();
+  const filas=(state.tarjetas||[]).map(t=>{
+    const interes=tcInteresesPorAnio(t)[anio]||0;
+    const membresiaMonto=parseFloat(t.membresiaMonto)||0;
+    const membresiaGratis=!!t.membresiaGratis;
+    const membresiaCosto=membresiaGratis?0:membresiaMonto;
+    if(interes<0.005 && membresiaMonto<0.005) return null; // nada que reportar para esta tarjeta
+    return {t, interes, membresiaMonto, membresiaGratis, membresiaCosto, total:interes+membresiaCosto};
+  }).filter(Boolean).sort((a,b)=>b.total-a.total);
+  if(!filas.length){
+    cont.innerHTML='<div class="dash-empty">📊 Ninguna tarjeta tiene intereses de cuotas ni membresía configurada para '+anio+'.</div>';
+    return;
+  }
+  cont.innerHTML=filas.map(f=>{
+    const sym=f.t.currency==='USD'?'$':'S/';
+    const nombre=`${f.t.banco||''}${f.t.cat?' '+f.t.cat:''}`;
+    const membresiaTxt=f.membresiaGratis
+      ? (f.membresiaMonto>0.005 ? `Exonerada <span style="color:var(--text3)">(ahorraste ${sym} ${numFmtSigned(f.membresiaMonto,2)})</span>` : 'Exonerada')
+      : (f.membresiaMonto>0.005 ? `${sym} ${numFmtSigned(f.membresiaMonto,2)}` : '—');
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px">${escapeHtml(nombre)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span style="color:var(--text3)">Intereses de cuotas pagados en ${anio}</span><b style="font-family:var(--mono);color:${f.interes>0.005?'var(--red)':'var(--text3)'}">${f.interes>0.005?sym+' '+numFmtSigned(f.interes,2):'—'}</b></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span style="color:var(--text3)">Membresía</span><b style="font-family:var(--mono)">${membresiaTxt}</b></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0 0;margin-top:2px;border-top:1px dashed var(--border2)"><span>Costo total de tenerla en ${anio}</span><b style="font-family:var(--mono)">${sym} ${numFmtSigned(f.total,2)}</b></div>
+    </div>`;
+  }).join('')+'<div style="font-size:10.5px;color:var(--text3);margin-top:10px">Los intereses se reconstruyen del sistema francés (cuota fija + TEA registrada en cada compra), agrupados por el año real de cada cuota. La membresía usa el monto configurado HOY en la tarjeta — si cambió de un año a otro, este reporte no distingue eso.</div>';
+}
 function renderMisCuotasActivas(){
   const cont=document.getElementById('mis-cuotas-contenido');
   const grupos=obtenerGruposDeCuotas();
@@ -17818,14 +17947,16 @@ function openTCConfigModal(tid){
     document.getElementById('tc-f-color-igual').checked=!t.colorTarjeta;
     document.getElementById('tc-f-ult4').value=t.ult4||'';
     document.getElementById('tc-f-desde').value=t.fechaDesde||'';
+    document.getElementById('tc-f-membresia-fecha').value=t.membresiaFechaCobro||'';
     document.getElementById('tc-f-membresia-monto').value=t.membresiaMonto||'';
     document.getElementById('tc-f-membresia-gratis').checked=!!t.membresiaGratis;
+    document.getElementById('tc-f-membresia-min-mensual').value=t.membresiaMinMensual||'';
     tcImgTmp=imgSegura(t.imagen);
     document.getElementById('tc-delete-btn').style.display='inline-flex';
     document.getElementById('tc-delete-btn').dataset.id=tid;
   } else {
     document.getElementById('tc-config-title').textContent='Nueva Tarjeta';
-    ['tc-f-banco','tc-f-cat','tc-f-pago','tc-f-inicio','tc-f-cierre','tc-f-linea','tc-f-tea-pen','tc-f-tea-usd','tc-f-nota','tc-f-membresia-monto','tc-f-desde'].forEach(id=>document.getElementById(id).value='');
+    ['tc-f-banco','tc-f-cat','tc-f-pago','tc-f-inicio','tc-f-cierre','tc-f-linea','tc-f-tea-pen','tc-f-tea-usd','tc-f-nota','tc-f-membresia-monto','tc-f-desde','tc-f-membresia-fecha','tc-f-membresia-min-mensual'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('tc-f-currency').value='PEN';
     document.getElementById('tc-f-color').value='#5b8def';
     document.getElementById('tc-f-marca').value=''; document.getElementById('tc-f-ult4').value=''; tcImgTmp='';
@@ -17855,14 +17986,16 @@ function pintarTCMembresiaResumen(){
   const gratisEl=document.getElementById('tc-f-membresia-gratis');
   const montoInp=document.getElementById('tc-f-membresia-monto');
   const resEl=document.getElementById('tc-f-membresia-resumen');
+  const fechaInp=document.getElementById('tc-f-membresia-fecha');
   if(!gratisEl||!montoInp||!resEl) return;
   const gratis=gratisEl.checked;
   montoInp.disabled=gratis;
   montoInp.style.opacity=gratis?'0.5':'1';
   const monto=parseFloat(montoInp.value)||0;
   const sym=document.getElementById('tc-f-currency').value==='USD'?'$':'S/';
+  const fechaStr=fechaInp&&fechaInp.value?' el '+new Date(fechaInp.value+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'long'})+' (cada año)':'';
   if(gratis) resEl.textContent=monto>0?('Actualmente exonerada — el monto de referencia ('+sym+' '+numFmtSigned(monto,2)+'/año) no se cobra mientras esté marcado.'):'Actualmente exonerada (no se cobra).';
-  else if(monto>0) resEl.textContent='Se cobrará '+sym+' '+numFmtSigned(monto,2)+' al año.';
+  else if(monto>0) resEl.textContent='Se cobrará '+sym+' '+numFmtSigned(monto,2)+' al año'+fechaStr+'.';
   else resEl.textContent='';
 }
 
@@ -17885,8 +18018,10 @@ function saveTCCard(){
     colorTarjeta:document.getElementById('tc-f-color-igual').checked ? '' : (document.getElementById('tc-f-color-plastico').value||''),
     ult4:(document.getElementById('tc-f-ult4').value||'').replace(/\D/g,'').slice(-4),
     fechaDesde:document.getElementById('tc-f-desde').value||'',
+    membresiaFechaCobro:document.getElementById('tc-f-membresia-fecha').value||'',
     membresiaMonto:parseFloat(document.getElementById('tc-f-membresia-monto').value)||0,
-    membresiaGratis:document.getElementById('tc-f-membresia-gratis').checked
+    membresiaGratis:document.getElementById('tc-f-membresia-gratis').checked,
+    membresiaMinMensual:parseFloat(document.getElementById('tc-f-membresia-min-mensual').value)||0
   };
   if(imgSegura(tcImgTmp)) data.imagen=tcImgTmp; else data.imagen='';
   if(!state.tarjetas) state.tarjetas=[];
@@ -18966,6 +19101,12 @@ const DASHBOARD_WIDGET_DEFS = {
       <div id="dash-alertas-presupuesto-body"><div class="dash-empty">Cargando...</div></div>
       <div style="margin-top:10px"><button class="btn" style="width:100%;font-size:11px" onclick="showPage('presupuesto')">Ver Presupuesto →</button></div>
     </div>`},
+  'membresias-tc': {label:'🎫 Estado de Membresías', size:'medium', shell:()=>`
+    <div class="card" style="padding:18px" id="dash-membresias-tc-card">
+      <div class="dash-section-title">🎫 Estado de Membresías</div>
+      <div id="dash-membresias-tc-body"><div class="dash-empty">Cargando...</div></div>
+      <div style="margin-top:10px"><button class="btn" style="width:100%;font-size:11px" onclick="showPage('tarjetas')">Ver Tarjetas →</button></div>
+    </div>`},
   'fechas': {label:'📅 Fechas Importantes', size:'large', shell:()=>`
     <div class="card" style="padding:18px" id="fecha-imp-card-wrap">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -19064,6 +19205,7 @@ const DASHBOARD_WIDGETS_DEFAULT = [
   {id:'kpi-afp', visible:false}, {id:'cuotas-resumen', visible:false},
   {id:'balance-neto-persona', visible:false}, {id:'todo-pendiente', visible:false},
   {id:'alertas-presupuesto', visible:false},
+  {id:'membresias-tc', visible:false},
   {id:'wx-conectado', visible:true}, {id:'wx-gastos-mes', visible:false}, {id:'wx-gasto-categoria', visible:false}, {id:'wx-gastos-por-mes', visible:false}, {id:'wx-proximos-pagos', visible:false}, {id:'wx-compras-camino', visible:false}, {id:'wx-dolares', visible:false}, {id:'wx-ahorros', visible:false}, {id:'wx-racha', visible:false}, {id:'wx-deuda-evolucion', visible:false}, {id:'wx-vencimientos', visible:false}, {id:'hw-fondo', visible:false}, {id:'hw-mealcanza', visible:false}, {id:'hw-diacompra', visible:false}, {id:'hw-subs', visible:false}, {id:'hw-dups', visible:false}, {id:'hw-tags', visible:false}, {id:'hw-meta', visible:false}, {id:'hw-alertas', visible:false},
 ];
 function ensureDashboardWidgetsDefault(){
@@ -21077,6 +21219,8 @@ function autoModalVeh(id){
     <div class="av-chips">${combs.map(c=>`<button type="button" class="av-chip ${v&&v.combustible===c?'on':''}" data-v="${c}" onclick="autoVehComb(this)">${c}</button>`).join('')}</div>
     <div class="av-sec">Documentos y vencimientos</div>
     ${doc('🛡️','SOAT','Seguro obligatorio','av-soat',v&&v.soatVence)}${doc('🔍','Revisión técnica','Inspección vehicular','av-rev',v&&v.revVence)}${doc('📄','Seguro vehicular','Póliza particular','av-seg',v&&v.seguroVence)}
+    <div class="av-two" style="margin-top:12px">${f('av-soat-monto','SOAT (costo anual, S/)',v&&v.soatMontoAnual,'Ej. 120','number')}${f('av-seg-monto','Seguro vehicular (costo anual, S/)',v&&v.seguroMontoAnual,'Ej. 800','number')}</div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">Opcional — solo para calcular el «Costo real anual» del auto (📊 arriba en la pestaña Auto).</div>
     <div class="av-sec">Notas</div>
     <textarea id="av-notas" rows="1" placeholder="Algo que quieras recordar (opcional)" oninput="this.style.height='auto';this.style.height=Math.min(120,this.scrollHeight)+'px'">${escapeHtml(v&&v.notas||'')}</textarea>
     ${esPr?`<div class="av-princ fijo"><div style="font-size:20px">⭐</div><div class="tx">${V.length?'Es tu auto principal':'Será tu auto principal'}<small>Se usa por defecto para el bot y para datos antiguos sin auto asignado.</small></div></div>`
@@ -21094,10 +21238,57 @@ function autoGuardarVeh(id){
   const g=i=>(document.getElementById(i)||{}).value||'';
   v.nombre=g('av-nom').trim()||'Mi auto'; v.icono=g('av-ico')||'🚗'; v.placa=g('av-placa').trim().toUpperCase(); v.anio=g('av-anio').trim(); v.combustible=g('av-comb');
   v.soatVence=g('av-soat'); v.revVence=g('av-rev'); v.seguroVence=g('av-seg'); v.notas=g('av-notas').trim();
+  v.soatMontoAnual=parseFloat(g('av-soat-monto'))||0; v.seguroMontoAnual=parseFloat(g('av-seg-monto'))||0;
   const c=document.getElementById('av-pr'); if(c&&c.checked){ V.forEach(x=>x.principal=false); v.principal=true; }
   saveState(); _cerrarModalDin('auto-veh-ov'); autoRender(); try{ fuelAplicarEtiquetas(); renderFuelSection('glp'); renderFuelSection('gas'); }catch(e){} toast('Auto guardado');
   if(esNuevo) logActividad('auto_veh_nuevo', `Auto nuevo: ${v.icono||'🚗'} ${v.nombre}`, {vehId:v.id});
   else logActividad('auto_veh_editado', `Auto editado: ${v.icono||'🚗'} ${v.nombre}`, {vehId:v.id, snapshotAntes:antes});
+}
+// ── 📊 Costo real anual del auto (combustible + mantenimiento + cuota + SOAT/seguro) ──
+function autoCostoAnual(vid,anio){
+  let comb=0,mant=0,cuota=0;
+  for(let m=1;m<=12;m++){
+    const mk=anio+'-'+String(m).padStart(2,'0');
+    const g=autoGastoMes(mk,vid);
+    comb+=g.comb; mant+=g.mant; cuota+=g.cuotaPag;
+  }
+  const vehs=vid?autoVehs().filter(x=>x.id===vid):autoVehs();
+  let soat=0,seguro=0;
+  vehs.forEach(v=>{ soat+=parseFloat(v.soatMontoAnual)||0; seguro+=parseFloat(v.seguroMontoAnual)||0; });
+  return {comb,mant,cuota,soat,seguro,total:comb+mant+cuota+soat+seguro};
+}
+function abrirCostoAnualAuto(){
+  const V=autoVehs();
+  if(!V.length){ toast('Primero agrega tu auto'); return; }
+  const selA=document.getElementById('ca-anio');
+  const hoyA=new Date().getFullYear();
+  const anios=[]; for(let a=hoyA;a>=hoyA-5;a--) anios.push(a);
+  selA.innerHTML=anios.map(a=>`<option value="${a}">${a}</option>`).join('');
+  selA.value=String(hoyA);
+  const wrap=document.getElementById('ca-veh-wrap'), selV=document.getElementById('ca-veh');
+  if(V.length>=2){
+    wrap.style.display='';
+    selV.innerHTML='<option value="">Todos los autos</option>'+V.map(v=>`<option value="${v.id}">${escapeHtml(v.icono||'🚗')} ${escapeHtml(v.nombre||'')}</option>`).join('');
+    selV.value=autoVidAct()||'';
+  } else {
+    wrap.style.display='none';
+    selV.innerHTML=`<option value="${V[0].id}">${escapeHtml(V[0].nombre||'')}</option>`;
+    selV.value=V[0].id;
+  }
+  renderCostoAnualAuto();
+  document.getElementById('auto-costo-anual-overlay').classList.add('open');
+}
+function cerrarCostoAnualAuto(){ document.getElementById('auto-costo-anual-overlay').classList.remove('open'); }
+function renderCostoAnualAuto(){
+  const cont=document.getElementById('ca-contenido'); if(!cont) return;
+  const V=autoVehs();
+  if(!V.length){ cont.innerHTML='<div class="dash-empty">🚗 Primero agrega tu auto en la pestaña Resumen.</div>'; return; }
+  const anio=parseInt(document.getElementById('ca-anio').value)||new Date().getFullYear();
+  const vid=document.getElementById('ca-veh').value||'';
+  const r=autoCostoAnual(vid,anio);
+  const fila=(label,val,destacar)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:${destacar?'6px':'3px'} 0${destacar?';border-top:1px dashed var(--border2);margin-top:4px':''}"><span style="color:${destacar?'var(--text1)':'var(--text3)'}">${label}</span><b style="font-family:var(--mono)${destacar?'':';color:var(--text2)'}">S/ ${numFmtSigned(val,2)}</b></div>`;
+  cont.innerHTML=fila('⛽ Combustible',r.comb)+fila('🔧 Mantenimiento',r.mant)+fila('💳 Cuota del préstamo (pagada)',r.cuota)+fila('🛡️ SOAT (anual)',r.soat)+fila('📄 Seguro vehicular (anual)',r.seguro)+fila('Costo total de tener el auto en '+anio,r.total,true)
+    +'<div style="font-size:10.5px;color:var(--text3);margin-top:10px">SOAT y seguro se cuentan como el monto anual configurado en los datos del auto (fijo, no varía por mes). Combustible, mantenimiento y cuota son lo realmente gastado/pagado en cada mes de '+anio+'.</div>';
 }
 // ── 🔀 Mover registros entre autos (uno por uno, o todo el historial desde «Editar auto») ──
 function autoMoverBtn(kind,id,ref){ const b=document.getElementById('mov-'+kind); if(!b) return; b.style.display=(autoVehs().length>=2&&id)?'inline-flex':'none'; b.dataset.id=id||''; b.dataset.t=ref||''; }
@@ -22027,6 +22218,38 @@ function renderNuevosWidgetsDashboard(){
           </div>
         </div>`;
       }).join('') + (alertas.length>5?`<div style="text-align:center;font-size:11px;color:var(--text3);padding-top:8px">+ ${alertas.length-5} más</div>`:'');
+    }
+  }
+
+  // ── Estado de Membresías (tarjetas) ──
+  const membEl=document.getElementById('dash-membresias-tc-body');
+  if(membEl){
+    const filas=(state.tarjetas||[]).filter(t=>/^\d{4}-\d{2}$/.test(String(t.fechaDesde||''))).map(t=>{
+      let c=null; try{ c=tcCicloMembresia(t); }catch(e){}
+      return c?{t,c}:null;
+    }).filter(Boolean);
+    if(!filas.length){
+      membEl.innerHTML='<div class="dash-empty">🎫 No hay tarjetas con seguimiento de membresía configurado.</div>';
+    } else {
+      const atrasadas=filas.filter(f=>!f.c.vaBien);
+      const okCount=filas.length-atrasadas.length;
+      let html=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">${okCount} al día de ${filas.length}${atrasadas.length?' · '+atrasadas.length+' necesita'+(atrasadas.length===1?'':'n')+' atención':''}</div>`;
+      const ordenadas=filas.slice().sort((a,b)=>(a.c.vaBien===b.c.vaBien)?0:(a.c.vaBien?1:-1));
+      html+=ordenadas.slice(0,5).map(({t,c})=>{
+        const ok=c.vaBien, color=ok?'var(--green)':'var(--amber)';
+        const nombre=`${t.banco||''}${t.cat?' '+t.cat:''}`;
+        const sym=t.currency==='USD'?'$':'S/';
+        const sub=c.usaMinimo?`mín. ${sym} ${numFmtSigned(c.minimo,2)}/mes`:'cualquier consumo al mes';
+        const estadoTxt=ok?('✅ '+c.pasados.length+'/12'):('⚠️ Falta '+c.meses[c.faltanteIdx].label);
+        return `<div style="padding:6px 0;border-bottom:1px solid var(--border2);cursor:pointer" onclick="showPage('tarjetas')">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px">
+            <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(nombre)}</span>
+            <span style="font-weight:600;color:${color};white-space:nowrap;margin-left:8px">${estadoTxt}</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3)">${c.cicloLabel||''}${sub?' · '+sub:''}</div>
+        </div>`;
+      }).join('') + (filas.length>5?`<div style="text-align:center;font-size:11px;color:var(--text3);padding-top:8px">+ ${filas.length-5} más</div>`:'');
+      membEl.innerHTML=html;
     }
   }
 }
@@ -26501,6 +26724,7 @@ const CAL_TIPOS = {
   deuda_mayor:   {icon:'🏛️', label:'Cuota deuda mayor',     color:'#f472b6'},
   mantenimiento: {icon:'🔧', label:'Mantenimiento del auto', color:'#fb923c'},
   vencimiento_auto: {icon:'🛡️', label:'Vencimiento del auto', color:'#ef4444'},
+  membresia_tc:  {icon:'🎫', label:'Cobro de membresía',    color:'#d97706'},
   pf_gasto:      {icon:'💸', label:'Pago frecuente',        color:'#f08a7e'},
   pf_ingreso:    {icon:'💵', label:'Ingreso frecuente',     color:'#34d399'},
   otro:          {icon:'📝', label:'Otro',                 color:'#6b7280'},
@@ -26589,6 +26813,15 @@ function getEventosAutomaticos(){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(String(fe||''))) return;
       autos.push({ id:'auto-doc-'+v.id+'-'+k, titulo:`${n}${_autoV().length>1?' — '+(v.nombre||'auto'):''} vence`, fecha:fe, tipo:'vencimiento_auto', auto:true, origenPage:'combustible' });
     });
+  }); }catch(e){}
+  // 🎫 Fecha de cobro de membresía de cada tarjeta (Tarjetas → Editar tarjeta)
+  // — se repite cada año en el mismo mes/día (recurrenteAnual:true), igual
+  // que un cumpleaños/feriado. No se muestra si está marcada "Actualmente es
+  // gratis (exonerada)" — no se espera ningún cobro mientras esté marcada.
+  try{ (state.tarjetas||[]).forEach(t=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(t.membresiaFechaCobro||''))) return;
+    if(t.membresiaGratis) return;
+    autos.push({ id:'auto-membresia-'+t.id, titulo:`🎫 Cobro de membresía — ${t.banco}${t.cat?' '+t.cat:''}`, fecha:t.membresiaFechaCobro, tipo:'membresia_tc', recurrenteAnual:true, auto:true, origenPage:'tarjetas' });
   }); }catch(e){}
   return autos;
 }
@@ -30583,6 +30816,49 @@ function seedDemo(){
 // y actualizar APP_VERSION / APP_VERSION_DATE (el aviso compara APP_VERSION_DATE).
 const APP_CHANGELOG = [
  {
+  "v": "v1.136.0",
+  "fecha": "20/11/26",
+  "cambios": [
+   "✨ Auto → nuevo botón \"📊 Costo real anual\". Elige el año (y el auto, si tienes más de uno) y ve cuánto te costó tenerlo ese año en total: combustible + mantenimiento + cuota del préstamo (lo realmente gastado/pagado cada mes) más SOAT y seguro vehicular (montos anuales que ahora puedes configurar al editar el auto, en \"Documentos y vencimientos\"). Sin comparador de precios de grifo."
+  ]
+ },
+ {
+  "v": "v1.135.0",
+  "fecha": "20/11/26",
+  "cambios": [
+   "✨ Tarjetas → nuevo botón \"📊 Reporte anual\" (junto a \"+ Agregar tarjeta\"). Por cada tarjeta y el año que elijas: cuánto pagaste en INTERESES de compras a cuotas con intereses (reconstruido del sistema francés, cuota fija + TEA, cuota por cuota, agrupado por el año real en que cae cada una) y cuánto te costó (o te ahorraste, si está exonerada) la MEMBRESÍA — con un total combinado por tarjeta, para decidir si vale la pena mantenerla. Las tarjetas sin intereses ni membresía configurada no aparecen en el reporte."
+  ]
+ },
+ {
+  "v": "v1.134.0",
+  "fecha": "20/11/26",
+  "cambios": [
+   "✨ Nuevo widget opcional de Dashboard: \"🎫 Estado de Membresías\". Resume, para cada tarjeta con seguimiento de membresía activo (fecha \"Tarjeta desde\" configurada), si va al día (✅ N/12) o le falta algún mes (⚠️ Falta <mes>), mostrando también el mínimo de consumo mensual si esa tarjeta lo usa. Las tarjetas que necesitan atención se muestran primero. Un clic lleva directo a Tarjetas. Como todos los widgets nuevos, empieza OCULTO por defecto — para activarlo: ✏️ Editar → Mi Resumen."
+  ]
+ },
+ {
+  "v": "v1.133.0",
+  "fecha": "20/11/26",
+  "cambios": [
+   "✨ Tarjetas → Editar tarjeta: nuevo campo opcional \"Monto mínimo de consumo por mes de corte\", debajo de Membresía. Algunos bancos no exoneran la membresía con cualquier consumo (como Interbank/BCP con S/1) — piden un mínimo/promedio de compras dentro de cada mes de CORTE (facturación) de la tarjeta. Si se configura un monto, el seguimiento 🎫 que ya se veía en la tarjeta de la lista (desde la versión anterior) cambia de criterio: en vez de \"¿hubo algún consumo ese mes calendario?\", ahora revisa \"¿el total FACTURADO ese mes de corte llegó al mínimo?\" — usando el mismo agrupamiento por mes de facturación que ya usa el resto de la app para las cuotas. El encabezado de la tira ahora muestra el mínimo configurado (ej. \"· mín. S/ 50.00/mes\") y el detalle de cada punto (al pasar el cursor) muestra cuánto se gastó ese mes vs. el mínimo. Tarjetas sin este campo configurado siguen funcionando exactamente igual que antes (cualquier consumo del mes cuenta)."
+  ]
+ },
+ {
+  "v": "v1.132.0",
+  "fecha": "20/11/26",
+  "cambios": [
+   "✨ La \"Fecha de cobro de membresía\" de cada tarjeta (agregada hace un momento en Editar tarjeta) ya aparece SOLA en el Calendario — no hay que crear un evento a mano. Se repite cada año en el mismo mes/día (como un cumpleaños), se ve tanto en la vista mensual completa como en el widget \"Fechas importantes\" del dashboard (con el ícono 🎫 y el cuenta regresivo), y un toque te lleva directo a Tarjetas. No aparece para una tarjeta marcada \"Actualmente es gratis (exonerada)\" — no se espera ningún cobro mientras esté así.",
+   "✨ Bot de Telegram (`bot_index.js`): el aviso diario de las 7am y `/recordatorios` ahora incluyen una sección \"🎫 Membresía de tarjetas\" cuando a alguna tarjeta le falten 30 días o menos para su fecha de cobro de membresía (🔴 si faltan ≤5 días, 🟡 si faltan más). Mismo criterio de exclusión que la app: no avisa de una tarjeta marcada como exonerada."
+  ]
+ },
+ {
+  "v": "v1.131.1",
+  "fecha": "20/11/26",
+  "cambios": [
+   "✨ Tarjetas → Editar tarjeta: nuevo campo opcional \"Fecha de cobro de membresía\", junto al de Membresía anual — el día en que el banco cobra la membresía (se repite cada año en esa misma fecha). Solo es referencia/recordatorio, no afecta ningún cálculo. Si está configurada, el resumen debajo del monto de Membresía ahora dice, por ejemplo, \"Se cobrará S/ 300.00 al año el 15 de diciembre (cada año)\"."
+  ]
+ },
+ {
   "v": "v1.131.0",
   "fecha": "20/11/26",
   "cambios": [
@@ -34036,12 +34312,24 @@ if(state.projGoals){
       </div>
     </div>
     <div class="field-row">
+      <div class="field"><label>Fecha de cobro de membresía <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input id="tc-f-membresia-fecha" type="date" oninput="pintarTCMembresiaResumen()"></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <div style="font-size:11px;color:var(--text2);padding-bottom:8px">El día en que el banco te cobra la membresía anual (si no está exonerada) — se repite cada año en esa misma fecha. Es solo referencia/recordatorio, no afecta ningún cálculo.</div>
+      </div>
+    </div>
+    <div class="field-row">
       <div class="field"><label>Membresía anual <span style="font-size:10px;color:var(--text3)">(opcional — monto)</span></label><input id="tc-f-membresia-monto" type="number" step="0.01" placeholder="Ej. 350.00" oninput="pintarTCMembresiaResumen()"></div>
       <div class="field" style="display:flex;align-items:flex-end;padding-bottom:10px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin:0;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer"><input id="tc-f-membresia-gratis" type="checkbox" style="width:auto;margin:0" onchange="pintarTCMembresiaResumen()"> Actualmente es gratis (exonerada)</label>
       </div>
     </div>
     <div class="field"><div id="tc-f-membresia-resumen" style="font-size:10.5px;color:var(--text3)"></div></div>
+    <div class="field-row">
+      <div class="field"><label>Monto mínimo de consumo por mes de corte <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input id="tc-f-membresia-min-mensual" type="number" step="0.01" placeholder="Ej. 50.00"></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <div style="font-size:11px;color:var(--text2);padding-bottom:8px">Algunas tarjetas no exoneran la membresía con cualquier consumo — piden un mínimo (o promedio) de compras dentro de cada mes de CORTE/facturación. Si pones un monto aquí, el seguimiento de abajo usará ESE criterio (total facturado ese mes ≥ este monto) en vez de "cualquier consumo del mes". Déjalo vacío si tu tarjeta solo pide al menos 1 sol de consumo.</div>
+      </div>
+    </div>
     <div class="field-row">
       <div class="field"><label>Moneda</label>
         <select id="tc-f-currency" onchange="pintarTCMembresiaResumen()">
@@ -34206,6 +34494,35 @@ if(state.projGoals){
     <div id="mis-cuotas-contenido" style="max-height:55vh;overflow-y:auto"></div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px">
       <button class="btn" onclick="cerrarMisCuotasActivas()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REPORTE ANUAL POR TARJETA (intereses pagados + costo de membresía) -->
+<div class="modal-overlay" id="tc-reporte-anual-overlay" onclick="if(event.target===this)cerrarReporteAnualTC()">
+  <div class="modal" style="width:560px;max-width:95vw">
+    <div class="modal-title"><span>📊 Reporte anual de tarjetas</span><button class="modal-close" onclick="cerrarReporteAnualTC()">✕</button></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Por tarjeta, cuánto pagaste en intereses de cuotas y cuánto te costó (o te ahorraste) la membresía — para decidir si vale la pena mantenerla.</div>
+    <div class="field" style="margin-bottom:10px"><label>Año</label><select id="tc-ra-anio" onchange="renderReporteAnualTC()"></select></div>
+    <div id="tc-ra-contenido" style="max-height:55vh;overflow-y:auto"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn" onclick="cerrarReporteAnualTC()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: COSTO REAL ANUAL DEL AUTO -->
+<div class="modal-overlay" id="auto-costo-anual-overlay" onclick="if(event.target===this)cerrarCostoAnualAuto()">
+  <div class="modal" style="width:480px;max-width:95vw">
+    <div class="modal-title"><span>📊 Costo real anual del auto</span><button class="modal-close" onclick="cerrarCostoAnualAuto()">✕</button></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Combustible + mantenimiento + cuota del préstamo + SOAT/seguro, sumado por año — para ver cuánto te cuesta realmente tener el auto.</div>
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+      <div class="field" style="flex:1;margin-bottom:0"><label>Año</label><select id="ca-anio" onchange="renderCostoAnualAuto()"></select></div>
+      <div class="field" style="flex:1;margin-bottom:0" id="ca-veh-wrap"><label>Auto</label><select id="ca-veh" onchange="renderCostoAnualAuto()"></select></div>
+    </div>
+    <div id="ca-contenido"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn" onclick="cerrarCostoAnualAuto()">Cerrar</button>
     </div>
   </div>
 </div>
